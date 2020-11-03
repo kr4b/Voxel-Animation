@@ -1,0 +1,695 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="debug|x64">
+      <Configuration>debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="release|x64">
+      <Configuration>release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{0BE51121-7770-7FE5-8081-02DAEC8BDBE5}</ProjectGuid>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>flux-uv-preview</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug|x64'">
+    <OutDir>..\..\lib\</OutDir>
+    <IntDir>..\..\_build_\debug-x64-msc-v141\x64\debug\flux-uv-preview\</IntDir>
+    <TargetName>flux-uv-preview-debug-x64-msc-v141</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='release|x64'">
+    <OutDir>..\..\lib\</OutDir>
+    <IntDir>..\..\_build_\release-x64-msc-v141\x64\release\flux-uv-preview\</IntDir>
+    <TargetName>flux-uv-preview-release-x64-msc-v141</TargetName>
+    <TargetExt>.lib</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>_DEBUG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>include;third_party\concurrentqueue\include;third_party\fmtlib\include;third_party\miniz\include;third_party\monocypher\include;third_party\pegtl\include;third_party\parallel-hashmap\include;third_party\zstd\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <MinimalRebuild>false</MinimalRebuild>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>NDEBUG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>include;third_party\concurrentqueue\include;third_party\fmtlib\include;third_party\miniz\include;third_party\monocypher\include;third_party\pegtl\include;third_party\parallel-hashmap\include;third_party\zstd\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="include\flux\base\action.hpp" />
+    <ClInclude Include="include\flux\base\def\vfs.hpp" />
+    <ClInclude Include="include\flux\base\default_catalogs.hpp" />
+    <ClInclude Include="include\flux\base\detail\queue.inl" />
+    <ClInclude Include="include\flux\base\errors.hpp" />
+    <ClInclude Include="include\flux\base\message.hpp" />
+    <ClInclude Include="include\flux\base\msg\stdmsg.hpp" />
+    <ClInclude Include="include\flux\base\queue.hpp" />
+    <ClInclude Include="include\flux\compat\barrier.hpp" />
+    <ClInclude Include="include\flux\compat\bit_cast.hpp" />
+    <ClInclude Include="include\flux\compat\byte.hpp" />
+    <ClInclude Include="include\flux\compat\call_once.hpp" />
+    <ClInclude Include="include\flux\compat\clamp.hpp" />
+    <ClInclude Include="include\flux\compat\constexpr.hpp" />
+    <ClInclude Include="include\flux\compat\current_func.hpp" />
+    <ClInclude Include="include\flux\compat\detail\current_func.inl" />
+    <ClInclude Include="include\flux\compat\detail\restrict.inl" />
+    <ClInclude Include="include\flux\compat\exchange.hpp" />
+    <ClInclude Include="include\flux\compat\integer_sequence.hpp" />
+    <ClInclude Include="include\flux\compat\invoke.hpp" />
+    <ClInclude Include="include\flux\compat\is_consteval.hpp" />
+    <ClInclude Include="include\flux\compat\is_trivially.hpp" />
+    <ClInclude Include="include\flux\compat\iterator_traits.hpp" />
+    <ClInclude Include="include\flux\compat\latch.hpp" />
+    <ClInclude Include="include\flux\compat\launder.hpp" />
+    <ClInclude Include="include\flux\compat\make_unique.hpp" />
+    <ClInclude Include="include\flux\compat\noexcept.hpp" />
+    <ClInclude Include="include\flux\compat\observer_ptr.hpp" />
+    <ClInclude Include="include\flux\compat\optional.hpp" />
+    <ClInclude Include="include\flux\compat\restrict.hpp" />
+    <ClInclude Include="include\flux\compat\shared_mutex.hpp" />
+    <ClInclude Include="include\flux\compat\source_location.hpp" />
+    <ClInclude Include="include\flux\compat\span.hpp" />
+    <ClInclude Include="include\flux\compat\string_view.hpp" />
+    <ClInclude Include="include\flux\compat\system_error.hpp" />
+    <ClInclude Include="include\flux\compat\to_address.hpp" />
+    <ClInclude Include="include\flux\compat\tuple_get.hpp" />
+    <ClInclude Include="include\flux\compat\type_traits.hpp" />
+    <ClInclude Include="include\flux\compat\uninitialized.hpp" />
+    <ClInclude Include="include\flux\compat\variant.hpp" />
+    <ClInclude Include="include\flux\compat\voidt.hpp" />
+    <ClInclude Include="include\flux\fml\aabb.hpp" />
+    <ClInclude Include="include\flux\fml\angle.hpp" />
+    <ClInclude Include="include\flux\fml\common.hpp" />
+    <ClInclude Include="include\flux\fml\constants.hpp" />
+    <ClInclude Include="include\flux\fml\detail\aabb.inl" />
+    <ClInclude Include="include\flux\fml\detail\angle.inl" />
+    <ClInclude Include="include\flux\fml\detail\common.inl" />
+    <ClInclude Include="include\flux\fml\detail\dual_quaternion.inl" />
+    <ClInclude Include="include\flux\fml\detail\quaternion.inl" />
+    <ClInclude Include="include\flux\fml\detail\small_matrix.inl" />
+    <ClInclude Include="include\flux\fml\detail\small_vector.inl" />
+    <ClInclude Include="include\flux\fml\detail\transform.inl" />
+    <ClInclude Include="include\flux\fml\detail\util.inl" />
+    <ClInclude Include="include\flux\fml\dual_quaternion.hpp" />
+    <ClInclude Include="include\flux\fml\exttypes.hpp" />
+    <ClInclude Include="include\flux\fml\forward.hpp" />
+    <ClInclude Include="include\flux\fml\quaternion.hpp" />
+    <ClInclude Include="include\flux\fml\small_matrix.hpp" />
+    <ClInclude Include="include\flux\fml\small_vector.hpp" />
+    <ClInclude Include="include\flux\fml\stdtypes.hpp" />
+    <ClInclude Include="include\flux\fml\transform.hpp" />
+    <ClInclude Include="include\flux\fml\util.hpp" />
+    <ClInclude Include="include\flux\ftl\any.hpp" />
+    <ClInclude Include="include\flux\ftl\auxiliary.hpp" />
+    <ClInclude Include="include\flux\ftl\catalog.hpp" />
+    <ClInclude Include="include\flux\ftl\catalog_key.hpp" />
+    <ClInclude Include="include\flux\ftl\contiguous_iterator.hpp" />
+    <ClInclude Include="include\flux\ftl\defaults.hpp" />
+    <ClInclude Include="include\flux\ftl\detail\any-aspect.hxx" />
+    <ClInclude Include="include\flux\ftl\detail\any-meta.hxx" />
+    <ClInclude Include="include\flux\ftl\detail\any-util.hxx" />
+    <ClInclude Include="include\flux\ftl\detail\any.inl" />
+    <ClInclude Include="include\flux\ftl\detail\catalog.inl" />
+    <ClInclude Include="include\flux\ftl\detail\catalog_key.inl" />
+    <ClInclude Include="include\flux\ftl\detail\contiguous_iterator.inl" />
+    <ClInclude Include="include\flux\ftl\detail\hash.inl" />
+    <ClInclude Include="include\flux\ftl\detail\id_pool.inl" />
+    <ClInclude Include="include\flux\ftl\detail\initialized.inl" />
+    <ClInclude Include="include\flux\ftl\detail\is_bitwise.inl" />
+    <ClInclude Include="include\flux\ftl\detail\meta_list.inl" />
+    <ClInclude Include="include\flux\ftl\detail\meta_set.inl" />
+    <ClInclude Include="include\flux\ftl\detail\not_null.inl" />
+    <ClInclude Include="include\flux\ftl\detail\protected.inl" />
+    <ClInclude Include="include\flux\ftl\detail\ptr_and_flag.inl" />
+    <ClInclude Include="include\flux\ftl\detail\signal.inl" />
+    <ClInclude Include="include\flux\ftl\detail\sobuffer.inl" />
+    <ClInclude Include="include\flux\ftl\detail\uninitialized.inl" />
+    <ClInclude Include="include\flux\ftl\detail\vector-private.hxx" />
+    <ClInclude Include="include\flux\ftl\detail\vector-realloc.hxx" />
+    <ClInclude Include="include\flux\ftl\detail\vector-traits.hxx" />
+    <ClInclude Include="include\flux\ftl\detail\vector.inl" />
+    <ClInclude Include="include\flux\ftl\dsstore.hpp" />
+    <ClInclude Include="include\flux\ftl\dsvalue.hpp" />
+    <ClInclude Include="include\flux\ftl\errors.hpp" />
+    <ClInclude Include="include\flux\ftl\explicit_init_list.hpp" />
+    <ClInclude Include="include\flux\ftl\hash.hpp" />
+    <ClInclude Include="include\flux\ftl\id_pool.hpp" />
+    <ClInclude Include="include\flux\ftl\in_buffer.hpp" />
+    <ClInclude Include="include\flux\ftl\initialized.hpp" />
+    <ClInclude Include="include\flux\ftl\is_bitwise.hpp" />
+    <ClInclude Include="include\flux\ftl\meta_bool.hpp" />
+    <ClInclude Include="include\flux\ftl\meta_list.hpp" />
+    <ClInclude Include="include\flux\ftl\meta_set.hpp" />
+    <ClInclude Include="include\flux\ftl\not_null.hpp" />
+    <ClInclude Include="include\flux\ftl\protected.hpp" />
+    <ClInclude Include="include\flux\ftl\ptr_and_flag.hpp" />
+    <ClInclude Include="include\flux\ftl\signal.hpp" />
+    <ClInclude Include="include\flux\ftl\sobuffer.hpp" />
+    <ClInclude Include="include\flux\ftl\uninitialized.hpp" />
+    <ClInclude Include="include\flux\ftl\vector.hpp" />
+    <ClInclude Include="include\flux\gl\checkpoint.hpp" />
+    <ClInclude Include="include\flux\gl\context.hpp" />
+    <ClInclude Include="include\flux\gl\defaults.hpp" />
+    <ClInclude Include="include\flux\gl\detail\checkpoint.inl" />
+    <ClInclude Include="include\flux\gl\detail\format.inl" />
+    <ClInclude Include="include\flux\gl\detail\glapi.inl" />
+    <ClInclude Include="include\flux\gl\detail\objects.inl" />
+    <ClInclude Include="include\flux\gl\error_category.hpp" />
+    <ClInclude Include="include\flux\gl\errors.hpp" />
+    <ClInclude Include="include\flux\gl\glaliases.hpp" />
+    <ClInclude Include="include\flux\gl\glapi.hpp" />
+    <ClInclude Include="include\flux\gl\objects.hpp" />
+    <ClInclude Include="include\flux\gl\setup\program.hpp" />
+    <ClInclude Include="include\flux\gl\setup\shader.hpp" />
+    <ClInclude Include="include\flux\gl\verbatim_glsl.hpp" />
+    <ClInclude Include="include\flux\io\buffer.hpp" />
+    <ClInclude Include="include\flux\io\buffer\file.hpp" />
+    <ClInclude Include="include\flux\io\buffer\mapping.hpp" />
+    <ClInclude Include="include\flux\io\buffer\memread.hpp" />
+    <ClInclude Include="include\flux\io\buffer\stream.hpp" />
+    <ClInclude Include="include\flux\io\buffer\sysfile.hpp" />
+    <ClInclude Include="include\flux\io\detail\buffer.inl" />
+    <ClInclude Include="include\flux\io\detail\stream.inl" />
+    <ClInclude Include="include\flux\io\detail\vfs.inl" />
+    <ClInclude Include="include\flux\io\errors.hpp" />
+    <ClInclude Include="include\flux\io\forward.hpp" />
+    <ClInclude Include="include\flux\io\stream.hpp" />
+    <ClInclude Include="include\flux\io\stream\bufread.hpp" />
+    <ClInclude Include="include\flux\io\stream\cfile.hpp" />
+    <ClInclude Include="include\flux\io\stream\gz.hpp" />
+    <ClInclude Include="include\flux\io\stream\http.hpp" />
+    <ClInclude Include="include\flux\io\stream\memread.hpp" />
+    <ClInclude Include="include\flux\io\stream\special.hpp" />
+    <ClInclude Include="include\flux\io\stream\sysfile.hpp" />
+    <ClInclude Include="include\flux\io\stream\zstd.hpp" />
+    <ClInclude Include="include\flux\io\util\archive.hpp" />
+    <ClInclude Include="include\flux\io\vfs.hpp" />
+    <ClInclude Include="include\flux\io\vfs\default_entry_record.hpp" />
+    <ClInclude Include="include\flux\io\vfs\native_path.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\inode.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\inode_record.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\lazydir.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\masquerade.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\overlay.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\pdir.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\sysdir.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\sysfile.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\sysroot.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\union.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\userdir.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\vdir.hpp" />
+    <ClInclude Include="include\flux\io\vfsi\zipdir.hpp" />
+    <ClInclude Include="include\flux\io\vpath.hpp" />
+    <ClInclude Include="include\flux\nih_\aligned_union.hpp" />
+    <ClInclude Include="include\flux\nih_\barrier.hpp" />
+    <ClInclude Include="include\flux\nih_\bit_cast.hpp" />
+    <ClInclude Include="include\flux\nih_\call_once.hpp" />
+    <ClInclude Include="include\flux\nih_\clamp.hpp" />
+    <ClInclude Include="include\flux\nih_\detail\barrier.inl" />
+    <ClInclude Include="include\flux\nih_\detail\call_once.inl" />
+    <ClInclude Include="include\flux\nih_\detail\latch.inl" />
+    <ClInclude Include="include\flux\nih_\detail\make_unique.inl" />
+    <ClInclude Include="include\flux\nih_\detail\observer_ptr.inl" />
+    <ClInclude Include="include\flux\nih_\detail\optional.inl" />
+    <ClInclude Include="include\flux\nih_\detail\source_location.inl" />
+    <ClInclude Include="include\flux\nih_\detail\system_error.inl" />
+    <ClInclude Include="include\flux\nih_\detail\tuple_get.inl" />
+    <ClInclude Include="include\flux\nih_\detail\uninitialized.inl" />
+    <ClInclude Include="include\flux\nih_\exchange.hpp" />
+    <ClInclude Include="include\flux\nih_\integer_sequence.hpp" />
+    <ClInclude Include="include\flux\nih_\is_trivially.hpp" />
+    <ClInclude Include="include\flux\nih_\iterator_traits.hpp" />
+    <ClInclude Include="include\flux\nih_\latch.hpp" />
+    <ClInclude Include="include\flux\nih_\make_unique.hpp" />
+    <ClInclude Include="include\flux\nih_\observer_ptr.hpp" />
+    <ClInclude Include="include\flux\nih_\optional.hpp" />
+    <ClInclude Include="include\flux\nih_\source_location.hpp" />
+    <ClInclude Include="include\flux\nih_\system_error.hpp" />
+    <ClInclude Include="include\flux\nih_\to_address.hpp" />
+    <ClInclude Include="include\flux\nih_\tuple_get.hpp" />
+    <ClInclude Include="include\flux\nih_\uninitialized.hpp" />
+    <ClInclude Include="include\flux\pp\argn.hpp" />
+    <ClInclude Include="include\flux\pp\bool.hpp" />
+    <ClInclude Include="include\flux\pp\detail\argn.inl" />
+    <ClInclude Include="include\flux\pp\detail\bool.inl" />
+    <ClInclude Include="include\flux\pp\detail\enum-msvc.inl" />
+    <ClInclude Include="include\flux\pp\detail\enum.inl" />
+    <ClInclude Include="include\flux\pp\detail\if-msvc.inl" />
+    <ClInclude Include="include\flux\pp\detail\if.inl" />
+    <ClInclude Include="include\flux\pp\detail\join.inl" />
+    <ClInclude Include="include\flux\pp\detail\message.inl" />
+    <ClInclude Include="include\flux\pp\detail\repeat-msvc.inl" />
+    <ClInclude Include="include\flux\pp\detail\repeat.inl" />
+    <ClInclude Include="include\flux\pp\detail\stringize.inl" />
+    <ClInclude Include="include\flux\pp\detail\tuple-msvc.inl" />
+    <ClInclude Include="include\flux\pp\detail\tuple.inl" />
+    <ClInclude Include="include\flux\pp\enum.hpp" />
+    <ClInclude Include="include\flux\pp\identity.hpp" />
+    <ClInclude Include="include\flux\pp\if.hpp" />
+    <ClInclude Include="include\flux\pp\join.hpp" />
+    <ClInclude Include="include\flux\pp\limits.hpp" />
+    <ClInclude Include="include\flux\pp\message.hpp" />
+    <ClInclude Include="include\flux\pp\repeat.hpp" />
+    <ClInclude Include="include\flux\pp\stringize.hpp" />
+    <ClInclude Include="include\flux\pp\symbols.hpp" />
+    <ClInclude Include="include\flux\pp\tuple.hpp" />
+    <ClInclude Include="include\flux\pp\unique.hpp" />
+    <ClInclude Include="include\flux\report\badness.hpp" />
+    <ClInclude Include="include\flux\report\defaults.hpp" />
+    <ClInclude Include="include\flux\report\identity.hpp" />
+    <ClInclude Include="include\flux\report\instr\common.hpp" />
+    <ClInclude Include="include\flux\report\instr\consumer.hpp" />
+    <ClInclude Include="include\flux\report\instr\consumer_basic.hpp" />
+    <ClInclude Include="include\flux\report\instr\context.hpp" />
+    <ClInclude Include="include\flux\report\instr\event.hpp" />
+    <ClInclude Include="include\flux\report\instr\forward.hpp" />
+    <ClInclude Include="include\flux\report\instr\info.hpp" />
+    <ClInclude Include="include\flux\report\instr\instrumentor.hpp" />
+    <ClInclude Include="include\flux\report\instr\method.hpp" />
+    <ClInclude Include="include\flux\report\instr\method_cuda.hpp" />
+    <ClInclude Include="include\flux\report\instrument.hpp" />
+    <ClInclude Include="include\flux\report\state.hpp" />
+    <ClInclude Include="include\flux\setup\arch.hpp" />
+    <ClInclude Include="include\flux\setup\buildcfg.hpp" />
+    <ClInclude Include="include\flux\setup\compiler.hpp" />
+    <ClInclude Include="include\flux\setup\defaults.hpp" />
+    <ClInclude Include="include\flux\setup\detail\arch.hxx" />
+    <ClInclude Include="include\flux\setup\detail\compiler.hxx" />
+    <ClInclude Include="include\flux\setup\detail\compiler_conf-clang.hxx" />
+    <ClInclude Include="include\flux\setup\detail\compiler_conf-gcc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\compiler_conf-intel.hxx" />
+    <ClInclude Include="include\flux\setup\detail\compiler_conf-msvc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\compiler_conf-nvcc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\compiler_conf-pgi.hxx" />
+    <ClInclude Include="include\flux\setup\detail\defaults-deploy.hxx" />
+    <ClInclude Include="include\flux\setup\detail\endian.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-langfeat_req_conf-clang.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-langfeat_req_conf-feature.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-langfeat_req_conf-gcc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-langfeat_req_conf-langlevel.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-langfeat_req_conf-msvc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-langfeat_req_conf-nvcc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-langfeat_req_conf-pgi.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-langfeat_required.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_req_conf-langlevel.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_req_conf-libcpp.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_req_conf-stdcpp.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_req_conf-vscpp.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_req_fixups-nvcc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_req_fixups.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_required.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_tr1.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_tr1_conf-stdcpp.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_tr1_conf-vscpp.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_tr1_fixups-nvcc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\ext-stdfeat_tr1_fixups.hxx" />
+    <ClInclude Include="include\flux\setup\detail\langfeat.hxx" />
+    <ClInclude Include="include\flux\setup\detail\langfeat_conf-clang.hxx" />
+    <ClInclude Include="include\flux\setup\detail\langfeat_conf-feature.hxx" />
+    <ClInclude Include="include\flux\setup\detail\langfeat_conf-gcc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\langfeat_conf-langlevel.hxx" />
+    <ClInclude Include="include\flux\setup\detail\langfeat_conf-msvc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\langfeat_conf-nvcc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\langfeat_conf-pgi.hxx" />
+    <ClInclude Include="include\flux\setup\detail\platform.hxx" />
+    <ClInclude Include="include\flux\setup\detail\stdfeat.hxx" />
+    <ClInclude Include="include\flux\setup\detail\stdfeat_conf-feature.hxx" />
+    <ClInclude Include="include\flux\setup\detail\stdfeat_conf-langlevel.hxx" />
+    <ClInclude Include="include\flux\setup\detail\stdfeat_conf-libcpp.hxx" />
+    <ClInclude Include="include\flux\setup\detail\stdfeat_conf-stdcpp.hxx" />
+    <ClInclude Include="include\flux\setup\detail\stdfeat_conf-vscpp.hxx" />
+    <ClInclude Include="include\flux\setup\detail\stdfeat_fixups-nvcc.hxx" />
+    <ClInclude Include="include\flux\setup\detail\stdfeat_fixups.hxx" />
+    <ClInclude Include="include\flux\setup\endian.hpp" />
+    <ClInclude Include="include\flux\setup\ext\langfeat_required.hpp" />
+    <ClInclude Include="include\flux\setup\ext\stdfeat_required.hpp" />
+    <ClInclude Include="include\flux\setup\ext\stdfeat_tr1.hpp" />
+    <ClInclude Include="include\flux\setup\langfeat.hpp" />
+    <ClInclude Include="include\flux\setup\namespace.hpp" />
+    <ClInclude Include="include\flux\setup\normalize.hpp" />
+    <ClInclude Include="include\flux\setup\platform.hpp" />
+    <ClInclude Include="include\flux\setup\stdfeat.hpp" />
+    <ClInclude Include="include\flux\setup\version.hpp" />
+    <ClInclude Include="include\flux\std\appinfo.hpp" />
+    <ClInclude Include="include\flux\std\assert.hpp" />
+    <ClInclude Include="include\flux\std\byte.hpp" />
+    <ClInclude Include="include\flux\std\clock.hpp" />
+    <ClInclude Include="include\flux\std\detail\except-einfo.inl" />
+    <ClInclude Include="include\flux\std\detail\except-query.inl" />
+    <ClInclude Include="include\flux\std\detail\except_data.hxx" />
+    <ClInclude Include="include\flux\std\detail\except_data.inl" />
+    <ClInclude Include="include\flux\std\detail\exception.inl" />
+    <ClInclude Include="include\flux\std\detail\log2.inl" />
+    <ClInclude Include="include\flux\std\enable_if.hpp" />
+    <ClInclude Include="include\flux\std\except\einfo.hpp" />
+    <ClInclude Include="include\flux\std\except\forward.hpp" />
+    <ClInclude Include="include\flux\std\except\query.hpp" />
+    <ClInclude Include="include\flux\std\exception.hpp" />
+    <ClInclude Include="include\flux\std\format.hpp" />
+    <ClInclude Include="include\flux\std\function.hpp" />
+    <ClInclude Include="include\flux\std\guarded.hpp" />
+    <ClInclude Include="include\flux\std\identity.hpp" />
+    <ClInclude Include="include\flux\std\inttypes.hpp" />
+    <ClInclude Include="include\flux\std\log.hpp" />
+    <ClInclude Include="include\flux\std\log2.hpp" />
+    <ClInclude Include="include\flux\std\log2_ctrl.hpp" />
+    <ClInclude Include="include\flux\std\log_control.hpp" />
+    <ClInclude Include="include\flux\std\mark.hpp" />
+    <ClInclude Include="include\flux\std\observer_ptr.hpp" />
+    <ClInclude Include="include\flux\std\optional.hpp" />
+    <ClInclude Include="include\flux\std\process_random.hpp" />
+    <ClInclude Include="include\flux\std\shared_ptr.hpp" />
+    <ClInclude Include="include\flux\std\static_assert.hpp" />
+    <ClInclude Include="include\flux\std\stdexcept.hpp" />
+    <ClInclude Include="include\flux\std\throw.hpp" />
+    <ClInclude Include="include\flux\std\unique_ptr.hpp" />
+    <ClInclude Include="include\flux\sys\addrinfo.hpp" />
+    <ClInclude Include="include\flux\sys\clock.hpp" />
+    <ClInclude Include="include\flux\sys\defpath.hpp" />
+    <ClInclude Include="include\flux\sys\detail\dylib.inl" />
+    <ClInclude Include="include\flux\sys\detail\hwclock.inl" />
+    <ClInclude Include="include\flux\sys\detail\intrin.inl" />
+    <ClInclude Include="include\flux\sys\detail\time_source.inl" />
+    <ClInclude Include="include\flux\sys\dylib.hpp" />
+    <ClInclude Include="include\flux\sys\errno_category.hpp" />
+    <ClInclude Include="include\flux\sys\errors.hpp" />
+    <ClInclude Include="include\flux\sys\execctrl.hpp" />
+    <ClInclude Include="include\flux\sys\filemap.hpp" />
+    <ClInclude Include="include\flux\sys\fsmanip.hpp" />
+    <ClInclude Include="include\flux\sys\fsquery.hpp" />
+    <ClInclude Include="include\flux\sys\gai_category.hpp" />
+    <ClInclude Include="include\flux\sys\hwclock.hpp" />
+    <ClInclude Include="include\flux\sys\info.hpp" />
+    <ClInclude Include="include\flux\sys\intrin.hpp" />
+    <ClInclude Include="include\flux\sys\pathutil.hpp" />
+    <ClInclude Include="include\flux\sys\stdio-style.hpp" />
+    <ClInclude Include="include\flux\sys\stdio.hpp" />
+    <ClInclude Include="include\flux\sys\syspath.hpp" />
+    <ClInclude Include="include\flux\sys\time_source.hpp" />
+    <ClInclude Include="include\flux\sys\win32\windows.h" />
+    <ClInclude Include="include\flux\sys\win32_category.hpp" />
+    <ClInclude Include="include\flux\util\at_thread_exit.hpp" />
+    <ClInclude Include="include\flux\util\attrib.hpp" />
+    <ClInclude Include="include\flux\util\bit_twiddle.hpp" />
+    <ClInclude Include="include\flux\util\debug_optimize.hpp" />
+    <ClInclude Include="include\flux\util\defaults.hpp" />
+    <ClInclude Include="include\flux\util\demangle.hpp" />
+    <ClInclude Include="include\flux\util\detail\attrib.inl" />
+    <ClInclude Include="include\flux\util\detail\bit_twiddle.inl" />
+    <ClInclude Include="include\flux\util\detail\debug_optimize.inl" />
+    <ClInclude Include="include\flux\util\detail\diagnostics.inl" />
+    <ClInclude Include="include\flux\util\detail\enum_bitfield.inl" />
+    <ClInclude Include="include\flux\util\detail\hint.inl" />
+    <ClInclude Include="include\flux\util\detail\intent.inl" />
+    <ClInclude Include="include\flux\util\detail\narrow.inl" />
+    <ClInclude Include="include\flux\util\detail\scope_exit.inl" />
+    <ClInclude Include="include\flux\util\detail\switch.inl" />
+    <ClInclude Include="include\flux\util\diagnostics.hpp" />
+    <ClInclude Include="include\flux\util\enum_bitfield.hpp" />
+    <ClInclude Include="include\flux\util\hint.hpp" />
+    <ClInclude Include="include\flux\util\intent.hpp" />
+    <ClInclude Include="include\flux\util\narrow.hpp" />
+    <ClInclude Include="include\flux\util\returns.hpp" />
+    <ClInclude Include="include\flux\util\scope_exit.hpp" />
+    <ClInclude Include="include\flux\util\switch.hpp" />
+    <ClInclude Include="include\flux_dlapi\GL\forward.hpp" />
+    <ClInclude Include="include\flux_dlapi\GL\gl-aliases.hpp" />
+    <ClInclude Include="include\flux_dlapi\GL\gl-types.hpp" />
+    <ClInclude Include="include\flux_dlapi\GL\gl.hpp" />
+    <ClInclude Include="include\flux_dlapi\GL\load.hpp" />
+    <ClInclude Include="include\flux_dlapi\GL\types.hpp" />
+    <ClInclude Include="include\flux_dlapi\cuda\cuda.hpp" />
+    <ClInclude Include="include\flux_dlapi\cuda\forward.hpp" />
+    <ClInclude Include="include\flux_dlapi\cuda\load.hpp" />
+    <ClInclude Include="include\flux_dlapi\os\defaults.hpp" />
+    <ClInclude Include="include\flux_dlapi\os\dlapi_category.hpp" />
+    <ClInclude Include="include\flux_dlapi\os\glfw.hpp" />
+    <ClInclude Include="include\flux_dlapi\os\glx.hpp" />
+    <ClInclude Include="include\flux_dlapi\os\localso.hpp" />
+    <ClInclude Include="include\flux_dlapi\os\testso.hpp" />
+    <ClInclude Include="include\flux_dlapi\os\wgl.hpp" />
+    <ClInclude Include="include\flux_dlapi\os\win32.hpp" />
+    <ClInclude Include="include\flux_dlapi\os\winsock.hpp" />
+    <ClInclude Include="include\flux_dlapi\os\x11.hpp" />
+    <ClInclude Include="include\flux_ext\blockingconcurrentqueue.hpp" />
+    <ClInclude Include="include\flux_ext\concurrentqueue.hpp" />
+    <ClInclude Include="include\flux_ext\crc32.hpp" />
+    <ClInclude Include="include\flux_ext\cxx_function.hpp" />
+    <ClInclude Include="include\flux_ext\defaults.hpp" />
+    <ClInclude Include="include\flux_ext\fmtlib.hpp" />
+    <ClInclude Include="include\flux_ext\impl\cxx_function.hpp" />
+    <ClInclude Include="include\flux_ext\impl\invoke.hpp" />
+    <ClInclude Include="include\flux_ext\impl\loguru.hpp" />
+    <ClInclude Include="include\flux_ext\impl\span.hpp" />
+    <ClInclude Include="include\flux_ext\impl\string_view.hpp" />
+    <ClInclude Include="include\flux_ext\impl\strong_typedef.hpp" />
+    <ClInclude Include="include\flux_ext\impl\variant.hpp" />
+    <ClInclude Include="include\flux_ext\invoke.hpp" />
+    <ClInclude Include="include\flux_ext\loguru.hpp" />
+    <ClInclude Include="include\flux_ext\miniz.hpp" />
+    <ClInclude Include="include\flux_ext\monocypher.hpp" />
+    <ClInclude Include="include\flux_ext\pegtl.hpp" />
+    <ClInclude Include="include\flux_ext\phmap.hpp" />
+    <ClInclude Include="include\flux_ext\phmap_fwd_decl.hpp" />
+    <ClInclude Include="include\flux_ext\shared_mutex.hpp" />
+    <ClInclude Include="include\flux_ext\span.hpp" />
+    <ClInclude Include="include\flux_ext\string_view.hpp" />
+    <ClInclude Include="include\flux_ext\strong_typedef.hpp" />
+    <ClInclude Include="include\flux_ext\support\miniz_category.hpp" />
+    <ClInclude Include="include\flux_ext\variant.hpp" />
+    <ClInclude Include="include\flux_ext\zstd.hpp" />
+    <ClInclude Include="src\dlapi_gl\gl_load.hxx" />
+    <ClInclude Include="src\dlapi_os\load_extended.hxx" />
+    <ClInclude Include="src\dlapi_os\load_util.hxx" />
+    <ClInclude Include="src\dlapi_os\load_util.inl" />
+    <ClInclude Include="src\gl\context_glx.hxx" />
+    <ClInclude Include="src\gl\context_wgl.hxx" />
+    <ClInclude Include="src\io\pathbuf.hxx" />
+    <ClInclude Include="src\io\vfs_record_factory.hxx" />
+    <ClInclude Include="src\std\logger.hxx" />
+    <ClInclude Include="src\std\logger2.hxx" />
+    <ClInclude Include="src\std\logger2.inl" />
+    <ClInclude Include="src\sys\pathbuf.hxx" />
+    <ClInclude Include="src\sys\x86_cpuid.hxx" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\base\def-vfs.cpp" />
+    <ClCompile Include="src\base\default_catalogs.cpp" />
+    <ClCompile Include="src\base\queue.cpp" />
+    <ClCompile Include="src\dlapi_cuda\load.cpp" />
+    <ClCompile Include="src\dlapi_gl\gl-load_amd.cpp" />
+    <ClCompile Include="src\dlapi_gl\gl-load_arb.cpp" />
+    <ClCompile Include="src\dlapi_gl\gl-load_core1.cpp" />
+    <ClCompile Include="src\dlapi_gl\gl-load_core2.cpp" />
+    <ClCompile Include="src\dlapi_gl\gl-load_core3.cpp" />
+    <ClCompile Include="src\dlapi_gl\gl-load_core4.cpp" />
+    <ClCompile Include="src\dlapi_gl\gl-load_ext.cpp" />
+    <ClCompile Include="src\dlapi_gl\gl-load_nv.cpp" />
+    <ClCompile Include="src\dlapi_gl\gl-load_other.cpp" />
+    <ClCompile Include="src\dlapi_gl\gl.cpp" />
+    <ClCompile Include="src\dlapi_os\defaults.cpp" />
+    <ClCompile Include="src\dlapi_os\dlapi_category.cpp" />
+    <ClCompile Include="src\dlapi_os\glfw.cpp" />
+    <ClCompile Include="src\dlapi_os\glx.cpp" />
+    <ClCompile Include="src\dlapi_os\load_extended.cpp" />
+    <ClCompile Include="src\dlapi_os\localso.cpp" />
+    <ClCompile Include="src\dlapi_os\testso.cpp" />
+    <ClCompile Include="src\dlapi_os\wgl.cpp" />
+    <ClCompile Include="src\dlapi_os\win32.cpp" />
+    <ClCompile Include="src\dlapi_os\winsock.cpp" />
+    <ClCompile Include="src\dlapi_os\x11.cpp" />
+    <ClCompile Include="src\ext_misc_\crc32.cpp">
+      <Optimization>Full</Optimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <ClCompile Include="src\ext_misc_\fmtlib.cpp">
+      <Optimization>Full</Optimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <ClCompile Include="src\ext_misc_\loguru.cpp">
+      <Optimization>Full</Optimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <ClCompile Include="src\ext_misc_\miniz.cpp">
+      <Optimization>Full</Optimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <ClCompile Include="src\ext_misc_\monocypher.cpp">
+      <Optimization>Full</Optimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <ClCompile Include="src\ext_misc_\shared_mutex.cpp">
+      <Optimization>Full</Optimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <ClCompile Include="src\ext_misc_\support_miniz_category.cpp">
+      <Optimization>Full</Optimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <ClCompile Include="src\ext_misc_\zstd-common.cpp">
+      <Optimization>Full</Optimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <ClCompile Include="src\ext_misc_\zstd-compress.cpp">
+      <Optimization>Full</Optimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <ClCompile Include="src\ext_misc_\zstd-decompress.cpp">
+      <Optimization>Full</Optimization>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+    </ClCompile>
+    <ClCompile Include="src\ftl\any.cpp" />
+    <ClCompile Include="src\ftl\catalog.cpp" />
+    <ClCompile Include="src\ftl\catalog_key.cpp" />
+    <ClCompile Include="src\ftl\id_pool.cpp" />
+    <ClCompile Include="src\ftl\not_null.cpp" />
+    <ClCompile Include="src\ftl\signal.cpp" />
+    <ClCompile Include="src\ftl\vector-private.cpp" />
+    <ClCompile Include="src\gl\checkpoint.cpp" />
+    <ClCompile Include="src\gl\context.cpp" />
+    <ClCompile Include="src\gl\context_glx.cpp" />
+    <ClCompile Include="src\gl\context_wgl.cpp" />
+    <ClCompile Include="src\gl\error_category.cpp" />
+    <ClCompile Include="src\gl\glapi.cpp" />
+    <ClCompile Include="src\gl\objects.cpp" />
+    <ClCompile Include="src\gl\setup-program.cpp" />
+    <ClCompile Include="src\gl\setup-shader.cpp" />
+    <ClCompile Include="src\io\buffer.cpp" />
+    <ClCompile Include="src\io\buffer_file.cpp" />
+    <ClCompile Include="src\io\buffer_memread.cpp" />
+    <ClCompile Include="src\io\buffer_stream.cpp" />
+    <ClCompile Include="src\io\buffer_sysfile.cpp" />
+    <ClCompile Include="src\io\pathbuf.cpp" />
+    <ClCompile Include="src\io\stream.cpp" />
+    <ClCompile Include="src\io\stream_bufread.cpp" />
+    <ClCompile Include="src\io\stream_cfile.cpp" />
+    <ClCompile Include="src\io\stream_gz.cpp" />
+    <ClCompile Include="src\io\stream_http.cpp" />
+    <ClCompile Include="src\io\stream_memread.cpp" />
+    <ClCompile Include="src\io\stream_special.cpp" />
+    <ClCompile Include="src\io\stream_sysfile.cpp" />
+    <ClCompile Include="src\io\stream_zstd_read.cpp" />
+    <ClCompile Include="src\io\stream_zstd_write.cpp" />
+    <ClCompile Include="src\io\util_archive_zip.cpp" />
+    <ClCompile Include="src\io\vfs.cpp" />
+    <ClCompile Include="src\io\vfs_default_entry_record.cpp" />
+    <ClCompile Include="src\io\vfs_native_path.cpp" />
+    <ClCompile Include="src\io\vfsi_inode.cpp" />
+    <ClCompile Include="src\io\vfsi_inode_record.cpp" />
+    <ClCompile Include="src\io\vfsi_lazydir.cpp" />
+    <ClCompile Include="src\io\vfsi_masquerade.cpp" />
+    <ClCompile Include="src\io\vfsi_overlay.cpp" />
+    <ClCompile Include="src\io\vfsi_pdir.cpp" />
+    <ClCompile Include="src\io\vfsi_sysdir.cpp" />
+    <ClCompile Include="src\io\vfsi_sysfile.cpp" />
+    <ClCompile Include="src\io\vfsi_sysroot.cpp" />
+    <ClCompile Include="src\io\vfsi_union.cpp" />
+    <ClCompile Include="src\io\vfsi_userdir.cpp" />
+    <ClCompile Include="src\io\vfsi_vdir.cpp" />
+    <ClCompile Include="src\io\vfsi_zipdir.cpp" />
+    <ClCompile Include="src\io\vpath.cpp" />
+    <ClCompile Include="src\nih_\system_error.cpp" />
+    <ClCompile Include="src\report\badness.cpp" />
+    <ClCompile Include="src\report\identity.cpp" />
+    <ClCompile Include="src\report\inst-consumer.cpp" />
+    <ClCompile Include="src\report\inst-consumer_basic.cpp" />
+    <ClCompile Include="src\report\inst-context.cpp" />
+    <ClCompile Include="src\report\inst-instrumentor.cpp" />
+    <ClCompile Include="src\report\inst-method.cpp" />
+    <ClCompile Include="src\report\inst-method_cuda.cpp" />
+    <ClCompile Include="src\report\state.cpp" />
+    <ClCompile Include="src\std\appinfo.cpp" />
+    <ClCompile Include="src\std\except-query.cpp" />
+    <ClCompile Include="src\std\except_data.cpp" />
+    <ClCompile Include="src\std\exception.cpp" />
+    <ClCompile Include="src\std\log2-consumer_native.cpp" />
+    <ClCompile Include="src\std\log2.cpp" />
+    <ClCompile Include="src\std\log2_ctrl.cpp" />
+    <ClCompile Include="src\std\log_control.cpp" />
+    <ClCompile Include="src\std\logger.cpp" />
+    <ClCompile Include="src\std\logger2.cpp" />
+    <ClCompile Include="src\std\process_random.cpp" />
+    <ClCompile Include="src\std\stdexcept.cpp" />
+    <ClCompile Include="src\sys\addrinfo.cpp" />
+    <ClCompile Include="src\sys\clock.cpp" />
+    <ClCompile Include="src\sys\defpath.cpp" />
+    <ClCompile Include="src\sys\dylib.cpp" />
+    <ClCompile Include="src\sys\errno_category.cpp" />
+    <ClCompile Include="src\sys\execctrl.cpp" />
+    <ClCompile Include="src\sys\filemap.cpp" />
+    <ClCompile Include="src\sys\fsmanip.cpp" />
+    <ClCompile Include="src\sys\fsquery.cpp" />
+    <ClCompile Include="src\sys\gai_category.cpp" />
+    <ClCompile Include="src\sys\hwclock.cpp" />
+    <ClCompile Include="src\sys\info.cpp" />
+    <ClCompile Include="src\sys\pathbuf.cpp">
+      <ObjectFileName>$(IntDir)\pathbuf1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="src\sys\pathutil.cpp" />
+    <ClCompile Include="src\sys\stdio-style.cpp" />
+    <ClCompile Include="src\sys\stdio.cpp" />
+    <ClCompile Include="src\sys\win32_category.cpp" />
+    <ClCompile Include="src\sys\x86_cpuid.cpp" />
+    <ClCompile Include="src\util\at_thread_exit.cpp" />
+    <ClCompile Include="src\util\demangle.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\std\logger.hxx.old" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

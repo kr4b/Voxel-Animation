@@ -1,0 +1,5 @@
+.vs
+_build_
+assets/backpack_small.*
+bin/
+lib/
