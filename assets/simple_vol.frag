@@ -72,10 +72,15 @@ void main() {
 		for( int i = 0; i < steps; ++i ) {
 			const float ii = float(i) / float(steps);
 			const vec3 samplePos = mix( ventry, vexit, ii );
-			accum += texture( texVol, samplePos ).x;
+			const float voxel = texture( texVol, samplePos ).x;
+			
+			if (voxel > 0.1f) {
+				accum = voxel;
+				break;
+			}
 		}
 
-		accum /= float(steps);
+		// accum /= float(steps);
 		col = vec3( accum );
 	}
 

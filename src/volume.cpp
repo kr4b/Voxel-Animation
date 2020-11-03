@@ -300,9 +300,14 @@ Volume load_cube() {
     const int size = 256;
     Volume cube(size, size, size);
 
-    for (int i = 0; i < size * size * size; i++) {
-        if (i % 32 == 0) {
-            cube.data()[i] = 1.0f;
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            for (int k = 0; k < size; k++) {
+                int index = i * size * size + j * size + k;
+                if (j % 10 == 1 && k % 10 == 1 && i % 10 == 1) {
+                    cube.data()[index] = 1.0f;
+                }
+            }
         }
     }
 

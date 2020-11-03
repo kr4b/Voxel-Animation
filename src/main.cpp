@@ -157,6 +157,9 @@ int main()
 
 	GL::UInt vol3d;
 	gl->createTextures( GL::TEXTURE_3D, 1, &vol3d );
+    gl->bindTextureUnit(0, vol3d);
+    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MIN_FILTER, GL::NEAREST);
+    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::NEAREST);
 	gl->textureStorage3D( vol3d, 1, GL::R32F, vol.width(), vol.height(), vol.depth() );
 	gl->textureSubImage3D( vol3d, 0,
 		0, 0, 0, // offset in the volume
@@ -172,7 +175,7 @@ int main()
 	auto const* glfw = flux::dlapi::os::glfw();
 	FLUX_ASSERT( glfw );
 
-    int steps = 64;
+    int steps = 256;
 
 	while( !glfw->windowShouldClose( ctx.win ) )
 	{
@@ -270,7 +273,7 @@ namespace
 
 		if( auto state = reinterpret_cast<State*>(glfw->getWindowUserPointer(aWin)) )
 		{
-			auto dist = 1.f + state->scrollMult * float(aY);
+			auto dist = 1.f - state->scrollMult * float(aY);
 			state->cameraOff *= dist;
 		}
 	}
