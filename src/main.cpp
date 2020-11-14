@@ -158,8 +158,11 @@ int main()
 	GL::UInt vol3d;
 	gl->createTextures( GL::TEXTURE_3D, 1, &vol3d );
     gl->bindTextureUnit(0, vol3d);
+
+    // Comment this for blurry voxels
     gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MIN_FILTER, GL::NEAREST);
     gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::NEAREST);
+
 	gl->textureStorage3D( vol3d, 1, GL::R32F, vol.width(), vol.height(), vol.depth() );
 	gl->textureSubImage3D( vol3d, 0,
 		0, 0, 0, // offset in the volume
@@ -175,7 +178,9 @@ int main()
 	auto const* glfw = flux::dlapi::os::glfw();
 	FLUX_ASSERT( glfw );
 
-    int steps = 256;
+    const int steps = 2048;
+    int frames = 0;
+    auto start = std::chrono::high_resolution_clock::now();
 
 	while( !glfw->windowShouldClose( ctx.win ) )
 	{
@@ -213,10 +218,13 @@ int main()
 		// clear color.
 		gl->clear( GL::COLOR_BUFFER_BIT );
 
+        auto now = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> diff = now - start;
 
 		// Run fullscreen shader.
 		gl->useProgram( program );
         gl->uniform1i(gl->getUniformLocation(program, "steps"), steps);
+        gl->uniform1f(gl->getUniformLocation(program, "time"), diff.count());
 		gl->bindBufferBase( GL::UNIFORM_BUFFER, 0, uVolMeta );
 		gl->bindBufferBase( GL::UNIFORM_BUFFER, 1, uCamera );
 
@@ -233,6 +241,13 @@ int main()
 		FLUX_GL_CHECKPOINT_DEBUG();
 		glfw->swapBuffers( ctx.win );
 		glfw->pollEvents();
+
+        frames += 1;
+
+        if (int(diff.count()) % 10000 == 0) {
+            std::cout << frames / 10 << std::endl;
+            frames = 0;
+        }
 	}
 	
 	return 0;
