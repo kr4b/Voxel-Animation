@@ -22,8 +22,8 @@
         const vec2 = (x, y) => { return { x: x, y: y, copy: function () { return vec2(this.x, this.y); } }; };
 
         const Camera = {
-            position: vec2(-110.0, 0.0),
-            rotation: 0.0,
+            position: vec2(-120.0, 50.0),
+            rotation: Math.atan2(-50, 120),
             halfFieldOfView: Math.PI / 3,
             distanceToImagePlane: 40.0,
 
@@ -80,25 +80,38 @@
                     let tt;
                     let ttt;
 
+                    ctx.globalAlpha = 0.2;
                     ctx.beginPath();
                     ctx.moveTo(this.d.x, this.d.y);
                     for (t = step; t < 1; t += step) {
                         tt = t * t;
                         ttt = tt * t;
-
                         ctx.lineTo(
                             this.a.x * ttt + this.b.x * tt + this.c.x * t + this.d.x,
                             this.a.y * ttt + this.b.y * tt + this.c.y * t + this.d.y
                         );
                     }
                     ctx.stroke();
+                    ctx.beginPath()
+                    ctx.setLineDash([5, 10]);
+                    for (t = 1; t < 2; t += step) {
+                        tt = t * t;
+                        ttt = tt * t;
+                        ctx.lineTo(
+                            this.a.x * ttt + this.b.x * tt + this.c.x * t + this.d.x,
+                            this.a.y * ttt + this.b.y * tt + this.c.y * t + this.d.y
+                        );
+                    }
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.globalAlpha = 1;
                 },
 
                 quadratic: function (a, b, c) {
                     const D = b * b - 4 * a * c;
 
                     if (D > 0.0) {
-                        return (-b - Math.sqrt(D)) / (2 * a);
+                        return (-b + Math.sqrt(D)) / (2 * a);
                     } else if (D == 0.0) {
                         return -b / (2 * a);
                     } else {
@@ -110,35 +123,60 @@
                     const p = (3 * a * c - b * b) / (3 * a * a);
                     const q = (2 * b * b * b - 9 * a * b * c + 27 * a * a * d) / (27 * a * a * a);
 
-                    const discriminant = -(4 * p * p * p + 27 * q * q);
+                    const discriminant = q * q + 4 * p * p * p / 27;
 
-                    const _p = p * p * p / 27;
-                    const _q = q * q / 4;
-
-                    const D = Math.sqrt(Math.abs(_q + _p));
                     if (discriminant > 0.0) {
+                        // 1 real root
+                        const D = Math.sqrt(q * q / 4 + p * p * p / 27);
                         const C0 = -0.5 * q + D;
                         const C1 = -0.5 * q - D;
-                        return Math.sign(C0) * Math.pow(Math.abs(C0), 1 / 3) + Math.sign(C1) * Math.pow(Math.abs(C1), 1 / 3);
-                    } else if (discriminant < 0.0) {
-                        const C = Math.sign(-0.5 * q - D) * Math.pow(Math.abs(-0.5 * q - D), 1 / 3);
-                        return C - p / (3 * C);
-                    }
+                        const t0 = Math.sign(C0) * Math.pow(Math.abs(C0), 1 / 3) + Math.sign(C1) * Math.pow(Math.abs(C1), 1 / 3);
 
-                    return 0.0;
+                        return t0;
+                    } else {
+                        // 3 real roots
+                        const fac0 = 2 * Math.sqrt(-p / 3);
+                        const arccos = Math.acos(3 * q / (2 * p) * Math.sqrt(-3 / p)) / 3;
+
+                        const t0 = fac0 * Math.cos(arccos);
+                        const t1 = fac0 * Math.cos(arccos - 2 * Math.PI / 3);
+                        const t2 = fac0 * Math.cos(arccos - 4 * Math.PI / 3);
+
+                        const conv = b / (3 * a);
+                        // if (t0 >= conv && t0 <= 1 + conv)
+                        // return t0;
+                        return t1;
+                    }
+                    // const conv = b / (3 * a);
+                    // if (t0 >= conv && t0 <= 1 + conv) {
+                    // return t0;
+                    // }
+                    // else if (t1 >= conv && t1 <= 1 + conv) {
+                    // return t1;
+                    // } else return t2;
+
+                    // const D = Math.sqrt(q * q / 4 + p * p * p / 27);
+                    // const C0 = -0.5 * q + D;
+                    // const C1 = -0.5 * q - D;
+                    // const t0 = Math.sign(C0) * Math.pow(Math.abs(C0), 1 / 3) + Math.sign(C1) * Math.pow(Math.abs(C1), 1 / 3);
+
+                    // return t0;
                 },
 
-                intersect_with_axis: function (axis, distaceFromOrigin) {
+                intersect_with_axis: function (axis, distanceFromOrigin) {
                     const a = this.a[axis];
                     const b = this.b[axis];
                     const c = this.c[axis];
-                    const d = this.d[axis] - distaceFromOrigin;
+                    const d = this.d[axis] - distanceFromOrigin;
 
-                    if (a == 0.0 && b == 0.0 && c == 0.0) {
+                    const EPSILON = 1e-6;
+
+                    return this.depressed_cubic(a, b, c, d) - b / (3.0 * a);
+                    if (Math.abs(a) <= EPSILON && Math.abs(b) <= EPSILON && Math.abs(c) <= EPSILON) {
                         return d;
-                    } else if (a == 0.0 && b == 0.0) {
+                    } else if (Math.abs(a) <= EPSILON && Math.abs(b) <= EPSILON) {
                         return -d / c;
-                    } else if (a == 0.0) {
+                    } else if (Math.abs(a) <= EPSILON) {
                         return this.quadratic(b, c, d);
                     } else {
                         return this.depressed_cubic(a, b, c, d) - b / (3.0 * a);
@@ -147,24 +185,11 @@
             };
         };
 
-        canvas.onclick = e => {
-            /*
-            const x = e.layerX - canvas.width / 2;
-            const y = e.layerY - canvas.height / 2;
-
-            Camera.position.x = x;
-            Camera.position.y = y;
-
-            Camera.rotation = Math.atan2(-y, -x);
-
-            render();
-            */
-        }
-
         let alpha = 0;
         canvas.onmousemove = e => {
-            const x = Math.cos(alpha) * 80.0;
-            const y = Math.sin(alpha) * 80.0;
+            const x = e.pageX - canvas.width / 2;
+            const y = e.pageY - canvas.height / 2;
+            // const y = 0;//Camera.position.y;
 
             Camera.position = vec2(x, y);
             Camera.rotation = Math.atan2(-y, -x);
@@ -180,44 +205,121 @@
             Camera.draw(ctx);
             VoxelObject.draw(ctx);
 
-            for (let i = -Camera.halfFieldOfView; i < Camera.halfFieldOfView; i += 100.1) {
-                const P0 = Camera.position.copy();
+            let K = 0;
+            for (let i = -Camera.halfFieldOfView; i < Camera.halfFieldOfView; i += 0.1) {
                 const P1 = Camera.position.copy();
+                const direction = vec2(Math.cos(Camera.rotation + i), Math.sin(Camera.rotation + i));
+                const distance = Math.sqrt(P1.x ** 2 + P1.y ** 2) * 2;
+                const P2 = vec2(P1.x + direction.x * distance, P1.y + direction.y * distance);
 
-                const direction = vec2(Math.cos(Camera.rotation  ), Math.sin(Camera.rotation  ));
+                const P0 = vec2(0.0, 0.0);
+                const P3 = vec2(0.0, 100.0);
 
-                const P2 = vec2(P1.x + direction.x * 160, P1.y + direction.y * 160);
-                const P3 = P2.copy();
+                // P0.x += Math.sin(Camera.rotation) * 150;
+                // P0.y += Math.cos(Camera.rotation) * 150;
+                // P3.x += Math.sin(Camera.rotation) * 150;
+                // P3.y += Math.cos(Camera.rotation) * 150;
+
+                // const a = vec2(
+                //     -0.5 * P0.x + 1.5 * P1.x - 1.5 * P2.x + 0.5 * P3.x,
+                //     -0.5 * P0.y + 1.5 * P1.y - 1.5 * P2.y + 0.5 * P3.y);
+                // const b = vec2(
+                //     P0.x - 2.5 * P1.x + 2.0 * P2.x - 0.5 * P3.x,
+                //     P0.y - 2.5 * P1.y + 2.0 * P2.y - 0.5 * P3.y);
+                // const c = vec2(
+                //     -0.5 * P0.x + 0.5 * P2.x,
+                //     -0.5 * P0.y + 0.5 * P2.y);
+                // const d = vec2(P1.x, P1.y);
 
                 const a = vec2(
-                    -0.5 * P0.x + 1.5 * P1.x - 1.5 * P2.x + 0.5 * P3.x,
-                    -0.5 * P0.y + 1.5 * P1.y - 1.5 * P2.y + 0.5 * P3.y);
+                    2 * P1.x - 2 * P2.x + 1 * P0.x + 1 * P3.x,
+                    2 * P1.y - 2 * P2.y + 1 * P0.y + 1 * P3.y);
                 const b = vec2(
-                    P0.x - 2.5 * P1.x + 2.0 * P2.x - 0.5 * P3.x,
-                    P0.y - 2.5 * P1.y + 2.0 * P2.y - 0.5 * P3.y);
-                const c = vec2(
-                    -0.5 * P0.x + 0.5 * P2.x,
-                    -0.5 * P0.y + 0.5 * P2.y);
+                    -3 * P1.x + 3 * P2.x - 2 * P0.x - 1 * P3.x,
+                    -3 * P1.y + 3 * P2.y - 2 * P0.y - 1 * P3.y);
+                const c = vec2(P0.x, P0.y);
                 const d = vec2(P1.x, P1.y);
 
                 const s = spline(a, b, c, d);
                 s.draw(ctx);
 
                 const t1 = vec2(
-                    s.intersect_with_axis("x", -20.0),
-                    s.intersect_with_axis("y", -20.0));
+                    s.intersect_with_axis("x", VoxelObject.aabbMin.x),
+                    s.intersect_with_axis("y", VoxelObject.aabbMin.y));
                 const t2 = vec2(
-                    s.intersect_with_axis("x", 20.0),
-                    s.intersect_with_axis("y", 20.0));
+                    s.intersect_with_axis("x", VoxelObject.aabbMax.x),
+                    s.intersect_with_axis("y", VoxelObject.aabbMax.y));
+
+                ctx.strokeStyle = "gray";
+                ctx.strokeRect(-canvas.width / 2, VoxelObject.aabbMin.x, canvas.width, VoxelObject.aabbMax.x - VoxelObject.aabbMin.x);
+                ctx.strokeRect(VoxelObject.aabbMin.y, -canvas.height / 2, VoxelObject.aabbMax.y - VoxelObject.aabbMin.y, canvas.height);
+                ctx.strokeStyle = "black";
 
                 const mins = vec2(Math.min(t1.x, t2.x), Math.min(t1.y, t2.y));
                 const maxs = vec2(Math.max(t1.x, t2.x), Math.max(t1.y, t2.y));
 
-                const near = Math.max(mins.x, mins.y);
+                const near = Math.min(mins.x, mins.y);
                 const far = Math.min(maxs.x, maxs.y);
 
                 let ts = vec2(near, far);
-                console.log(ts);
+                // s.draw_point_at(ctx, t1.x); // t1
+                // s.draw_point_at(ctx, t1.y); // t0
+
+                // s.draw_point_at(ctx, t2.x); // t1
+                // s.draw_point_at(ctx, t2.y); // t0
+
+                const intersect = (t) => {
+                    if (t < 0 || t > 1) return;
+
+                    const tt = t * t;
+                    const ttt = tt * t;
+                    const P = vec2(
+                        s.a.x * ttt + s.b.x * tt + s.c.x * t + s.d.x,
+                        s.a.y * ttt + s.b.y * tt + s.c.y * t + s.d.y
+                    );
+
+                    const EPSILON = 1e-6;
+
+                    if (P.x >= VoxelObject.aabbMin.x - EPSILON && P.x <= VoxelObject.aabbMax.x + EPSILON
+                        && P.y >= VoxelObject.aabbMin.y - EPSILON && P.y <= VoxelObject.aabbMax.y + EPSILON) {
+                        s.draw_point_at(ctx, t);
+                        s.draw_point_at(ctx, t);
+                    }
+                }
+
+                ctx.fillStyle = "blue";
+
+                const test = (t, c) => {
+                    const tt = t * t;
+                    const ttt = tt * t;
+                    const P = vec2(
+                        s.a.x * ttt + s.b.x * tt + s.c.x * t + s.d.x,
+                        s.a.y * ttt + s.b.y * tt + s.c.y * t + s.d.y
+                    );
+
+                    const n0 = Math.max(0, Math.sign(P.x - VoxelObject.aabbMin.x));
+                    const n1 = Math.max(0, Math.sign(P.y - VoxelObject.aabbMin.y));
+                    const n2 = Math.max(0, Math.sign(P.x - VoxelObject.aabbMax.x));
+                    const n3 = Math.max(0, Math.sign(P.y - VoxelObject.aabbMax.y));
+
+                    const N = n0 * 8 + n1 * 4 + n2 * 2 + n3;
+
+                    console.log(N);
+                    if (N == c) {
+                        s.draw_point_at(ctx, t);
+                    }
+                }
+                test(t1.x, 12);
+                test(t2.x, 14);
+                test(t1.y, 8);
+                test(t2.y, 13);
+
+                ctx.fillStyle = "red";
+                // intersect(t1.x);
+                // intersect(t1.y);
+                // intersect(t2.x);
+                // intersect(t2.y);
+                ctx.fillStyle = "black";
 
                 if (ts.x <= ts.y && ts.y >= 0.0) {
                     ts.x = Math.max(0.0, ts.x);
@@ -229,10 +331,14 @@
                         s.a.x * ttt + s.b.x * tt + s.c.x * t + s.d.x,
                         s.a.y * ttt + s.b.y * tt + s.c.y * t + s.d.y
                     );
-                    s.draw_point_at(ctx, ts.x);
-                    s.draw_point_at(ctx, ts.y);
+
+                    // ctx.fillStyle = "red";
+                    // s.draw_point_at(ctx, ts.x);
+                    // s.draw_point_at(ctx, ts.y);
+                    // ctx.fillStyle = "black";
                 }
             }
+            console.log(K);
         }
         render();
 
