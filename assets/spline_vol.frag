@@ -102,7 +102,7 @@ vec3 intersect_spline_axis(in Spline aSpline, in vec3 aDistancesFromOrigin) {
         depressed_cubic(aSpline.a.z, aSpline.b.z, aSpline.c.z, aSpline.d.z - aDistancesFromOrigin.z)) - aSpline.b / (3.0f * aSpline.a);
 }
 
-#define EPSILON 1e-2f
+#define EPSILON 1e-6f
 
 vec3 intersected_aabb(in vec3 t, in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax) {
     const vec3 tt = t * t;
@@ -156,6 +156,10 @@ vec2 intersect_spline_aabb(in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax
     return vec2(near, far);
 }
 
+vec3 point_on_spline(float t, Spline spline) {
+    return t * t * t * spline.a + t * t * spline.b + t * spline.c + spline.d;
+}
+
 void main() {
     const Spline spline = make_spline(gl_FragCoord.xy * uCamera.reciprocalWindowSize);
     vec2 ts = intersect_spline_aabb(spline, uVolMeta.volMin, uVolMeta.volMax);
@@ -167,31 +171,16 @@ void main() {
 	if( ts.x <= ts.y && ts.y >= 0.0f ) {
         ts.x = max(0.0, ts.x);
 
-        const vec2 tts = ts * ts;
-        const vec2 ttts = tts * ts;
-
-		const vec3 worldEntry = ttts.x * spline.a + tts.x * spline.b + ts.x * spline.c + spline.d;
-		const vec3 worldExit = ttts.y * spline.a + tts.y * spline.b + ts.y * spline.c + spline.d;
-
-		const vec3 scale = uVolMeta.volMax - uVolMeta.volMin;
-		const vec3 ventry = (worldEntry - uVolMeta.volMin) / scale;
-		const vec3 vexit = (worldExit - uVolMeta.volMin) / scale;
-
-		float accum = 0.f;
 		for( int i = 0; i < steps; ++i ) {
 			const float ii = float(i) / float(steps);
-			const vec3 samplePos = mix( ventry, vexit, ii );
-			const float voxel = texture( texVol, samplePos ).x;
+			const vec3 samplePos = point_on_spline(mix(ts.x, ts.y, ii), spline);
+			const float voxel = texture(texVol, samplePos).x;
 			
 			if (voxel > 0.1f) {
-				accum = voxel;
+                col = vec3( voxel );
 				break;
 			}
 		}
-
-		// accum /= float(steps);
-		col = vec3( accum );
-		// col = vec3( 0.6 );
 	}
     oColor = col;
 }
