@@ -27,8 +27,7 @@ struct Ray {
 
 Ray make_ray( vec2 aFragCoord ) {
 	const vec4 hray = vec4( aFragCoord * 2.0 - vec2(1.0), 1.0, 1.0 );
-	const vec4 tray = vec4(cos(aFragCoord.y * 2.0 + time / 1000.0) / 4.0, 0.0, 0.0, 0.0);
-	const vec4 wray = uCamera.inverseProjCamera * (tray + hray);
+	const vec4 wray = uCamera.inverseProjCamera * hray;
 
 	Ray ray;
 	ray.org = uCamera.cameraWorldPos;

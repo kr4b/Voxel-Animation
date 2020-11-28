@@ -25,6 +25,7 @@
 
 #include <string>
 #include <sstream>
+#include <iostream>
 
 //--//////////////////////////////////////////////////////////////////////////
 //--    >>> namespace = flux::gl >>>                ///{{{1///////////////////
@@ -71,6 +72,7 @@ Shader setup_shader( GL::Enum aKind, char const* aSource, std::size_t aSourceLen
 		ftl::Vector<GL::Char> shaderLog(logLength);
 		gl->getShaderInfoLog( shader, logLength, &logLength, &shaderLog[0] );
 
+        std::cout << shaderLog.data() << std::endl;
 		FLUX_THROW( error::GLShaderCompileFailed )
 			<< flux::einfo::ErrorDesc( "Failed to compile shader" )
 			<< flux::einfo::ErrorMeta( FLUX_FMT_STRING("shader = '{}' ({}); Info Log = >>>\n{}\n<<<"), aIdent, shader_kind_(aKind), compat::string_view(shaderLog.data(),shaderLog.size()) )

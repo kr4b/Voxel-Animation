@@ -131,7 +131,7 @@ int main()
 
     auto const program = gl::load_program_from_vfs({
         { GL::VERTEX_SHADER, "/@flux/opt/assets/simple_vol.vert" },
-        { GL::FRAGMENT_SHADER, "/@flux/opt/assets/simple_vol.frag" }
+        { GL::FRAGMENT_SHADER, "/@flux/opt/assets/spline_vol.frag" }
         });
 
     GL::UInt vao;

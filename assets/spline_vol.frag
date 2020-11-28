@@ -91,26 +91,22 @@ float depressed_cubic(in float a, in float b, in float c, in float d) {
 }
 
 vec3 intersect_spline_axis(in Spline aSpline, in vec3 aDistancesFromOrigin) {
-    // const float a = aCoefficients.x;
-    // const float b = aCoefficients.y;
-    // const float c = aCoefficients.z;
-    // const float d = aCoefficients.w - aDistancesFromOrigin;
-
     return vec3(
         depressed_cubic(aSpline.a.x, aSpline.b.x, aSpline.c.x, aSpline.d.x - aDistancesFromOrigin.x),
         depressed_cubic(aSpline.a.y, aSpline.b.y, aSpline.c.y, aSpline.d.y - aDistancesFromOrigin.y),
         depressed_cubic(aSpline.a.z, aSpline.b.z, aSpline.c.z, aSpline.d.z - aDistancesFromOrigin.z)) - aSpline.b / (3.0f * aSpline.a);
 }
 
+vec3 point_on_spline(float t, Spline spline) {
+    return t * t * t * spline.a + t * t * spline.b + t * spline.c + spline.d;
+}
+
 #define EPSILON 1e-6f
 
 vec3 intersected_aabb(in vec3 t, in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax) {
-    const vec3 tt = t * t;
-    const vec3 ttt = tt * t;
-
-    const vec3 P0 = ttt.x * aSpline.a + tt.x * aSpline.b + t.x * aSpline.c + aSpline.d;
-    const vec3 P1 = ttt.y * aSpline.a + tt.y * aSpline.b + t.y * aSpline.c + aSpline.d;
-    const vec3 P2 = ttt.z * aSpline.a + tt.z * aSpline.b + t.z * aSpline.c + aSpline.d;
+    const vec3 P0 = point_on_spline(t.x, aSpline);
+    const vec3 P1 = point_on_spline(t.y, aSpline);
+    const vec3 P2 = point_on_spline(t.z, aSpline);
 
     const vec3 resultT = step(vec3(0.0), t) * step(t, vec3(1.0));
     const vec3 result0 = step(aAABBMin - EPSILON, P0) * step(P0, aAABBMax + EPSILON);
@@ -156,10 +152,6 @@ vec2 intersect_spline_aabb(in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax
     return vec2(near, far);
 }
 
-vec3 point_on_spline(float t, Spline spline) {
-    return t * t * t * spline.a + t * t * spline.b + t * spline.c + spline.d;
-}
-
 void main() {
     const Spline spline = make_spline(gl_FragCoord.xy * uCamera.reciprocalWindowSize);
     vec2 ts = intersect_spline_aabb(spline, uVolMeta.volMin, uVolMeta.volMax);
@@ -171,9 +163,10 @@ void main() {
 	if( ts.x <= ts.y && ts.y >= 0.0f ) {
         ts.x = max(0.0, ts.x);
 
+        const vec3 scale = uVolMeta.volMax - uVolMeta.volMin;
 		for( int i = 0; i < steps; ++i ) {
 			const float ii = float(i) / float(steps);
-			const vec3 samplePos = point_on_spline(mix(ts.x, ts.y, ii), spline);
+			const vec3 samplePos = point_on_spline(mix(ts.x, ts.y, ii), spline) / scale;
 			const float voxel = texture(texVol, samplePos).x;
 			
 			if (voxel > 0.1f) {
