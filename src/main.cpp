@@ -25,6 +25,7 @@ namespace GLFW = flux::dlapi::os::GLFW;
 #include <chrono>
 #include <limits>
 #include <iostream>
+#include <string>
 
 #include "startup.hpp"
 #include "defaults.hpp"
@@ -54,6 +55,7 @@ namespace
         double lastY = std::numeric_limits<double>::quiet_NaN();
 
         bool inControl = false;
+        bool debugMode = false;
 
         static constexpr float scrollMult = 0.1f;
         static constexpr float motionRotMult = 0.6f;
@@ -135,10 +137,14 @@ int main()
         { GL::FRAGMENT_SHADER, "/@flux/opt/assets/spline_vol.frag" }
     });
 
+    auto const debugProgram = gl::load_program_from_vfs({
+        { GL::VERTEX_SHADER, "/@flux/opt/assets/simple_vol.vert" },
+        { GL::FRAGMENT_SHADER, "/@flux/opt/assets/simple_vol.frag" }
+    });
+
     GL::UInt vao;
     gl->createVertexArrays(1, &vao);
-    // This vao remains empty; we need to be allowed to legally draw vertices,
-    // though.
+    // This vao remains empty; we need to be allowed to legally draw vertices, though.
 
     GL::UInt uVolMeta;
     gl->createBuffers(1, &uVolMeta);
@@ -199,8 +205,8 @@ int main()
 
         auto const view =
             fml::make_translation_3d<mat44f>(state.cameraOff)
-            * fml::make_rotation_3d<mat44f>(state.cameraRot)
-            ;
+            * fml::make_rotation_3d<mat44f>(state.cameraRot);
+
         auto const vp = fml::invert(view) * fml::make_vector<vec4f>(0.f, 0.f, 0.f, 1.f);
 
         auto const proj = fml::make_projection_perspective_gl_3d<mat44f>(
@@ -208,7 +214,10 @@ int main()
             float(width) / height,
             0.1f,
             100.f
-            );
+        );
+
+        // Clear screen
+        gl->clear(GL::COLOR_BUFFER_BIT | GL::DEPTH_BUFFER_BIT);
 
         UCamera camera;
         camera.cameraWorldPos = fml::shrink<vec3f>(vp) / vp.w;
@@ -216,36 +225,37 @@ int main()
         camera.reciprocalWindowSize = fml::make_vector<vec2f>(
             1.f / width,
             1.f / height
-            );
+        );
 
         gl->namedBufferSubData(uCamera, 0, sizeof(UCamera), &camera);
-
-        // Clear screen
-        // Note: We don't need a depth buffer for this simple demo, so just
-        // clear color.
-        gl->clear(GL::COLOR_BUFFER_BIT);
-
         auto now = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> diff = now - start;
 
-        // Run fullscreen shader.
-        gl->useProgram(program);
-        gl->uniform1i(gl->getUniformLocation(program, "steps"), steps);
-        gl->uniform1f(gl->getUniformLocation(program, "time"), diff.count());
+        if (state.debugMode) {
+            gl->useProgram(debugProgram);
+        } else {
+            std::chrono::duration<double, std::milli> diff = now - start;
+
+            gl->useProgram(program);
+            gl->uniform1i(gl->getUniformLocation(program, "steps"), steps);
+            gl->uniform1f(gl->getUniformLocation(program, "time"), diff.count());
+        }
+
         gl->bindBufferBase(GL::UNIFORM_BUFFER, 0, uVolMeta);
         gl->bindBufferBase(GL::UNIFORM_BUFFER, 1, uCamera);
 
         gl->bindTextureUnit(0, vol3d);
-
         gl->bindVertexArray(vao);
+
         gl->drawArrays(GL::TRIANGLES, 0, 3);
+
+        if (state.debugMode) {
+            spline.update_from_screen_coords(gl, fml::make_vector<vec2f>(0.0f, 0.0f) * camera.reciprocalWindowSize, camera.inverseProjCamera, camera.cameraWorldPos);
+            spline.render(gl, view, proj);
+        }
 
         // Clean up state
         gl->useProgram(0);
         gl->bindVertexArray(0);
-
-        spline.update_from_screen_coords(gl, fml::make_vector<vec2f>(0.0f, 0.0f) * camera.reciprocalWindowSize, camera.inverseProjCamera, camera.cameraWorldPos);
-        spline.render(gl, view, proj);
 
         // Swap buffers. pollEvents() so that the animation can run.
         FLUX_GL_CHECKPOINT_DEBUG();
@@ -265,27 +275,44 @@ int main()
     return 0;
 }
 
-
-namespace
-{
-    void glfw_cb_key_(GLFW::Window* aWin, int aKey, int, int aAct, int)
-    {
-        // Special: Escape => exit.
-        if (GLFW::KEY_ESCAPE == aKey && GLFW::PRESS == aAct)
-        {
-            flux::dlapi::os::glfw()->setWindowShouldClose(aWin, GLFW::GLFW_TRUE);
-            return;
-        }
-    }
-    void glfw_cb_button_(GLFW::Window* aWin, int aBut, int aAct, int)
-    {
+namespace {
+    void glfw_cb_key_(GLFW::Window* aWin, int aKey, int, int aAct, int) {
         auto const* glfw = flux::dlapi::os::glfw();
         FLUX_ASSERT(glfw);
 
-        if (auto state = reinterpret_cast<State*>(glfw->getWindowUserPointer(aWin)))
-        {
-            if (GLFW::MOUSE_BUTTON_LEFT == aBut)
-            {
+        if (auto state = reinterpret_cast<State*>(glfw->getWindowUserPointer(aWin))) {
+            if (aAct != GLFW::PRESS) {
+                return;
+            }
+
+            switch (aKey) {
+            // Escape => exit
+            case GLFW::KEY_ESCAPE:
+                glfw->setWindowShouldClose(aWin, GLFW::GLFW_TRUE);
+                break;
+            // Space => create new debug spline
+            case GLFW::KEY_SPACE:
+                // TODO: Add spline to state and create new spline
+                //state->spline = make_spline();
+                break;
+            // Tab => toggle debug mode
+            case GLFW::KEY_TAB:
+                state->debugMode = !state->debugMode;
+                std::string newTitle = std::string(kWindowDefaults.name) + (state->debugMode ? " - Debug" : "");
+                glfw->setWindowTitle(aWin, newTitle.c_str());
+                break;
+            }
+
+            return;
+        }
+    }
+
+    void glfw_cb_button_(GLFW::Window* aWin, int aBut, int aAct, int) {
+        auto const* glfw = flux::dlapi::os::glfw();
+        FLUX_ASSERT(glfw);
+
+        if (auto state = reinterpret_cast<State*>(glfw->getWindowUserPointer(aWin))) {
+            if (GLFW::MOUSE_BUTTON_LEFT == aBut) {
                 if ((state->inControl = (GLFW::PRESS == aAct)))
                     glfw->setInputMode(aWin, GLFW::CURSOR, GLFW::CURSOR_DISABLED);
                 else
@@ -293,40 +320,35 @@ namespace
             }
         }
     }
-    void glfw_cb_scroll_(GLFW::Window* aWin, double /*aX*/, double aY)
-    {
+
+    void glfw_cb_scroll_(GLFW::Window* aWin, double /*aX*/, double aY) {
         auto const* glfw = flux::dlapi::os::glfw();
         FLUX_ASSERT(glfw);
 
-        if (auto state = reinterpret_cast<State*>(glfw->getWindowUserPointer(aWin)))
-        {
+        if (auto state = reinterpret_cast<State*>(glfw->getWindowUserPointer(aWin))) {
             auto dist = 1.f - state->scrollMult * float(aY);
             state->cameraOff *= dist;
         }
     }
-    void glfw_cb_motion_(GLFW::Window* aWin, double aX, double aY)
-    {
+
+    void glfw_cb_motion_(GLFW::Window* aWin, double aX, double aY) {
         auto const* glfw = flux::dlapi::os::glfw();
         FLUX_ASSERT(glfw);
 
-        if (auto state = reinterpret_cast<State*>(glfw->getWindowUserPointer(aWin)))
-        {
+        if (auto state = reinterpret_cast<State*>(glfw->getWindowUserPointer(aWin))) {
             using namespace fml;
 
             auto const lastX = compat::exchange(state->lastX, aX);
             auto const lastY = compat::exchange(state->lastY, aY);
-            if (!std::isnan(lastX))
-            {
+            if (!std::isnan(lastX)) {
                 auto const deltaX = aX - lastX;
                 auto const deltaY = aY - lastY;
 
-                if (state->inControl)
-                {
+                if (state->inControl) {
                     state->cameraRot =
                         make_rotation_3d<quatf>(degreesf(state->motionRotMult*deltaX), 0.f, 1.f, 0.f)
                         * make_rotation_3d<quatf>(degreesf(state->motionRotMult*deltaY), 1.f, 0.f, 0.f)
-                        * state->cameraRot
-                        ;
+                        * state->cameraRot;
                 }
             }
         }
