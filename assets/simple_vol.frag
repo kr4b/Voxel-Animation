@@ -18,7 +18,6 @@ layout( std140, binding = 1 ) uniform UCamera {
 layout( binding = 0 ) uniform sampler3D texVol;
 
 uniform int steps;
-uniform float time;
 
 struct Ray {
 	vec3 org;
@@ -47,7 +46,7 @@ vec2 intersect_ray_aabb( in Ray aRay, in vec3 aAABBMin, in vec3 aAABBMax ) {
 	return vec2( near, far );
 };
 
-// #define VOLUME_STEPS 64
+#define VOLUME_STEPS 1024
 
 void main() {
 	// Create ray and intesect with the volume's bounding box
@@ -70,8 +69,8 @@ void main() {
 		const vec3 vexit = (worldExit - uVolMeta.volMin) / scale;
 
 		float accum = 0.f;
-		for( int i = 0; i < steps; ++i ) {
-			const float ii = float(i) / float(steps);
+		for( int i = 0; i < VOLUME_STEPS; ++i ) {
+			const float ii = float(i) / float(VOLUME_STEPS);
 			const vec3 samplePos = mix( ventry, vexit, ii );
 			const float voxel = texture( texVol, samplePos ).x;
 			
