@@ -132,7 +132,7 @@ int main()
     auto const program = gl::load_program_from_vfs({
         { GL::VERTEX_SHADER, "/@flux/opt/assets/simple_vol.vert" },
         { GL::FRAGMENT_SHADER, "/@flux/opt/assets/spline_vol.frag" }
-        });
+    });
 
     GL::UInt vao;
     gl->createVertexArrays(1, &vao);
@@ -146,6 +146,35 @@ int main()
     GL::UInt uCamera;
     gl->createBuffers(1, &uCamera);
     gl->namedBufferStorage(uCamera, sizeof(UCamera), nullptr, GL::DYNAMIC_STORAGE_BIT);
+
+    auto const debugProgram = gl::load_program_from_vfs({
+        { GL::VERTEX_SHADER, "/@flux/opt/assets/debug.vert" },
+        { GL::FRAGMENT_SHADER, "/@flux/opt/assets/debug.frag" }
+    });
+
+    GL::Float vertices[6];
+    vertices[0] = 0.0f; vertices[1] = 0.0f; vertices[2] = 0.0f;
+    vertices[3] = 2.0f; vertices[4] = 2.0f; vertices[5] = 2.0f;
+    GL::Float colors[6];
+    colors[0] = 1.0f; colors[1] = 0.0f; colors[2] = 0.0f;
+    colors[3] = 0.0f; colors[4] = 1.0f; colors[5] = 1.0f;
+
+    GL::UInt buffers[2];
+    GL::UInt debugVao;
+    gl->genVertexArrays(1, &debugVao);
+    gl->bindVertexArray(debugVao);
+    gl->genBuffers(2, buffers);
+    gl->bindBuffer(GL::ARRAY_BUFFER, buffers[0]);
+    gl->bufferData(GL::ARRAY_BUFFER, 6 * sizeof(GL::Float), vertices, GL::STATIC_DRAW);
+    gl->vertexAttribPointer(0, 3, GL::FLOAT, GL::GLFALSE, 0, 0);
+    gl->enableVertexAttribArray(0);
+
+    gl->bindBuffer(GL::ARRAY_BUFFER, buffers[1]);
+    gl->bufferData(GL::ARRAY_BUFFER, 6 * sizeof(GL::Float), colors, GL::STATIC_DRAW);
+    gl->vertexAttribPointer(1, 3, GL::FLOAT, GL::GLFALSE, 0, 0);
+    gl->enableVertexAttribArray(1);
+
+    gl->bindVertexArray(0);
 
     FLUX_GL_CHECKPOINT_ALWAYS();
 
@@ -236,6 +265,14 @@ int main()
 
         gl->bindVertexArray(vao);
         gl->drawArrays(GL::TRIANGLES, 0, 3);
+
+        gl->useProgram(debugProgram);
+        gl->bindVertexArray(debugVao);
+        gl->bindBuffer(GL::ARRAY_BUFFER, buffers[0]);
+        gl->bindBuffer(GL::ARRAY_BUFFER, buffers[1]);
+        gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "inverseProjCamera"), 1, GL::GLTRUE, camera.inverseProjCamera.data());
+
+        gl->drawArrays(GL::LINES, 0, 2);
 
         // Clean up state
         gl->useProgram(0);
