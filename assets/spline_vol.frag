@@ -48,7 +48,7 @@ Spline make_spline(in vec2 aFragCoord) {
     const vec3 P2 = origin + direction * length(origin) * 2.0f;
 
     const vec3 P0 = vec3(0.0, 0.0, 0.0);
-    const vec3 P3 = vec3(10.0, 0.0, 0.0);
+    const vec3 P3 = vec3(0.0, 0.0, 0.0);
 
     Spline spline;
     spline.a = 2.0f * P1 - 2.0f * P2 + 1.0f * P0 + 1.0f * P3;
@@ -164,6 +164,7 @@ void main() {
 	// Step through volume
 	// Only do this if we hit the volume
     vec3 col = vec3(0.0);
+    float depth = 1.0;
 
 	if( ts.x <= ts.y && ts.y >= 0.0f ) {
         ts.x = max(0.0, ts.x);
@@ -171,14 +172,17 @@ void main() {
         const vec3 scale = uVolMeta.volMax - uVolMeta.volMin;
 		for( int i = 0; i < steps; ++i ) {
 			const float ii = float(i) / float(steps);
-			const vec3 samplePos = (position_on_spline(mix(ts.x, ts.y, ii), spline) - 1.0) / scale;
+            const vec3 splinePos = position_on_spline(mix(ts.x, ts.y, ii), spline);
+			const vec3 samplePos = (splinePos - 1.0) / scale;
 			const float voxel = texture(texVol, samplePos).x;
 			
 			if (voxel > 0.1f) {
                 col = vec3( voxel );
+                depth = length(splinePos - uCamera.cameraWorldPos) / length(uCamera.cameraWorldPos) * 0.5;
 				break;
 			}
 		}
 	}
     oColor = col;
+    gl_FragDepth = depth;
 }
