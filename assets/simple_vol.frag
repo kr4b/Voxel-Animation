@@ -56,7 +56,7 @@ void main() {
 	// Step through volume
 	// Only do this if we hit the volume
   vec3 col = vec3( 0.f );
-    float depth = 1.0;
+  float depth = 1.0;
 
 	if( ts.x <= ts.y && ts.y >= 0.0f ) {
 		if (ts.x < 0.0f) {
@@ -72,19 +72,16 @@ void main() {
 		float accum = 0.f;
 		for( int i = 0; i < VOLUME_STEPS; ++i ) {
 			const float ii = float(i) / float(VOLUME_STEPS);
-            const vec3 worldPos = mix(worldEntry, worldExit, ii);
+      const vec3 worldPos = mix(worldEntry, worldExit, ii);
 			const vec3 samplePos = mix( ventry, vexit, ii );
 			const float voxel = texture( texVol, samplePos ).x;
 			
 			if (voxel > 0.1f) {
-				accum = voxel;
-                depth = min(worldPos.z, depth);
+				col = samplePos;
+        depth = min(worldPos.z, depth);
 				break;
 			}
 		}
-
-		// accum /= float(steps);
-		col = vec3( accum );
 	}
 
     oColor = col;

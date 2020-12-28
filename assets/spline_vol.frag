@@ -48,7 +48,7 @@ Spline make_spline(in vec2 aFragCoord) {
     const vec3 P2 = origin + direction * length(origin) * 2.0f;
 
     const vec3 P0 = vec3(0.0, 0.0, 0.0);
-    const vec3 P3 = vec3(0.0, 0.0, 0.0);
+    const vec3 P3 = vec3(0.0, 10.0, 0.0);
 
     Spline spline;
     spline.a = 2.0f * P1 - 2.0f * P2 + 1.0f * P0 + 1.0f * P3;
@@ -173,11 +173,11 @@ void main() {
 		for( int i = 0; i < steps; ++i ) {
 			const float ii = float(i) / float(steps);
             const vec3 splinePos = position_on_spline(mix(ts.x, ts.y, ii), spline);
-			const vec3 samplePos = (splinePos - 1.0) / scale;
+			const vec3 samplePos = (splinePos - uVolMeta.volMin) / scale;
 			const float voxel = texture(texVol, samplePos).x;
 			
 			if (voxel > 0.1f) {
-                col = vec3( voxel );
+                col = samplePos;
                 depth = length(splinePos - uCamera.cameraWorldPos) / length(uCamera.cameraWorldPos) * 0.5;
 				break;
 			}
