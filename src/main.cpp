@@ -268,9 +268,8 @@ int main()
 
         gl->useProgram(debugProgram);
         gl->bindVertexArray(debugVao);
-        gl->bindBuffer(GL::ARRAY_BUFFER, buffers[0]);
-        gl->bindBuffer(GL::ARRAY_BUFFER, buffers[1]);
-        gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "inverseProjCamera"), 1, GL::GLTRUE, camera.inverseProjCamera.data());
+        gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "view"), 1, GL::GLFALSE, view.data());
+        gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "proj"), 1, GL::GLFALSE, proj.data());
 
         gl->drawArrays(GL::LINES, 0, 2);
 
