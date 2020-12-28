@@ -260,6 +260,7 @@ int main()
                     camera.inverseProjCamera,
                     camera.cameraWorldPos
                 );
+                spline.intersect_spline_aabb(volMeta.volMin, volMeta.volMax);
                 state.refreshSpline = false;
             }
             spline.render(gl, view, proj);

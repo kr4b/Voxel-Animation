@@ -11,6 +11,8 @@ namespace fml = flux::fml;
 using namespace fml::stdtypes;
 using namespace fml::literals;
 
+#include <algorithm>
+
 class Spline {
 public:
 	Spline(const gl::GLapi*);
@@ -26,10 +28,18 @@ public:
 
 	vec3f position_on_spline(const float t);
 
+	void intersect_spline_aabb(const vec3f, const vec3f);
+
 private:
+	bool intersection;
+	vec3f worldEntry, worldExit;
 	vec3f a, b, c, d;
 	gl::Program debugProgram;
-	gl::GL::UInt debugVao;
-	gl::GL::UInt buffers[2];
+	gl::GL::UInt lineVao, pointsVao;
+	gl::GL::UInt buffers[4];
 
 };
+
+float depressed_cubic(float, float, float, float);
+float point_in_aabb(const vec3f aPoint, const vec3f aAABBMin, const vec3f aAABBMax);
+vec3f intersected_aabb(const vec3f t, Spline* aSpline, vec3f aAABBMin, vec3f aAABBMax);
