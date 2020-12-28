@@ -44,7 +44,7 @@ void Spline::update_from_screen_coords(const gl::GLapi* gl, const vec2f coords, 
 	const vec4f wray = inverseProjCamera * hray;
 
 	const vec3f origin = cameraWorldPos;
-	const vec3f direction = fml::normalize(-cameraWorldPos);// fml::normalize(fml::make_vector<vec3f>(wray.x, wray.y, wray.z) / wray.w - origin);
+	const vec3f direction = fml::normalize(fml::make_vector<vec3f>(wray.x, wray.y, wray.z) / wray.w - origin);
 
 	const vec3f P1 = origin;
 	const vec3f P2 = origin + direction * fml::length(origin) * 2.0f;

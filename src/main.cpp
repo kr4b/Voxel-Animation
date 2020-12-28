@@ -51,8 +51,8 @@ namespace
         quatf cameraRot = fml::make_identity<quatf>();
         vec3f cameraOff = fml::make_vector<vec3f>(0.f, 0.f, -3.f);
 
-        double lastX = std::numeric_limits<double>::quiet_NaN();
-        double lastY = std::numeric_limits<double>::quiet_NaN();
+        double lastX = 0.0;
+        double lastY = 0.0;
 
         bool inControl = false;
         bool debugMode = false;
@@ -253,7 +253,7 @@ int main()
             if (state.refreshSpline) {
                 spline.update_from_screen_coords(
                     gl,
-                    fml::make_vector<vec2f>(0.0f, 0.0f) * camera.reciprocalWindowSize,
+                    fml::make_vector<vec2f>(state.lastX, height - state.lastY) * camera.reciprocalWindowSize,
                     camera.inverseProjCamera,
                     camera.cameraWorldPos
                 );
