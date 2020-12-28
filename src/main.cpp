@@ -51,6 +51,9 @@ namespace
         quatf cameraRot = fml::make_identity<quatf>();
         vec3f cameraOff = fml::make_vector<vec3f>(0.f, 0.f, -3.f);
 
+        quatf lastCameraRot = fml::make_identity<quatf>();
+        vec3f lastCameraOff = fml::make_vector<vec3f>(0.f, 0.f, -3.f);
+
         double lastX = std::numeric_limits<double>::quiet_NaN();
         double lastY = std::numeric_limits<double>::quiet_NaN();
 
@@ -302,12 +305,20 @@ namespace {
             // Space => create new debug spline
             case GLFW::KEY_SPACE:
                 state->refreshSpline = true;
+                state->lastCameraRot = state->cameraRot;
+                state->lastCameraOff = state->cameraOff;
                 break;
             // Tab => toggle debug mode
-            case GLFW::KEY_TAB:
+            case GLFW::KEY_TAB: {
                 state->debugMode = !state->debugMode;
                 std::string newTitle = std::string(kWindowDefaults.name) + (state->debugMode ? " - Debug" : "");
                 glfw->setWindowTitle(aWin, newTitle.c_str());
+                break;
+            }
+            // Backspace => return to camera transformation when spline was created
+            case GLFW::KEY_BACKSPACE:
+                state->cameraRot = state->lastCameraRot;
+                state->cameraOff = state->lastCameraOff;
                 break;
             }
 
