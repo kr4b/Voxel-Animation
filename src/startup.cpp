@@ -124,6 +124,9 @@ GfxContext gfx_startup()
 	gl->enable( GL::FRAMEBUFFER_SRGB );
 	gl->clearColor( 0.0f, 0.3f, 0.3f, 0.0f );
 
+	gl->enable(GL::DEPTH_TEST);
+	gl->depthFunc(GL::LEQUAL);
+
 	// Return context
 	GfxContext ret;
 	ret.win = compat::exchange( win, nullptr );
