@@ -25,6 +25,7 @@ namespace GLFW = flux::dlapi::os::GLFW;
 #include <chrono>
 #include <limits>
 #include <iostream>
+#include <string>
 
 #include "startup.hpp"
 #include "defaults.hpp"
@@ -312,7 +313,7 @@ namespace {
             switch (aKey) {
             // Escape => exit
             case GLFW::KEY_ESCAPE:
-                flux::dlapi::os::glfw()->setWindowShouldClose(aWin, GLFW::GLFW_TRUE);
+                glfw->setWindowShouldClose(aWin, GLFW::GLFW_TRUE);
                 break;
             // Space => create new debug spline
             case GLFW::KEY_SPACE:
@@ -322,6 +323,8 @@ namespace {
             // Tab => toggle debug mode
             case GLFW::KEY_TAB:
                 state->debugMode = !state->debugMode;
+                std::string newTitle = std::string(kWindowDefaults.name) + (state->debugMode ? " - Debug" : "");
+                glfw->setWindowTitle(aWin, newTitle.c_str());
                 break;
             }
 
