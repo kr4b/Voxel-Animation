@@ -56,6 +56,7 @@ namespace
 
         bool inControl = false;
         bool debugMode = false;
+        bool refreshSpline = true;
 
         static constexpr float scrollMult = 0.1f;
         static constexpr float motionRotMult = 0.6f;
@@ -249,7 +250,15 @@ int main()
         gl->drawArrays(GL::TRIANGLES, 0, 3);
 
         if (state.debugMode) {
-            spline.update_from_screen_coords(gl, fml::make_vector<vec2f>(0.0f, 0.0f) * camera.reciprocalWindowSize, camera.inverseProjCamera, camera.cameraWorldPos);
+            if (state.refreshSpline) {
+                spline.update_from_screen_coords(
+                    gl,
+                    fml::make_vector<vec2f>(0.0f, 0.0f) * camera.reciprocalWindowSize,
+                    camera.inverseProjCamera,
+                    camera.cameraWorldPos
+                );
+                state.refreshSpline = false;
+            }
             spline.render(gl, view, proj);
         }
 
@@ -292,8 +301,7 @@ namespace {
                 break;
             // Space => create new debug spline
             case GLFW::KEY_SPACE:
-                // TODO: Add spline to state and create new spline
-                //state->spline = make_spline();
+                state->refreshSpline = true;
                 break;
             // Tab => toggle debug mode
             case GLFW::KEY_TAB:
