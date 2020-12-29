@@ -1,25 +1,5 @@
 #include "spline.hpp"
-
-const int detail = 100;
-
-const double M_PI = 3.14159265;
-
-const vec3f EPSILON = fml::make_vector<vec3f>(1.0e-6f, 1.0e-6f, 1.0e-6f);
-const vec3f ZERO_VECTOR = fml::make_zero<vec3f>();
-const vec3f ONE_VECTOR = fml::make_one<vec3f>();
-const vec3f MAX_VALUE = fml::make_vector<vec3f>(1.0e6f, 1.0e6f, 1.0e6f);
-const vec3f MIN_VALUE = -MAX_VALUE;
-
-template <typename T> inline int sign(T x) {
-	return (T(0) < x) - (x < T(0));
-}
-
-inline vec3f step(vec3f edge, vec3f x) {
-	return fml::make_vector<vec3f>(
-		x.x >= edge.x ? 1.0f : 0.0f,
-		x.y >= edge.y ? 1.0f : 0.0f,
-		x.z >= edge.z ? 1.0f : 0.0f);
-}
+#include "depressed_cubic.hpp"
 
 Spline::Spline(const gl::GLapi* gl) {
 	this->intersection = false;
@@ -85,9 +65,12 @@ void Spline::update_from_screen_coords(const gl::GLapi* gl, const vec2f coords, 
 	const vec3f direction = fml::normalize(fml::make_vector<vec3f>(wray.x, wray.y, wray.z) / wray.w - origin);
 
 	const vec3f P1 = origin;
-	const vec3f P2 = origin + direction * fml::length(origin) * 2.0f;
+	vec3f P2 = origin + direction * fml::length(origin) * 2.0f;
+	float tmp = P2.y;
+	P2.y = P2.z;
+	P2.z = tmp - 0.5f;
 
-	const vec3f P0 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
+	const vec3f P0 = fml::make_vector<vec3f>(0.0f, 20.0f, -15.0f);
 	const vec3f P3 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
 
 	this->a = 2.0f * P1 - 2.0f * P2 + 1.0f * P0 + 1.0f * P3;
@@ -175,17 +158,30 @@ inline vec3f Spline::position_on_spline(float t) {
 void Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
 	const vec3f conversion = -this->b / (3.0f * this->a);
 
+	
 	const vec3f t1 = conversion + vec3f(
-		depressed_cubic(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
-		depressed_cubic(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
-		depressed_cubic(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
+		DepressedCubic::find_roots_static(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
+		DepressedCubic::find_roots_static(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
+		DepressedCubic::find_roots_static(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
 	const vec3f t2 = conversion + vec3f(
-		depressed_cubic(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
-		depressed_cubic(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
-		depressed_cubic(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
+		DepressedCubic::find_roots_static(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
+		DepressedCubic::find_roots_static(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
+		DepressedCubic::find_roots_static(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
 
-	const vec3f it1 = intersected_aabb(t1, this, aAABBMin, aAABBMax);
-	const vec3f it2 = intersected_aabb(t2, this, aAABBMin, aAABBMax);
+	vec2f ts = fml::make_zero<vec2f>();
+	calculate_near_far(t1, t2, aAABBMin, aAABBMax, &ts);
+
+	this->intersection = ts.x <= ts.y && ts.y >= 0.0f;
+	if (this->intersection) {
+		this->worldEntry = this->position_on_spline(ts.x);
+		this->worldExit = this->position_on_spline(ts.y);
+		std::cout << ts.x << ", " << ts.y << std::endl;
+	}
+}
+
+void Spline::calculate_near_far(const vec3f t1, const vec3f t2, const vec3f aAABBMin, const vec3f aAABBMax, vec2f* ts) {
+	const vec3f it1 = this->intersected_aabb(t1, aAABBMin, aAABBMax);
+	const vec3f it2 = this->intersected_aabb(t2, aAABBMin, aAABBMax);
 
 	const vec3f nt1 = t1 * it1 + (ONE_VECTOR - it1) * MAX_VALUE;
 	const vec3f nt2 = t2 * it2 + (ONE_VECTOR - it2) * MAX_VALUE;
@@ -194,55 +190,16 @@ void Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
 	const vec3f ft2 = t2 * it2 + (ONE_VECTOR - it2) * MIN_VALUE;
 
 	const vec3f inear = fml::make_vector<vec3f>(std::min(nt1.x, nt2.x), std::min(nt1.y, nt2.y), std::min(nt1.z, nt2.z));
-	const float near = std::min(inear.x, std::min(inear.y, inear.z));
+	ts->x = std::min(inear.x, std::min(inear.y, inear.z));
 
 	const vec3f ifar = fml::make_vector<vec3f>(std::max(ft1.x, ft2.x), std::max(ft1.y, ft2.y), std::max(ft1.z, ft2.z));
-	const float far = std::max(ifar.x, std::max(ifar.y, ifar.z));
-
-	this->intersection = near <= far && far >= 0.0f;
-	if (this->intersection) {
-		this->worldEntry = this->position_on_spline(near);
-		this->worldExit = this->position_on_spline(far);
-	}
+	ts->y = std::max(ifar.x, std::max(ifar.y, ifar.z));
 }
 
-float depressed_cubic(float a, float b, float c, float d) {
-	const float p = (3.0f * a * c - b * b) / (3.0f * a * a);
-	const float q = (2.0f * b * b * b - 9.0f * a * b * c + 27.0f * a * a * d) / (27.0f * a * a * a);
-
-	const float discriminant = q * q + 4.0f * p * p * p / 27.0f;
-
-	if (discriminant > 0.0f) {
-		// 1 real root
-		const float D = sqrt(q * q / 4.0f + p * p * p / 27.0f);
-		const float C0 = -0.5f * q + D;
-		const float C1 = -0.5f * q - D;
-		const float t0 = sign(C0) * pow(abs(C0), 1.0f / 3.0f) + sign(C1) * pow(abs(C1), 1.0f / 3.0f);
-
-		return t0;
-	}
-	else {
-		// 3 real roots
-		const float fac0 = 2.0f * sqrt(-p / 3.0f);
-		const float arccos = acos(3.0f * q / (2.0f * p) * sqrt(-3.0f / p)) / 3.0f;
-
-		// const t0 = fac0 * Math.cos(arccos);
-		const float t1 = fac0 * cos(arccos - 2.0f * M_PI / 3.0f);
-		// const t2 = fac0 * Math.cos(arccos - 4 * M_PI / 3);
-
-		return t1;
-	}
-}
-
-float point_in_aabb(const vec3f aPoint, const vec3f aAABBMin, const vec3f aAABBMax) {
-	const vec3f result = step(aAABBMin - EPSILON, aPoint) * step(aPoint, aAABBMax + EPSILON);
-	return result.x * result.y * result.z;
-}
-
-vec3f intersected_aabb(const vec3f t, Spline* aSpline, vec3f aAABBMin, vec3f aAABBMax) {
-	const vec3f P0 = aSpline->position_on_spline(t.x);
-	const vec3f P1 = aSpline->position_on_spline(t.y);
-	const vec3f P2 = aSpline->position_on_spline(t.z);
+vec3f Spline::intersected_aabb(const vec3f t, vec3f aAABBMin, vec3f aAABBMax) {
+	const vec3f P0 = this->position_on_spline(t.x);
+	const vec3f P1 = this->position_on_spline(t.y);
+	const vec3f P2 = this->position_on_spline(t.z);
 
 	const vec3f resultT = step(ZERO_VECTOR, t) * step(t, ONE_VECTOR);
 	const float result0 = point_in_aabb(P0, aAABBMin, aAABBMax);
@@ -253,4 +210,9 @@ vec3f intersected_aabb(const vec3f t, Spline* aSpline, vec3f aAABBMin, vec3f aAA
 		resultT.x * result0,
 		resultT.y * result1,
 		resultT.z * result2);
+}
+
+float point_in_aabb(const vec3f aPoint, const vec3f aAABBMin, const vec3f aAABBMax) {
+	const vec3f result = step(aAABBMin - EPSILON, aPoint) * step(aPoint, aAABBMax + EPSILON);
+	return result.x * result.y * result.z;
 }

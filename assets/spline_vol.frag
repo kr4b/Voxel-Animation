@@ -45,10 +45,13 @@ Spline make_spline(in vec2 aFragCoord) {
 	const vec3 direction = normalize( wray.xyz / wray.w - origin );
 
     const vec3 P1 = origin;
-    const vec3 P2 = origin + direction * length(origin) * 2.0f;
+    vec3 P2 = origin + direction * length(origin) * 2.0f;
+    float tmp = P2.y;
+    P2.y = P2.z;
+    P2.z = tmp - 0.5f;
 
-    const vec3 P0 = vec3(0.0, 0.0, 0.0);
-    const vec3 P3 = vec3(0.0, 10.0, 0.0);
+    const vec3 P0 = vec3(0.0, 20.0, -15.0);
+    const vec3 P3 = vec3(0.0, 0.0, 0.0);
 
     Spline spline;
     spline.a = 2.0f * P1 - 2.0f * P2 + 1.0f * P0 + 1.0f * P3;
@@ -67,7 +70,7 @@ float depressed_cubic(in float a, in float b, in float c, in float d) {
     const float p = (3.0f * a * c - b * b) / (3.0f * a * a);
     const float q = (2.0f * b * b * b - 9.0f * a * b * c + 27.0f * a * a * d) / (27.0f * a * a * a);
 
-    const float discriminant = q * q + 4.0f * p * p * p / 27.0f;
+    const float discriminant = 27.0f * q * q + 4.0f * p * p * p;
 
     if (discriminant > 0.0f) {
         // 1 real root

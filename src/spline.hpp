@@ -12,6 +12,17 @@ using namespace fml::stdtypes;
 using namespace fml::literals;
 
 #include <algorithm>
+#include <iostream>
+
+#include "math_util.hpp"
+
+
+const int detail = 100;
+const vec3f EPSILON = fml::make_vector<vec3f>(1.0e-6f, 1.0e-6f, 1.0e-6f);
+const vec3f ZERO_VECTOR = fml::make_zero<vec3f>();
+const vec3f ONE_VECTOR = fml::make_one<vec3f>();
+const vec3f MAX_VALUE = fml::make_vector<vec3f>(1.0e6f, 1.0e6f, 1.0e6f);
+const vec3f MIN_VALUE = -MAX_VALUE;
 
 class Spline {
 public:
@@ -39,8 +50,9 @@ private:
 	gl::GL::UInt lineVao, pointsVao;
 	gl::GL::UInt buffers[4];
 
+
+	vec3f intersected_aabb(const vec3f t, vec3f aAABBMin, vec3f aAABBMax);
+	void calculate_near_far(const vec3f, const vec3f, const vec3f, const vec3f, vec2f*);
 };
 
-float depressed_cubic(float, float, float, float);
-float point_in_aabb(const vec3f aPoint, const vec3f aAABBMin, const vec3f aAABBMax);
-vec3f intersected_aabb(const vec3f t, Spline* aSpline, vec3f aAABBMin, vec3f aAABBMax);
+float point_in_aabb(const vec3f, const vec3f, const vec3f);
