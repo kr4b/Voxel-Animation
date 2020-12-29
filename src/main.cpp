@@ -261,6 +261,7 @@ int main()
                     camera.cameraWorldPos
                 );
                 spline.intersect_spline_aabb(volMeta.volMin, volMeta.volMax);
+                spline.update_buffers(gl);
                 state.refreshSpline = false;
             }
             spline.render(gl, view, proj);

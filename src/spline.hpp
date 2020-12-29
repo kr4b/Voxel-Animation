@@ -33,6 +33,7 @@ public:
 private:
 	bool intersection;
 	vec3f worldEntry, worldExit;
+	vec2f lastCursorPos;
 	vec3f a, b, c, d;
 	gl::Program debugProgram;
 	gl::GL::UInt lineVao, pointsVao;

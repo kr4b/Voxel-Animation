@@ -26,6 +26,8 @@ Spline::Spline(const gl::GLapi* gl) {
 	this->worldEntry = fml::make_zero<vec3f>();
 	this->worldExit = fml::make_zero<vec3f>();
 
+	this->lastCursorPos = fml::make_zero<vec2f>();
+
 	this->a = fml::make_zero<vec3f>();
 	this->b = fml::make_zero<vec3f>();
 	this->c = fml::make_zero<vec3f>();
@@ -62,12 +64,12 @@ void Spline::init_vao(const gl::GLapi* gl) {
 	gl->bindVertexArray(this->pointsVao);
 
 	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	gl->bufferData(gl::GL::ARRAY_BUFFER, 2 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
 	gl->vertexAttribPointer(0, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
 	gl->enableVertexAttribArray(0);
 
 	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	gl->bufferData(gl::GL::ARRAY_BUFFER, 2 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
 	gl->vertexAttribPointer(1, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
 	gl->enableVertexAttribArray(1);
 
@@ -75,8 +77,8 @@ void Spline::init_vao(const gl::GLapi* gl) {
 }
 
 void Spline::update_from_screen_coords(const gl::GLapi* gl, const vec2f coords, const mat44f inverseProjCamera, const vec3f cameraWorldPos) {
-	const vec2f transformedCoordinates = coords * 2.0f - fml::make_vector<vec2f>(1.0f, 1.0f);
-	const vec4f hray = fml::make_vector<vec4f>(transformedCoordinates.x, transformedCoordinates.y, 1.0f, 1.0f);
+	const vec2f transformed = coords * 2.0f - fml::make_vector<vec2f>(1.0f, 1.0f);
+	const vec4f hray = fml::make_vector<vec4f>(transformed.x, transformed.y, 1.0f, 1.0f);
 	const vec4f wray = inverseProjCamera * hray;
 
 	const vec3f origin = cameraWorldPos;
@@ -92,8 +94,6 @@ void Spline::update_from_screen_coords(const gl::GLapi* gl, const vec2f coords, 
 	this->b = -3.0f * P1 + 3.0f * P2 - 2.0f * P0 - 1.0f * P3;
 	this->c = P0;
 	this->d = P1;
-
-	this->update_buffers(gl);
 }
 
 void Spline::update_buffers(const gl::GLapi *gl) {
@@ -126,23 +126,21 @@ void Spline::update_buffers(const gl::GLapi *gl) {
 	}
 
 	{
-		gl::GL::Float vertices[3 * 3];
-		gl::GL::Float colors[3 * 3];
+		gl::GL::Float vertices[2 * 3];
+		gl::GL::Float colors[2 * 3];
 
 		vertices[0] = worldEntry.x; vertices[1] = worldEntry.y; vertices[2] = worldEntry.z;
 		vertices[3] = worldExit.x; vertices[4] = worldExit.y; vertices[5] = worldExit.z;
-		vertices[6] = worldExit.x; vertices[7] = worldExit.y; vertices[8] = worldExit.z;
 
-		colors[0] = 1.0f; colors[1] = 0.0f; colors[2] = 1.0f;
-		colors[3] = 1.0f; colors[4] = 1.0f; colors[5] = 0.0f;
-		colors[5] = 1.0f; colors[6] = 1.0f; colors[7] = 0.0f;
+		colors[0] = 1.0f; colors[1] = 0.0f; colors[2] = 0.0f;
+		colors[3] = 0.0f; colors[4] = 0.0f; colors[5] = 1.0f;
 
 		gl->bindVertexArray(this->pointsVao);
 
 		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), vertices);
+		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 2 * 3 * sizeof(gl::GL::Float), vertices);
 		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), colors);
+		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 2 * 3 * sizeof(gl::GL::Float), colors);
 
 		gl->bindVertexArray(0);
 	}
