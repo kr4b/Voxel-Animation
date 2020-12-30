@@ -57,7 +57,7 @@ void Spline::init_vao(const gl::GLapi* gl) {
 	gl->bindVertexArray(0);
 }
 
-void Spline::update_from_screen_coords(const gl::GLapi* gl, const vec2f coords, const mat44f inverseProjCamera, const vec3f cameraWorldPos) {
+void Spline::update_from_screen_coords(const gl::GLapi* gl, const vec2f coords, const mat44f inverseProjCamera, const vec3f cameraWorldPos, const vec3f tangent1, const vec3f tangent2) {
 	const vec2f transformed = coords * 2.0f - fml::make_vector<vec2f>(1.0f, 1.0f);
 	const vec4f hray = fml::make_vector<vec4f>(transformed.x, transformed.y, 1.0f, 1.0f);
 	const vec4f wray = inverseProjCamera * hray;
@@ -72,8 +72,8 @@ void Spline::update_from_screen_coords(const gl::GLapi* gl, const vec2f coords, 
 	P2.y = P2.z;
 	P2.z = tmp - 0.5f;
 
-	const vec3f P0 = fml::make_vector<vec3f>(0.0f, 1.0f, 0.0f);
-	const vec3f P3 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
+	const vec3f P0 = tangent1;
+	const vec3f P3 = tangent2;
 
 	this->a = 2.0f * P1 - 2.0f * P2 + 1.0f * P0 + 1.0f * P3;
 	this->b = -3.0f * P1 + 3.0f * P2 - 2.0f * P0 - 1.0f * P3;

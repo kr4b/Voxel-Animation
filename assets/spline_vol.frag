@@ -19,6 +19,8 @@ layout( binding = 0 ) uniform sampler3D texVol;
 
 uniform int steps;
 uniform float time;
+uniform vec3 tangent1;
+uniform vec3 tangent2;
 
 struct Ray {
 	vec3 org;
@@ -50,8 +52,8 @@ Spline make_spline(in vec2 aFragCoord) {
     P2.y = P2.z;
     P2.z = tmp - 0.5f;
 
-    const vec3 P0 = vec3(0.0, 1.0, 0.0);
-    const vec3 P3 = vec3(0.0, 0.0, 0.0);
+    const vec3 P0 = tangent1;
+    const vec3 P3 = tangent2;
 
     Spline spline;
     spline.a = 2.0f * P1 - 2.0f * P2 + 1.0f * P0 + 1.0f * P3;
