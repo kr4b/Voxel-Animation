@@ -216,7 +216,7 @@ int main()
         auto const proj = fml::make_projection_perspective_gl_3d<mat44f>(
             60.0_degf,
             float(width) / height,
-            0.1f,
+            0.01f,
             100.f
         );
 

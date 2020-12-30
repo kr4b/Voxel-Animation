@@ -50,7 +50,7 @@ Spline make_spline(in vec2 aFragCoord) {
     P2.y = P2.z;
     P2.z = tmp - 0.5f;
 
-    const vec3 P0 = vec3(0.0, 20.0, -15.0);
+    const vec3 P0 = vec3(0.0, 1.0, 0.0);
     const vec3 P3 = vec3(0.0, 0.0, 0.0);
 
     Spline spline;

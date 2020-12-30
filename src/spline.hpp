@@ -46,6 +46,7 @@ private:
 	vec3f worldEntry, worldExit;
 	vec2f lastCursorPos;
 	vec3f a, b, c, d;
+    vec3f start;
 	gl::Program debugProgram;
 	gl::GL::UInt lineVao, pointsVao;
 	gl::GL::UInt buffers[4];

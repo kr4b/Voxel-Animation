@@ -12,6 +12,7 @@ Spline::Spline(const gl::GLapi* gl) {
 	this->b = fml::make_zero<vec3f>();
 	this->c = fml::make_zero<vec3f>();
 	this->d = fml::make_zero<vec3f>();
+    this->start = fml::make_zero<vec3f>();
 
 	this->init_program(gl);
 	this->init_vao(gl);
@@ -44,12 +45,12 @@ void Spline::init_vao(const gl::GLapi* gl) {
 	gl->bindVertexArray(this->pointsVao);
 
 	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 2 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
 	gl->vertexAttribPointer(0, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
 	gl->enableVertexAttribArray(0);
 
 	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 2 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
 	gl->vertexAttribPointer(1, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
 	gl->enableVertexAttribArray(1);
 
@@ -63,6 +64,7 @@ void Spline::update_from_screen_coords(const gl::GLapi* gl, const vec2f coords, 
 
 	const vec3f origin = cameraWorldPos;
 	const vec3f direction = fml::normalize(fml::make_vector<vec3f>(wray.x, wray.y, wray.z) / wray.w - origin);
+    this->start = origin + direction * 0.015f;
 
 	const vec3f P1 = origin;
 	vec3f P2 = origin + direction * fml::length(origin) * 2.0f;
@@ -70,7 +72,7 @@ void Spline::update_from_screen_coords(const gl::GLapi* gl, const vec2f coords, 
 	P2.y = P2.z;
 	P2.z = tmp - 0.5f;
 
-	const vec3f P0 = fml::make_vector<vec3f>(0.0f, 20.0f, -15.0f);
+	const vec3f P0 = fml::make_vector<vec3f>(0.0f, 1.0f, 0.0f);
 	const vec3f P3 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
 
 	this->a = 2.0f * P1 - 2.0f * P2 + 1.0f * P0 + 1.0f * P3;
@@ -109,21 +111,23 @@ void Spline::update_buffers(const gl::GLapi *gl) {
 	}
 
 	{
-		gl::GL::Float vertices[2 * 3];
-		gl::GL::Float colors[2 * 3];
+		gl::GL::Float vertices[3 * 3];
+		gl::GL::Float colors[3 * 3];
 
-		vertices[0] = worldEntry.x; vertices[1] = worldEntry.y; vertices[2] = worldEntry.z;
-		vertices[3] = worldExit.x; vertices[4] = worldExit.y; vertices[5] = worldExit.z;
+        vertices[0] = this->start.x; vertices[1] = this->start.y; vertices[2] = this->start.z;
+		vertices[3] = worldEntry.x; vertices[4] = worldEntry.y; vertices[5] = worldEntry.z;
+		vertices[6] = worldExit.x; vertices[7] = worldExit.y; vertices[8] = worldExit.z;
 
-		colors[0] = 1.0f; colors[1] = 0.0f; colors[2] = 0.0f;
-		colors[3] = 0.0f; colors[4] = 0.0f; colors[5] = 1.0f;
+        colors[0] = 0.0f; colors[1] = 1.0f; colors[2] = 0.0f;
+		colors[3] = 1.0f; colors[4] = 0.0f; colors[5] = 0.0f;
+		colors[6] = 0.0f; colors[7] = 0.0f; colors[8] = 1.0f;
 
 		gl->bindVertexArray(this->pointsVao);
 
 		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 2 * 3 * sizeof(gl::GL::Float), vertices);
+		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), vertices);
 		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 2 * 3 * sizeof(gl::GL::Float), colors);
+		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), colors);
 
 		gl->bindVertexArray(0);
 	}
@@ -140,15 +144,13 @@ void Spline::render(const gl::GLapi* gl, const mat44f view, const mat44f proj) {
 	gl->drawArrays(gl::GL::LINE_STRIP, 0, detail);
     gl->lineWidth(1.0f);
 
-	if (intersection) {
-		gl->bindVertexArray(this->pointsVao);
-		gl->pointSize(10.0f);
-		gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "view"), 1, gl::GL::GLFALSE, view.data());
-		gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
+    gl->bindVertexArray(this->pointsVao);
+    gl->pointSize(10.0f);
+    gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "view"), 1, gl::GL::GLFALSE, view.data());
+    gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
 
-		gl->drawArrays(gl::GL::POINTS, 0, 2);
-		gl->pointSize(1.0f);
-	}
+    gl->drawArrays(gl::GL::POINTS, 0, intersection ? 3 : 1);
+    gl->pointSize(1.0f);
 
 	gl->bindVertexArray(0);
 }
