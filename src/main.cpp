@@ -236,6 +236,9 @@ int main()
 
         if (state.debugMode) {
             gl->useProgram(debugProgram);
+
+            gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "view"), 1, gl::GL::GLFALSE, view.data());
+            gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
         } else {
             std::chrono::duration<double, std::milli> diff = now - start;
 

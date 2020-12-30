@@ -167,7 +167,7 @@ void main() {
 	// Step through volume
 	// Only do this if we hit the volume
     vec3 col = vec3(0.0);
-    float depth = 1.0;
+    // float depth = 1.0;
 
 	if( ts.x <= ts.y && ts.y >= 0.0f ) {
         ts.x = max(0.0, ts.x);
@@ -181,11 +181,12 @@ void main() {
 			
 			if (voxel > 0.1f) {
                 col = samplePos;
-                depth = length(splinePos - uCamera.cameraWorldPos) / length(uCamera.cameraWorldPos) * 0.5;
+                // depth = length(splinePos - uCamera.cameraWorldPos) / length(uCamera.cameraWorldPos) * 0.5;
 				break;
 			}
 		}
 	}
+
     oColor = col;
-    gl_FragDepth = depth;
+    // gl_FragDepth = depth;
 }

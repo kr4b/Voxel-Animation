@@ -93,9 +93,9 @@ void Spline::update_buffers(const gl::GLapi *gl) {
 			vertices[i * 3 + 1] = point.y;
 			vertices[i * 3 + 2] = point.z;
 
-			colors[i * 3 + 0] = 1.0f - t;
-			colors[i * 3 + 1] = t;
-			colors[i * 3 + 2] = t;
+            colors[i * 3 + 0] = 1.0f;
+			colors[i * 3 + 1] = 1.0f;
+			colors[i * 3 + 2] = 1.0f;
 		}
 
 		gl->bindVertexArray(this->lineVao);
@@ -136,7 +136,9 @@ void Spline::render(const gl::GLapi* gl, const mat44f view, const mat44f proj) {
 	gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "view"), 1, gl::GL::GLFALSE, view.data());
 	gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
 
+    gl->lineWidth(3.0f);
 	gl->drawArrays(gl::GL::LINE_STRIP, 0, detail);
+    gl->lineWidth(1.0f);
 
 	if (intersection) {
 		gl->bindVertexArray(this->pointsVao);
@@ -144,7 +146,7 @@ void Spline::render(const gl::GLapi* gl, const mat44f view, const mat44f proj) {
 		gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "view"), 1, gl::GL::GLFALSE, view.data());
 		gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
 
-		gl->drawArrays(gl::GL::POINTS, 0, 3);
+		gl->drawArrays(gl::GL::POINTS, 0, 2);
 		gl->pointSize(1.0f);
 	}
 

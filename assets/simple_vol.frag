@@ -17,7 +17,8 @@ layout( std140, binding = 1 ) uniform UCamera {
 
 layout( binding = 0 ) uniform sampler3D texVol;
 
-uniform int steps;
+uniform mat4 proj;
+uniform mat4 view;
 
 struct Ray {
 	vec3 org;
@@ -78,7 +79,10 @@ void main() {
 			
 			if (voxel > 0.1f) {
 				col = samplePos;
-        depth = min(worldPos.z, depth);
+				vec4 transformedPos = proj * view * vec4(worldPos, 1.0);
+				float far = gl_DepthRange.far;
+				float near = gl_DepthRange.near;
+        depth = ((transformedPos.z / transformedPos.w) * (far - near) + near + far) / 2.0;
 				break;
 			}
 		}
