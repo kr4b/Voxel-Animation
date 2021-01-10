@@ -193,8 +193,8 @@ int main()
     auto const* glfw = flux::dlapi::os::glfw();
     FLUX_ASSERT(glfw);
 
-    vec3f tangent1 = fml::make_vector<vec3f>(0.0f, 100.0f, 0.0f);
-    vec3f tangent2 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
+    vec3f tangent1 = fml::make_vector<vec3f>(0.0f, 10.0f, 0.0f);
+    vec3f tangent2 = fml::make_vector<vec3f>(0.0f, 0.0f, 5.0f);
 
     const int steps = 2048;
     int frames = 0;

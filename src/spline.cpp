@@ -1,6 +1,8 @@
 #include "spline.hpp"
 #include "depressed_cubic.hpp"
 
+#define POINT_COUNT 21
+
 Spline::Spline(const gl::GLapi* gl) {
 	this->intersection = false;
 	this->worldEntry = fml::make_zero<vec3f>();
@@ -19,10 +21,10 @@ Spline::Spline(const gl::GLapi* gl) {
 }
 
 void Spline::init_program(const gl::GLapi* gl) {
-	this->debugProgram = gl::load_program_from_vfs({
-	{ gl::GL::VERTEX_SHADER, "/@flux/opt/assets/debug.vert" },
-	{ gl::GL::FRAGMENT_SHADER, "/@flux/opt/assets/debug.frag" }
-		});
+    this->debugProgram = gl::load_program_from_vfs({
+	    { gl::GL::VERTEX_SHADER, "/@flux/opt/assets/debug.vert" },
+	    { gl::GL::FRAGMENT_SHADER, "/@flux/opt/assets/debug.frag" }
+    });
 }
 
 void Spline::init_vao(const gl::GLapi* gl) {
@@ -31,11 +33,13 @@ void Spline::init_vao(const gl::GLapi* gl) {
 
 	gl->genBuffers(4, this->buffers);
 
+    // Spline vertices
 	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[0]);
 	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * detail * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
 	gl->vertexAttribPointer(0, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
 	gl->enableVertexAttribArray(0);
 
+    // Spline colors
 	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[1]);
 	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * detail * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
 	gl->vertexAttribPointer(1, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
@@ -44,13 +48,15 @@ void Spline::init_vao(const gl::GLapi* gl) {
 	gl->genVertexArrays(1, &this->pointsVao);
 	gl->bindVertexArray(this->pointsVao);
 
+    // Point vertices
 	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * POINT_COUNT * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
 	gl->vertexAttribPointer(0, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
 	gl->enableVertexAttribArray(0);
 
+    // Point colors
 	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * POINT_COUNT * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
 	gl->vertexAttribPointer(1, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
 	gl->enableVertexAttribArray(1);
 
@@ -111,23 +117,30 @@ void Spline::update_buffers(const gl::GLapi *gl) {
 	}
 
 	{
-		gl::GL::Float vertices[3 * 3];
-		gl::GL::Float colors[3 * 3];
+		gl::GL::Float vertices[3 * POINT_COUNT];
+		gl::GL::Float colors[3 * POINT_COUNT];
 
         vertices[0] = this->start.x; vertices[1] = this->start.y; vertices[2] = this->start.z;
-		vertices[3] = worldEntry.x; vertices[4] = worldEntry.y; vertices[5] = worldEntry.z;
-		vertices[6] = worldExit.x; vertices[7] = worldExit.y; vertices[8] = worldExit.z;
-
         colors[0] = 0.0f; colors[1] = 1.0f; colors[2] = 0.0f;
-		colors[3] = 1.0f; colors[4] = 0.0f; colors[5] = 0.0f;
-		colors[6] = 0.0f; colors[7] = 0.0f; colors[8] = 1.0f;
+
+        auto random = []() {
+            return float(rand()) / float(RAND_MAX);
+        };
+
+        for (int i = 0; i < POINT_COUNT - 1; i++) {
+		    vertices[3 + i * 3] = this->points[i].x; vertices[4 + i * 3] = this->points[i].y; vertices[5 + i * 3] = this->points[i].z;
+		    colors[3 + i * 3] = random(); colors[4 + i * 3] = random(); colors[5 + i * 3] = random();
+        }
+
+        colors[(POINT_COUNT - 2) * 3] = 1.0f; colors[(POINT_COUNT - 2) * 3 + 1] = 0.0f; colors[(POINT_COUNT - 2) * 3 + 2] = 0.0f;
+        colors[(POINT_COUNT - 1) * 3] = 1.0f; colors[(POINT_COUNT - 1) * 3 + 1] = 0.0f; colors[(POINT_COUNT - 1) * 3 + 2] = 0.0f;
 
 		gl->bindVertexArray(this->pointsVao);
 
 		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), vertices);
+		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * POINT_COUNT * sizeof(gl::GL::Float), vertices);
 		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), colors);
+		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * POINT_COUNT * sizeof(gl::GL::Float), colors);
 
 		gl->bindVertexArray(0);
 	}
@@ -149,7 +162,7 @@ void Spline::render(const gl::GLapi* gl, const mat44f view, const mat44f proj) {
     gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "view"), 1, gl::GL::GLFALSE, view.data());
     gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
 
-    gl->drawArrays(gl::GL::POINTS, 0, intersection ? 3 : 1);
+    gl->drawArrays(gl::GL::POINTS, 0, intersection ? POINT_COUNT : 1);
     gl->pointSize(1.0f);
 
 	gl->bindVertexArray(0);
@@ -161,7 +174,6 @@ inline vec3f Spline::position_on_spline(float t) {
 
 void Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
 	const vec3f conversion = -this->b / (3.0f * this->a);
-
 	
 	const vec3f t1 = conversion + vec3f(
 		DepressedCubic::find_roots_static(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
@@ -181,6 +193,55 @@ void Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
 		this->worldExit = this->position_on_spline(ts.y);
 		std::cout << ts.x << ", " << ts.y << std::endl;
 	}
+
+    const vec3f p1 = conversion + vec3f(
+        DepressedCubic::find_roots_first(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
+        DepressedCubic::find_roots_first(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
+        DepressedCubic::find_roots_first(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
+    const vec3f p2 = conversion + vec3f(
+        DepressedCubic::find_roots_first(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
+        DepressedCubic::find_roots_first(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
+        DepressedCubic::find_roots_first(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
+
+    const vec3f p3 = conversion + vec3f(
+        DepressedCubic::find_roots_second(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
+        DepressedCubic::find_roots_second(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
+        DepressedCubic::find_roots_second(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
+    const vec3f p4 = conversion + vec3f(
+        DepressedCubic::find_roots_second(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
+        DepressedCubic::find_roots_second(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
+        DepressedCubic::find_roots_second(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
+
+    const vec3f p5 = conversion + vec3f(
+        DepressedCubic::find_roots_third(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
+        DepressedCubic::find_roots_third(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
+        DepressedCubic::find_roots_third(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
+    const vec3f p6 = conversion + vec3f(
+        DepressedCubic::find_roots_third(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
+        DepressedCubic::find_roots_third(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
+        DepressedCubic::find_roots_third(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
+
+    this->points.clear();
+    this->points.push_back(this->position_on_spline(p1.x));
+    this->points.push_back(this->position_on_spline(p1.y));
+    this->points.push_back(this->position_on_spline(p1.z));
+    this->points.push_back(this->position_on_spline(p2.x));
+    this->points.push_back(this->position_on_spline(p2.y));
+    this->points.push_back(this->position_on_spline(p2.z));
+    this->points.push_back(this->position_on_spline(p3.x));
+    this->points.push_back(this->position_on_spline(p3.y));
+    this->points.push_back(this->position_on_spline(p3.z));
+    this->points.push_back(this->position_on_spline(p4.x));
+    this->points.push_back(this->position_on_spline(p4.y));
+    this->points.push_back(this->position_on_spline(p4.z));
+    this->points.push_back(this->position_on_spline(p5.x));
+    this->points.push_back(this->position_on_spline(p5.y));
+    this->points.push_back(this->position_on_spline(p5.z));
+    this->points.push_back(this->position_on_spline(p6.x));
+    this->points.push_back(this->position_on_spline(p6.y));
+    this->points.push_back(this->position_on_spline(p6.z));
+    this->points.push_back(this->worldEntry);
+    this->points.push_back(this->worldExit);
 }
 
 void Spline::calculate_near_far(const vec3f t1, const vec3f t2, const vec3f aAABBMin, const vec3f aAABBMax, vec2f* ts) {

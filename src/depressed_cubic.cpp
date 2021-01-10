@@ -19,6 +19,48 @@ float DepressedCubic::find_roots() {
 	}
 }
 
+float DepressedCubic::find_roots_first(float a, float b, float c, float d) {
+    DepressedCubic cubic(a, b, c, d);
+
+    if (cubic.discriminant > 0.0f) {
+        return cubic.single_root();
+    }
+    else {
+        const float fac = 2.0f * sqrt(-cubic.p / 3.0f);
+        const float arccos = acos(3.0f * cubic.q / (2.0f * cubic.p) * sqrt(-3.0f / cubic.p)) / 3.0f;
+
+        return cubic.first_root(fac, arccos);
+    }
+}
+
+float DepressedCubic::find_roots_second(float a, float b, float c, float d) {
+    DepressedCubic cubic(a, b, c, d);
+
+    if (cubic.discriminant > 0.0f) {
+        return cubic.single_root();
+    }
+    else {
+        const float fac = 2.0f * sqrt(-cubic.p / 3.0f);
+        const float arccos = acos(3.0f * cubic.q / (2.0f * cubic.p) * sqrt(-3.0f / cubic.p)) / 3.0f;
+
+        return cubic.second_root(fac, arccos);
+    }
+}
+
+float DepressedCubic::find_roots_third(float a, float b, float c, float d) {
+    DepressedCubic cubic(a, b, c, d);
+
+    if (cubic.discriminant > 0.0f) {
+        return cubic.single_root();
+    }
+    else {
+        const float fac = 2.0f * sqrt(-cubic.p / 3.0f);
+        const float arccos = acos(3.0f * cubic.q / (2.0f * cubic.p) * sqrt(-3.0f / cubic.p)) / 3.0f;
+
+        return cubic.third_root(fac, arccos);
+    }
+}
+
 float DepressedCubic::find_roots_static(float a, float b, float c, float d) {
 	DepressedCubic cubic(a, b, c, d);
 	return cubic.find_roots();

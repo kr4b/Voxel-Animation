@@ -92,12 +92,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="defaults.hpp" />
+    <ClInclude Include="depressed_cubic.hpp" />
+    <ClInclude Include="spline.hpp" />
     <ClInclude Include="startup.hpp" />
     <ClInclude Include="volume.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="depressed_cubic.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="miniz.c" />
+    <ClCompile Include="spline.cpp" />
     <ClCompile Include="startup.cpp" />
     <ClCompile Include="volume.cpp" />
   </ItemGroup>

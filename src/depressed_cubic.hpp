@@ -7,7 +7,10 @@ class DepressedCubic {
 public:
 	DepressedCubic(float, float, float, float);
 
-	float find_roots();
+	static float find_roots_first(float a, float b, float c, float d);
+    static float find_roots_second(float a, float b, float c, float d);
+    static float find_roots_third(float a, float b, float c, float d);
+    float find_roots();
 
 	static float find_roots_static(float, float, float, float);
 

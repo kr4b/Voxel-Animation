@@ -13,9 +13,9 @@ using namespace fml::literals;
 
 #include <algorithm>
 #include <iostream>
+#include <vector>
 
 #include "math_util.hpp"
-
 
 const int detail = 100;
 const vec3f EPSILON = fml::make_vector<vec3f>(1.0e-6f, 1.0e-6f, 1.0e-6f);
@@ -50,7 +50,7 @@ private:
 	gl::Program debugProgram;
 	gl::GL::UInt lineVao, pointsVao;
 	gl::GL::UInt buffers[4];
-
+    std::vector<vec3f> points;
 
 	vec3f intersected_aabb(const vec3f t, vec3f aAABBMin, vec3f aAABBMax);
 	void calculate_near_far(const vec3f, const vec3f, const vec3f, const vec3f, vec2f*);
