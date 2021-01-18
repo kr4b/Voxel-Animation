@@ -22,11 +22,6 @@ uniform float time;
 uniform vec3 tangent1;
 uniform vec3 tangent2;
 
-struct Ray {
-	vec3 org;
-	vec3 dir;
-};
-
 struct Spline {
     vec3 a; // t^3
     vec3 b; // t^2
@@ -34,9 +29,13 @@ struct Spline {
     vec3 d; // t^0
 };
 
-struct Plane {
-    vec3 normal;
-    float D;
+struct Cubic {
+    vec3 p;
+    vec3 q_1;
+    vec3 root;
+    vec3 discriminant;
+    vec3 fac0;
+    vec3 arccos;
 };
 
 Spline make_spline(in vec2 aFragCoord) {
@@ -66,43 +65,80 @@ Spline make_spline(in vec2 aFragCoord) {
 
 #define M_PI 3.14159265
 
-// From at^3 + bt^2 + ct + d = 0
-// To x^3 + px + q = 0
-float depressed_cubic(in float a, in float b, in float c, in float d) {
-    const float p = (3.0f * a * c - b * b) / (3.0f * a * a);
-    const float q = (2.0f * b * b * b - 9.0f * a * b * c + 27.0f * a * a * d) / (27.0f * a * a * a);
+Cubic make_cubic(in Spline spline) {
+    Cubic cubic;
+    cubic.p = (3.0f * spline.a * spline.c - spline.b * spline.b) / (3.0f * spline.a * spline.a);
+    cubic.q_1 = (2.0f * spline.b * spline.b * spline.b - 9.0f * spline.a * spline.b * spline.c) / (27.0f * spline.a * spline.a * spline.a);
+    return cubic;
+}
 
-    const float discriminant = 27.0f * q * q + 4.0f * p * p * p;
+float single_real_root(in float p, in float q) {
+    const float D = sqrt(q * q / 4.0f + p * p * p / 27.0f);
+    const float C0 = -0.5f * q + D;
+    const float C1 = -0.5f * q - D;
+    const float t0 = sign(C0) * pow(abs(C0), 1.0f / 3.0f) + sign(C1) * pow(abs(C1), 1.0f / 3.0f);
 
+    return t0;
+}
+
+void three_real_root_variables(in float p, in float q, out float fac0, out float arccos) {
+    fac0 = 2.0f * sqrt(-p / 3.0f);
+    arccos = acos(3.0f * q / (2.0f * p) * sqrt(-3.0f / p)) / 3.0f;
+}
+
+float first_real_root(in float fac0, in float arccos) {
+    return fac0 * cos(arccos);
+}
+
+float second_real_root(in float fac0, in float arccos) {
+    return fac0 * cos(arccos - 2.0f * M_PI / 3.0f);
+}
+
+float third_real_root(in float fac0, in float arccos) {
+    return fac0 * cos(arccos - 4.0f * M_PI / 3.0f);
+}
+
+float solve_first_cubic(in float discriminant, in float root, in float fac0, in float arccos) {
     if (discriminant > 0.0f) {
-        // 1 real root
-        const float D = sqrt(q * q / 4.0f + p * p * p / 27.0f);
-        const float C0 = -0.5f * q + D;
-        const float C1 = -0.5f * q - D;
-        const float t0 = sign(C0) * pow(abs(C0), 1.0f / 3.0f) + sign(C1) * pow(abs(C1), 1.0f / 3.0f);
-
-        return t0;
+        return root;
     } else {
-        // 3 real roots
-        const float fac0 = 2.0f * sqrt(-p / 3.0f);
-        const float arccos = acos(3.0f * q / (2.0f * p) * sqrt(-3.0f / p)) / 3.0f;
-
-        // const t0 = fac0 * Math.cos(arccos);
-        const float t1 = fac0 * cos(arccos - 2.0f * M_PI / 3.0f);
-        // const t2 = fac0 * Math.cos(arccos - 4 * M_PI / 3);
-
-        return t1;
+        return first_real_root(fac0, arccos);
     }
 }
 
-vec3 intersect_spline_axis(in Spline aSpline, in vec3 aDistancesFromOrigin) {
-    return vec3(
-        depressed_cubic(aSpline.a.x, aSpline.b.x, aSpline.c.x, aSpline.d.x - aDistancesFromOrigin.x),
-        depressed_cubic(aSpline.a.y, aSpline.b.y, aSpline.c.y, aSpline.d.y - aDistancesFromOrigin.y),
-        depressed_cubic(aSpline.a.z, aSpline.b.z, aSpline.c.z, aSpline.d.z - aDistancesFromOrigin.z)) - aSpline.b / (3.0f * aSpline.a);
+float solve_third_cubic(in float discriminant, in float root, in float fac0, in float arccos) {
+    if (discriminant > 0.0f) {
+        return root;
+    } else {
+        return third_real_root(fac0, arccos);
+    }
 }
 
-vec3 position_on_spline(float t, Spline spline) {
+float solve_cubic(in float discriminant, in float p, in float q, out float root, out float fac0, out float arccos) {
+    if (discriminant > 0.0f) {
+        root = single_real_root(p, q);
+        return root;
+    } else {
+        three_real_root_variables(p, q, fac0, arccos);
+
+        return second_real_root(fac0, arccos);
+    }
+}
+
+
+// From at^3 + bt^2 + ct + d = 0
+// To x^3 + px + q = 0
+vec3 depressed_cubic(inout Cubic cubic, in Spline spline, in vec3 offset) {
+    const vec3 q = cubic.q_1 + (spline.d - offset) / spline.a;
+    cubic.discriminant = 27.0f * q * q + 4.0f * cubic.p * cubic.p * cubic.p;
+
+    return vec3(
+        solve_cubic(cubic.discriminant.x, cubic.p.x, q.y, cubic.root.x, cubic.fac0.x, cubic.arccos.x),
+        solve_cubic(cubic.discriminant.y, cubic.p.y, q.y, cubic.root.y, cubic.fac0.y, cubic.arccos.y),
+        solve_cubic(cubic.discriminant.z, cubic.p.z, q.y, cubic.root.z, cubic.fac0.z, cubic.arccos.z));
+}
+
+vec3 position_on_spline(in float t, in Spline spline) {
     return t * t * t * spline.a + t * t * spline.b + t * spline.c + spline.d;
 }
 
@@ -132,17 +168,30 @@ vec3 intersected_aabb(in vec3 t, in Spline aSpline, in vec3 aAABBMin, in vec3 aA
 #define MAX_VALUE 2.0f
 #define MIN_VALUE -MAX_VALUE
 
+void determine_new_near_far(in vec3 t1, in vec3 t2, inout float near, inout float far, in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax) {
+    const vec3 it1 = intersected_aabb(t1, aSpline, aAABBMin, aAABBMax);
+    const vec3 it2 = intersected_aabb(t2, aSpline, aAABBMin, aAABBMax);
+
+    const vec3 nt1 = t1 * it1 + (1.0f - it1) * MAX_VALUE;
+    const vec3 nt2 = t2 * it2 + (1.0f - it2) * MAX_VALUE;
+
+    const vec3 ft1 = t1 * it1 + (1.0f - it1) * MIN_VALUE;
+    const vec3 ft2 = t2 * it2 + (1.0f - it2) * MIN_VALUE;
+
+    const vec3 inear = min(nt1, nt2);
+    near = min(near, min(inear.x, min(inear.y, inear.z)));
+
+    const vec3 ifar = max(ft1, ft2);
+    far = max(far, max(ifar.x, max(ifar.y, ifar.z)));
+}
+
 vec2 intersect_spline_aabb(in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax) {
     const vec3 conversion = -aSpline.b / (3.0f * aSpline.a);
 
-    const vec3 t1 = conversion + vec3(
-        depressed_cubic(aSpline.a.x, aSpline.b.x, aSpline.c.x, aSpline.d.x - aAABBMin.x),
-        depressed_cubic(aSpline.a.y, aSpline.b.y, aSpline.c.y, aSpline.d.y - aAABBMin.y),
-        depressed_cubic(aSpline.a.z, aSpline.b.z, aSpline.c.z, aSpline.d.z - aAABBMin.z));
-    const vec3 t2 = conversion + vec3(
-        depressed_cubic(aSpline.a.x, aSpline.b.x, aSpline.c.x, aSpline.d.x - aAABBMax.x),
-        depressed_cubic(aSpline.a.y, aSpline.b.y, aSpline.c.y, aSpline.d.y - aAABBMax.y),
-        depressed_cubic(aSpline.a.z, aSpline.b.z, aSpline.c.z, aSpline.d.z - aAABBMax.z));
+    Cubic cubic_min = make_cubic(aSpline);
+    Cubic cubic_max = cubic_min;
+    const vec3 t1 = conversion + depressed_cubic(cubic_min, aSpline, aAABBMin);
+    const vec3 t2 = conversion + depressed_cubic(cubic_max, aSpline, aAABBMax);
 
     const vec3 it1 = intersected_aabb(t1, aSpline, aAABBMin, aAABBMax);
     const vec3 it2 = intersected_aabb(t2, aSpline, aAABBMin, aAABBMax);
@@ -154,11 +203,37 @@ vec2 intersect_spline_aabb(in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax
     const vec3 ft2 = t2 * it2 + (1.0f - it2) * MIN_VALUE;
 
     const vec3 inear = min(nt1, nt2);
-    const float near = min(inear.x, min(inear.y, inear.z));
+    float near = min(inear.x, min(inear.y, inear.z));
 
     const vec3 ifar = max(ft1, ft2);
-    const float far = max(ifar.x, max(ifar.y, ifar.z));
+    float far = max(ifar.x, max(ifar.y, ifar.z));
 
+    if (near == far) {
+        const vec3 first_t1 = vec3(
+            solve_first_cubic(cubic_min.discriminant.x, cubic_min.root.x, cubic_min.fac0.x, cubic_min.arccos.x),
+            solve_first_cubic(cubic_min.discriminant.y, cubic_min.root.y, cubic_min.fac0.y, cubic_min.arccos.y),
+            solve_first_cubic(cubic_min.discriminant.z, cubic_min.root.z, cubic_min.fac0.z, cubic_min.arccos.z));
+        const vec3 first_t2 = vec3(
+            solve_first_cubic(cubic_max.discriminant.x, cubic_max.root.x, cubic_max.fac0.x, cubic_max.arccos.x),
+            solve_first_cubic(cubic_max.discriminant.y, cubic_max.root.y, cubic_max.fac0.y, cubic_max.arccos.y),
+            solve_first_cubic(cubic_max.discriminant.z, cubic_max.root.z, cubic_max.fac0.z, cubic_max.arccos.z));
+
+        determine_new_near_far(first_t1, first_t2, near, far, aSpline, aAABBMin, aAABBMax);
+
+        if (near == far) {
+            const vec3 third_t1 = vec3(
+                solve_third_cubic(cubic_min.discriminant.x, cubic_min.root.x, cubic_min.fac0.x, cubic_min.arccos.x),
+                solve_third_cubic(cubic_min.discriminant.y, cubic_min.root.y, cubic_min.fac0.y, cubic_min.arccos.y),
+                solve_third_cubic(cubic_min.discriminant.z, cubic_min.root.z, cubic_min.fac0.z, cubic_min.arccos.z));
+            const vec3 third_t2 = vec3(
+                solve_third_cubic(cubic_max.discriminant.x, cubic_max.root.x, cubic_max.fac0.x, cubic_max.arccos.x),
+                solve_third_cubic(cubic_max.discriminant.y, cubic_max.root.y, cubic_max.fac0.y, cubic_max.arccos.y),
+                solve_third_cubic(cubic_max.discriminant.z, cubic_max.root.z, cubic_max.fac0.z, cubic_max.arccos.z));
+
+            determine_new_near_far(third_t1, third_t2, near, far, aSpline, aAABBMin, aAABBMax);
+        }
+    }                                                        
+                                                             
     return vec2(near, far);
 }
 
