@@ -74,9 +74,9 @@ void Spline::update_from_screen_coords(const gl::GLapi* gl, const vec2f coords, 
 
 	const vec3f P1 = origin;
 	vec3f P2 = origin + direction * fml::length(origin) * 2.0f;
-	float tmp = P2.y;
-	P2.y = P2.z;
-	P2.z = tmp - 0.5f;
+	// float tmp = P2.y;
+	// P2.y = P2.z;
+	// P2.z = tmp - 0.5f;
 
 	const vec3f P0 = tangent1;
 	const vec3f P3 = tangent2;
