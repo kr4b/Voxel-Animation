@@ -129,7 +129,7 @@ vec3 intersected_aabb(in vec3 t, in Spline aSpline, in vec3 aAABBMin, in vec3 aA
         resultT.z * result2);
 }
 
-#define MAX_VALUE 1e6
+#define MAX_VALUE 2.0f
 #define MIN_VALUE -MAX_VALUE
 
 vec2 intersect_spline_aabb(in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax) {

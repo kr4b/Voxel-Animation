@@ -253,25 +253,28 @@
                 // s.draw_point_at(ctx, t1.y);
                 // s.draw_point_at(ctx, t2.y);
 
+                const MAX_VALUE = 2.0;
+                const MIN_VALUE = -MAX_VALUE;
+
                 let neart = Number.MAX_SAFE_INTEGER;
                 let fart = Number.MIN_SAFE_INTEGER;
                 let result = vec2(0, 0);
 
                 const intersect1x = intersect(t1.x, result);
-                neart = Math.min(neart, t1.x * intersect1x + (1 - intersect1x) * Number.MAX_SAFE_INTEGER);
-                fart = Math.max(fart, t1.x * intersect1x + (1 - intersect1x) * Number.MIN_SAFE_INTEGER);
+                neart = Math.min(neart, t1.x * intersect1x + (1 - intersect1x) * MAX_VALUE);
+                fart = Math.max(fart, t1.x * intersect1x + (1 - intersect1x) * MIN_VALUE);
 
                 const intersect1y = intersect(t1.y, result);
-                neart = Math.min(neart, t1.y * intersect1y + (1 - intersect1y) * Number.MAX_SAFE_INTEGER);
-                fart = Math.max(fart, t1.y * intersect1y + (1 - intersect1y) * Number.MIN_SAFE_INTEGER);
+                neart = Math.min(neart, t1.y * intersect1y + (1 - intersect1y) * MAX_VALUE);
+                fart = Math.max(fart, t1.y * intersect1y + (1 - intersect1y) * MIN_VALUE);
 
                 const intersect2x = intersect(t2.x, result);
-                neart = Math.min(neart, t2.x * intersect2x + (1 - intersect2x) * Number.MAX_SAFE_INTEGER);
-                fart = Math.max(fart, t2.x * intersect2x + (1 - intersect2x) * Number.MIN_SAFE_INTEGER);
+                neart = Math.min(neart, t2.x * intersect2x + (1 - intersect2x) * MAX_VALUE);
+                fart = Math.max(fart, t2.x * intersect2x + (1 - intersect2x) * MIN_VALUE);
 
                 const intersect2y = intersect(t2.y, result);
-                neart = Math.min(neart, t2.y * intersect2y + (1 - intersect2y) * Number.MAX_SAFE_INTEGER);
-                fart = Math.max(fart, t2.y * intersect2y + (1 - intersect2y) * Number.MIN_SAFE_INTEGER);
+                neart = Math.min(neart, t2.y * intersect2y + (1 - intersect2y) * MAX_VALUE);
+                fart = Math.max(fart, t2.y * intersect2y + (1 - intersect2y) * MIN_VALUE);
 
                 if (neart <= fart && fart >= 0.0) {
                     neart = Math.max(0.0, neart);
