@@ -221,25 +221,36 @@ void Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
         DepressedCubic::find_roots_third(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
         DepressedCubic::find_roots_third(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
 
+    std::vector<float> tVector;
+    printf("p1: (%f, %f, %f)\n", p1.x, p1.y, p1.z);
+    tVector.push_back(p1.x);
+    tVector.push_back(p1.y);
+    tVector.push_back(p1.z);
+    printf("p2: (%f, %f, %f)\n", p2.x, p2.y, p2.z);
+    tVector.push_back(p2.x);
+    tVector.push_back(p2.y);
+    tVector.push_back(p2.z);
+    printf("p3: (%f, %f, %f)\n", p3.x, p3.y, p3.z);
+    tVector.push_back(p3.x);
+    tVector.push_back(p3.y);
+    tVector.push_back(p3.z);
+    printf("p4: (%f, %f, %f)\n", p4.x, p4.y, p4.z);
+    tVector.push_back(p4.x);
+    tVector.push_back(p4.y);
+    tVector.push_back(p4.z);
+    printf("p5: (%f, %f, %f)\n", p5.x, p5.y, p5.z);
+    tVector.push_back(p5.x);
+    tVector.push_back(p5.y);
+    tVector.push_back(p5.z);
+    printf("p6: (%f, %f, %f)\n", p6.x, p6.y, p6.z);
+    tVector.push_back(p6.x);
+    tVector.push_back(p6.y);
+    tVector.push_back(p6.z);
+
     this->points.clear();
-    this->points.push_back(this->position_on_spline(p1.x));
-    this->points.push_back(this->position_on_spline(p1.y));
-    this->points.push_back(this->position_on_spline(p1.z));
-    this->points.push_back(this->position_on_spline(p2.x));
-    this->points.push_back(this->position_on_spline(p2.y));
-    this->points.push_back(this->position_on_spline(p2.z));
-    this->points.push_back(this->position_on_spline(p3.x));
-    this->points.push_back(this->position_on_spline(p3.y));
-    this->points.push_back(this->position_on_spline(p3.z));
-    this->points.push_back(this->position_on_spline(p4.x));
-    this->points.push_back(this->position_on_spline(p4.y));
-    this->points.push_back(this->position_on_spline(p4.z));
-    this->points.push_back(this->position_on_spline(p5.x));
-    this->points.push_back(this->position_on_spline(p5.y));
-    this->points.push_back(this->position_on_spline(p5.z));
-    this->points.push_back(this->position_on_spline(p6.x));
-    this->points.push_back(this->position_on_spline(p6.y));
-    this->points.push_back(this->position_on_spline(p6.z));
+    for (float t : tVector) {
+        this->points.push_back(this->position_on_spline(t));
+    }
     this->points.push_back(this->worldEntry);
     this->points.push_back(this->worldExit);
 }
