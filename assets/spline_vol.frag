@@ -134,9 +134,9 @@ vec3 depressed_cubic(inout Cubic cubic, in Spline spline, in vec3 offset) {
     cubic.discriminant = 27.0f * q * q + 4.0f * cubic.p * cubic.p * cubic.p;
 
     return vec3(
-        solve_cubic(cubic.discriminant.x, cubic.p.x, q.y, cubic.root.x, cubic.fac0.x, cubic.arccos.x),
+        solve_cubic(cubic.discriminant.x, cubic.p.x, q.x, cubic.root.x, cubic.fac0.x, cubic.arccos.x),
         solve_cubic(cubic.discriminant.y, cubic.p.y, q.y, cubic.root.y, cubic.fac0.y, cubic.arccos.y),
-        solve_cubic(cubic.discriminant.z, cubic.p.z, q.y, cubic.root.z, cubic.fac0.z, cubic.arccos.z));
+        solve_cubic(cubic.discriminant.z, cubic.p.z, q.z, cubic.root.z, cubic.fac0.z, cubic.arccos.z));
 }
 
 vec3 position_on_spline(in float t, in Spline spline) {
