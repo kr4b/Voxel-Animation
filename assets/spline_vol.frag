@@ -210,11 +210,11 @@ vec2 intersect_spline_aabb(in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax
     float far = max(ifar.x, max(ifar.y, ifar.z));
 
     if (near == far) {
-        const vec3 first_t1 = vec3(
+        const vec3 first_t1 = conversion + vec3(
             solve_first_cubic(cubic_min.discriminant.x, cubic_min.root.x, cubic_min.fac0.x, cubic_min.arccos.x),
             solve_first_cubic(cubic_min.discriminant.y, cubic_min.root.y, cubic_min.fac0.y, cubic_min.arccos.y),
             solve_first_cubic(cubic_min.discriminant.z, cubic_min.root.z, cubic_min.fac0.z, cubic_min.arccos.z));
-        const vec3 first_t2 = vec3(
+        const vec3 first_t2 = conversion + vec3(
             solve_first_cubic(cubic_max.discriminant.x, cubic_max.root.x, cubic_max.fac0.x, cubic_max.arccos.x),
             solve_first_cubic(cubic_max.discriminant.y, cubic_max.root.y, cubic_max.fac0.y, cubic_max.arccos.y),
             solve_first_cubic(cubic_max.discriminant.z, cubic_max.root.z, cubic_max.fac0.z, cubic_max.arccos.z));
@@ -222,11 +222,11 @@ vec2 intersect_spline_aabb(in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax
         determine_new_near_far(first_t1, first_t2, near, far, aSpline, aAABBMin, aAABBMax);
 
         if (near == far) {
-            const vec3 third_t1 = vec3(
+            const vec3 third_t1 = conversion + vec3(
                 solve_third_cubic(cubic_min.discriminant.x, cubic_min.root.x, cubic_min.fac0.x, cubic_min.arccos.x),
                 solve_third_cubic(cubic_min.discriminant.y, cubic_min.root.y, cubic_min.fac0.y, cubic_min.arccos.y),
                 solve_third_cubic(cubic_min.discriminant.z, cubic_min.root.z, cubic_min.fac0.z, cubic_min.arccos.z));
-            const vec3 third_t2 = vec3(
+            const vec3 third_t2 = conversion + vec3(
                 solve_third_cubic(cubic_max.discriminant.x, cubic_max.root.x, cubic_max.fac0.x, cubic_max.arccos.x),
                 solve_third_cubic(cubic_max.discriminant.y, cubic_max.root.y, cubic_max.fac0.y, cubic_max.arccos.y),
                 solve_third_cubic(cubic_max.discriminant.z, cubic_max.root.z, cubic_max.fac0.z, cubic_max.arccos.z));
