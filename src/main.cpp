@@ -193,8 +193,13 @@ int main()
     auto const* glfw = flux::dlapi::os::glfw();
     FLUX_ASSERT(glfw);
 
-    vec3f tangent1 = fml::make_vector<vec3f>(0.0f, 10.0f, 0.0f);
-    vec3f tangent2 = fml::make_vector<vec3f>(0.0f, 0.0f, 5.0f);
+    vec3f tangent1 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
+    vec3f tangent2 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
+    mat44f P2 = fml::make_matrix<mat44f>(
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f);
 
     const int steps = 2048;
     int frames = 0;
@@ -250,6 +255,7 @@ int main()
             gl->uniform1f(gl->getUniformLocation(program, "time"), diff.count());
             gl->uniform3f(gl->getUniformLocation(program, "tangent1"), tangent1.x, tangent1.y, tangent1.z);
             gl->uniform3f(gl->getUniformLocation(program, "tangent2"), tangent2.x, tangent2.y, tangent2.z);
+            gl->uniformMatrix4fv(gl->getUniformLocation(program, "P2Matrix"), 1, false, P2.data());
         }
 
         gl->bindBufferBase(GL::UNIFORM_BUFFER, 0, uVolMeta);
@@ -268,7 +274,8 @@ int main()
                     camera.inverseProjCamera,
                     camera.cameraWorldPos,
                     tangent1,
-                    tangent2
+                    tangent2,
+                    P2
                 );
                 spline.intersect_spline_aabb(volMeta.volMin, volMeta.volMax);
                 spline.update_buffers(gl);
