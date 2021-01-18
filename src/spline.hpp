@@ -33,7 +33,7 @@ public:
 	void init_program(const gl::GLapi*);
 	void init_vao(const gl::GLapi*);
 
-	void update_from_screen_coords(const gl::GLapi*, const vec2f, const mat44f, const vec3f, const vec3f, const vec3f);
+	void update_from_screen_coords(const gl::GLapi*, const vec2f, const mat44f, const vec3f, const vec3f, const vec3f, const mat44f);
 
 	void update_buffers(const gl::GLapi* gl);
 
