@@ -4,3 +4,5 @@ _build_
 assets/backpack_small.*
 bin/
 lib/
+
+simplevol.vcxproj
