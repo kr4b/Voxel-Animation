@@ -209,7 +209,14 @@ vec2 intersect_spline_aabb(in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax
     const vec3 ifar = max(ft1, ft2);
     float far = max(ifar.x, max(ifar.y, ifar.z));
 
-    if (near == far) {
+    // p1: (-2.469688, 11.644688, 2.899517)
+    // p2: (3.919728, 11.687952, 2.755641)
+    // p3: (-2.469688, 1.856308, 2.899517)
+    // p4: (3.919728, 1.478349, 0.658754)
+    // p5: (-2.469688, 0.207449, 2.899517)
+    // p6: (3.919728, 0.542143, -0.531658)
+
+    if (near == far || near > 1.0 || far < 0.0) {
         const vec3 first_t1 = conversion + vec3(
             solve_first_cubic(cubic_min.discriminant.x, cubic_min.root.x, cubic_min.fac0.x, cubic_min.arccos.x),
             solve_first_cubic(cubic_min.discriminant.y, cubic_min.root.y, cubic_min.fac0.y, cubic_min.arccos.y),
@@ -221,7 +228,7 @@ vec2 intersect_spline_aabb(in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax
 
         determine_new_near_far(first_t1, first_t2, near, far, aSpline, aAABBMin, aAABBMax);
 
-        if (near == far) {
+        if (near == far || near > 1.0 || far < 0.0) {
             const vec3 third_t1 = conversion + vec3(
                 solve_third_cubic(cubic_min.discriminant.x, cubic_min.root.x, cubic_min.fac0.x, cubic_min.arccos.x),
                 solve_third_cubic(cubic_min.discriminant.y, cubic_min.root.y, cubic_min.fac0.y, cubic_min.arccos.y),

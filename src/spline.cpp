@@ -163,7 +163,7 @@ void Spline::render(const gl::GLapi* gl, const mat44f view, const mat44f proj) {
     gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "view"), 1, gl::GL::GLFALSE, view.data());
     gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
 
-    gl->drawArrays(gl::GL::POINTS, 0, intersection ? POINT_COUNT : 1);
+    gl->drawArrays(gl::GL::POINTS, 0, POINT_COUNT);
     gl->pointSize(1.0f);
 
 	gl->bindVertexArray(0);
@@ -188,12 +188,10 @@ void Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
 	vec2f ts = fml::make_zero<vec2f>();
 	calculate_near_far(t1, t2, aAABBMin, aAABBMax, &ts);
 
+	std::cout << ts.x << ", " << ts.y << std::endl;
 	this->intersection = ts.x <= ts.y && ts.y >= 0.0f;
-	if (this->intersection) {
-		this->worldEntry = this->position_on_spline(ts.x);
-		this->worldExit = this->position_on_spline(ts.y);
-		std::cout << ts.x << ", " << ts.y << std::endl;
-	}
+	this->worldEntry = this->position_on_spline(ts.x);
+	this->worldExit = this->position_on_spline(ts.y);
 
     const vec3f p1 = conversion + vec3f(
         DepressedCubic::find_roots_first(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
