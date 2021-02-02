@@ -97,10 +97,10 @@ void Spline::update_from_screen_coords(const vec2f coords, const mat44f inverseP
     this->start = origin + direction * 0.015f;
 
 	const vec3f P1 = origin;
-	const vec4f transformedDirection = P2Matrix * fml::make_vector<vec4f>(direction.x, direction.y, direction.z, 1.0f);
-	vec3f P2 = origin + fml::make_vector<vec3f>(transformedDirection.x, transformedDirection.y, transformedDirection.z) * fml::length(origin) * 2.0f;
+	const vec4f transformedDirection = P2Matrix * fml::make_vector<vec4f>(origin.x + direction.x, origin.y + direction.y, origin.z + direction.z, 1.0f);
+	const vec3f P2 = fml::make_vector<vec3f>(transformedDirection.x, transformedDirection.y, transformedDirection.z) * fml::length(origin) * 2.0f;
 
-	parameters_from_points(P1, P2, P1 + tangent1, P2 + tangent2);
+    parameters_from_tangents(P1, P2, tangent1, tangent2);
 }
 
 void Spline::update_buffers(const gl::GLapi *gl) {

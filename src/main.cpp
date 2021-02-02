@@ -26,6 +26,7 @@ namespace GLFW = flux::dlapi::os::GLFW;
 #include <limits>
 #include <iostream>
 #include <string>
+#include <cmath>
 
 #include "startup.hpp"
 #include "defaults.hpp"
@@ -193,13 +194,8 @@ int main()
     auto const* glfw = flux::dlapi::os::glfw();
     FLUX_ASSERT(glfw);
 
-    vec3f tangent1 = fml::make_vector<vec3f>(0.0f, 50.0f, 0.0f);
+    vec3f tangent1 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
     vec3f tangent2 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
-    mat44f P2 = fml::make_matrix<mat44f>(
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f);
 
     const int steps = 2048;
     int frames = 0;
@@ -242,14 +238,19 @@ int main()
         gl->namedBufferSubData(uCamera, 0, sizeof(UCamera), &camera);
         auto now = std::chrono::high_resolution_clock::now();
 
+        std::chrono::duration<double, std::milli> diff = now - start;
+        mat44f P2 = fml::make_matrix<mat44f>(
+            1.0f, 0.0f, 0.0f, 0.5f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+
         if (state.debugMode) {
             gl->useProgram(debugProgram);
 
             gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "view"), 1, gl::GL::GLFALSE, view.data());
             gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
         } else {
-            std::chrono::duration<double, std::milli> diff = now - start;
-
             gl->useProgram(program);
             gl->uniform1i(gl->getUniformLocation(program, "steps"), steps);
             gl->uniform1f(gl->getUniformLocation(program, "time"), diff.count());
@@ -268,15 +269,15 @@ int main()
 
         if (state.debugMode) {
             if (state.refreshSpline) {
-                vec4f offset1 = view * fml::make_vector<vec4f>(tangent1.x, tangent1.y, tangent1.z, 1.0);
-                vec4f offset2 = view * fml::make_vector<vec4f>(tangent2.x, tangent2.y, tangent2.z, 1.0);
+                //vec4f offset1 = view * fml::make_vector<vec4f>(tangent1.x, tangent1.y, tangent1.z, 1.0);
+                //vec4f offset2 = view * fml::make_vector<vec4f>(tangent2.x, tangent2.y, tangent2.z, 1.0);
 
                 spline.update_from_screen_coords(
                     fml::make_vector<vec2f>(state.lastX, height - state.lastY) * camera.reciprocalWindowSize,
                     camera.inverseProjCamera,
                     camera.cameraWorldPos,
-                    fml::make_vector<vec3f>(offset1.x, offset1.y, offset1.z),
-                    fml::make_vector<vec3f>(offset2.x, offset2.y, offset2.z),
+                    tangent1,
+                    tangent2,
                     P2
                 );
                 spline.intersect_spline_aabb(volMeta.volMin, volMeta.volMax);
