@@ -193,8 +193,8 @@ int main()
     auto const* glfw = flux::dlapi::os::glfw();
     FLUX_ASSERT(glfw);
 
-    vec3f tangent1 = fml::make_vector<vec3f>(0.0f, 10.0f, 0.0f);
-    vec3f tangent2 = fml::make_vector<vec3f>(0.0f, 0.0f, 5.0f);
+    vec3f tangent1 = fml::make_vector<vec3f>(0.0f, 50.0f, 0.0f);
+    vec3f tangent2 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
     mat44f P2 = fml::make_matrix<mat44f>(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
@@ -268,13 +268,15 @@ int main()
 
         if (state.debugMode) {
             if (state.refreshSpline) {
+                vec4f offset1 = view * fml::make_vector<vec4f>(tangent1.x, tangent1.y, tangent1.z, 1.0);
+                vec4f offset2 = view * fml::make_vector<vec4f>(tangent2.x, tangent2.y, tangent2.z, 1.0);
+
                 spline.update_from_screen_coords(
-                    gl,
                     fml::make_vector<vec2f>(state.lastX, height - state.lastY) * camera.reciprocalWindowSize,
                     camera.inverseProjCamera,
                     camera.cameraWorldPos,
-                    tangent1,
-                    tangent2,
+                    fml::make_vector<vec3f>(offset1.x, offset1.y, offset1.z),
+                    fml::make_vector<vec3f>(offset2.x, offset2.y, offset2.z),
                     P2
                 );
                 spline.intersect_spline_aabb(volMeta.volMin, volMeta.volMax);
