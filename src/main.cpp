@@ -240,10 +240,15 @@ int main()
 
         std::chrono::duration<double, std::milli> diff = now - start;
         mat44f P2 = fml::make_matrix<mat44f>(
-            1.0f, 0.0f, 0.0f, 0.5f,
+            1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 1.0f, 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f);
+        //mat44f P2 = fml::make_matrix<mat44f>(
+        //    cos(diff.count() / 1000.0), -sin(diff.count() / 1000.0), 0.0f, 0.0f,
+        //    sin(diff.count() / 1000.0), cos(diff.count() / 1000.0), 0.0f, 0.0f,
+        //    0.0f, 0.0f, 1.0f, 0.0f,
+        //    0.0f, 0.0f, 0.0f, 1.0f);
 
         if (state.debugMode) {
             gl->useProgram(debugProgram);
