@@ -10,7 +10,29 @@ class Ray {
 
   constructor(origin: vec2, dir: vec2) {
     this.origin = origin;
-    this.dir = dir;
+    this.dir    = dir;
+  }
+
+  draw_point_at(ctx: CanvasRenderingContext2D, t: number): void {
+    const point: vec2 = add(this.origin, scale(this.dir, t));
+
+    ctx.beginPath();
+    ctx.arc(
+      Math.max(-ctx.canvas.width / 2, Math.min(ctx.canvas.width / 2, point.x)),
+      Math.max(-ctx.canvas.height / 2, Math.min(ctx.canvas.height / 2, point.y)),
+      0.02, 0.0, 2.0 * Math.PI);
+    ctx.fill();
+  }
+
+  draw(ctx: CanvasRenderingContext2D): void {
+    const end: vec2 = add(this.origin, this.dir);
+
+    ctx.globalAlpha = 0.2;
+    ctx.beginPath();
+    ctx.moveTo(this.origin.x, this.origin.y);
+    ctx.lineTo(end.x, end.y);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   /// Intersection of this ray with the given AABB
