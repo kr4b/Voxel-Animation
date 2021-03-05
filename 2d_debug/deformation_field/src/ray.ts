@@ -68,7 +68,8 @@ class Ray {
       for (let i = 0; i < VOLUME_STEPS; i++) {
         const ii: number = i / VOLUME_STEPS;
 
-        const samplePos: vec2  = mix(ventry, vexit, ii);
+        const samplePos: vec2 = mix(ventry, vexit, ii);
+        console.log(samplePos);
         const sample: Spline | null = sampler.get(this, samplePos);
 
         if (sample != null) {
