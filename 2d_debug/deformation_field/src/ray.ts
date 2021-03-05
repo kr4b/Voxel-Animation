@@ -1,4 +1,5 @@
 import { Sampler } from "./sampler.js";
+import Spline from "./spline.js";
 import { add, divide, max, min, mix, scale, subtract, vec2 } from "./vec2.js"
 
 const VOLUME_STEPS: number = 1024;
@@ -26,7 +27,7 @@ class Ray {
   }
 
   /// Intersection of this ray with the given sampler and AABB
-  intersect_ray_sampler<T>(sampler: Sampler<T>): T | null {
+  intersect_ray_sampler<T>(sampler: Sampler<T>): Spline | null {
     const ts: vec2 = this.intersect_ray_aabb(sampler.aabbMin, sampler.aabbMax);
 
     if (ts.x <= ts.y && ts.y > 0.0) {
@@ -46,7 +47,7 @@ class Ray {
         const ii: number = i / VOLUME_STEPS;
 
         const samplePos: vec2  = mix(ventry, vexit, ii);
-        const sample: T | null = sampler.get(samplePos);
+        const sample: Spline | null = sampler.get(samplePos);
 
         if (sample != null) {
           return sample;
