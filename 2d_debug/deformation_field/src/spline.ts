@@ -1,5 +1,5 @@
-import DepressedCubic from "./depressed_cubic";
-import { add, copy, divide, multiply, scale, step, subtract, vec2 } from "./vec2";
+import DepressedCubic from "./depressed_cubic.js";
+import { add, copy, divide, multiply, scale, step, subtract, vec2 } from "./vec2.js";
 
 const { min, max, PI } = Math;
 const EPSILON = vec2(1e-6, 1e-6);
@@ -99,13 +99,11 @@ class Spline {
         const t1 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabbMin)));
         const t2 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabbMax)));
 
-        const ts = vec2(0, 0);
-        this.calculate_near_far(t1, t2, aabbMin, aabbMax, ts);
+        this.calculate_near_far(t1, t2, aabbMin, aabbMax, this.ts);
 
-        this.ts = ts;
-        this.intersection = ts.x <= ts.y && ts.y >= 0;
-        this.entry = this.position_on_spline(ts.x);
-        this.exit  = this.position_on_spline(ts.y);
+        this.intersection = this.ts.x <= this.ts.y && this.ts.y >= 0;
+        this.entry = this.position_on_spline(this.ts.x);
+        this.exit  = this.position_on_spline(this.ts.y);
     }
 
     private calculate_near_far(t1: vec2, t2: vec2, aabbMin: vec2, aabbMax: vec2, ts: vec2): void {
@@ -119,7 +117,7 @@ class Spline {
         const ft2 = add(multiply(t2, it2), multiply(subtract(vec2(1, 1), it2), MIN_VALUE));
 
         const inear = vec2(min(nt1.x, nt2.x), min(nt1.y, nt2.y));
-        const ifar  = vec2(max(nt1.x, nt2.x), max(nt1.y, nt2.y));
+        const ifar  = vec2(max(ft1.x, ft2.x), max(ft1.y, ft2.y));
 
         ts.x = min(inear.x, inear.y);
         ts.y = max(ifar.x,  ifar.y);

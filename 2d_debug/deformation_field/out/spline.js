@@ -68,12 +68,10 @@ var Spline = /** @class */ (function () {
         var conversion = divide(scale(this.b, -1), scale(this.a, 3));
         var t1 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabbMin)));
         var t2 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabbMax)));
-        var ts = vec2(0, 0);
-        this.calculate_near_far(t1, t2, aabbMin, aabbMax, ts);
-        this.ts = ts;
-        this.intersection = ts.x <= ts.y && ts.y >= 0;
-        this.entry = this.position_on_spline(ts.x);
-        this.exit = this.position_on_spline(ts.y);
+        this.calculate_near_far(t1, t2, aabbMin, aabbMax, this.ts);
+        this.intersection = this.ts.x <= this.ts.y && this.ts.y >= 0;
+        this.entry = this.position_on_spline(this.ts.x);
+        this.exit = this.position_on_spline(this.ts.y);
     };
     Spline.prototype.calculate_near_far = function (t1, t2, aabbMin, aabbMax, ts) {
         var it1 = this.intersected_aabb(t1, aabbMin, aabbMax);
@@ -83,7 +81,7 @@ var Spline = /** @class */ (function () {
         var ft1 = add(multiply(t1, it1), multiply(subtract(vec2(1, 1), it1), MIN_VALUE));
         var ft2 = add(multiply(t2, it2), multiply(subtract(vec2(1, 1), it2), MIN_VALUE));
         var inear = vec2(min(nt1.x, nt2.x), min(nt1.y, nt2.y));
-        var ifar = vec2(max(nt1.x, nt2.x), max(nt1.y, nt2.y));
+        var ifar = vec2(max(ft1.x, ft2.x), max(ft1.y, ft2.y));
         ts.x = min(inear.x, inear.y);
         ts.y = max(ifar.x, ifar.y);
     };

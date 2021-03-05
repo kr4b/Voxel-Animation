@@ -1,4 +1,4 @@
-import { vec2 } from "./vec2";
+import { vec2 } from "./vec2.js";
 
 const { abs, acos, cos, PI, pow, sqrt } = Math;
 
