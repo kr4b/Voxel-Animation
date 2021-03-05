@@ -51,11 +51,13 @@ function render() {
         ctx.strokeStyle = "black";
         var spline = ray.intersect_ray_sampler(sampler);
         var result = spline === null || spline === void 0 ? void 0 : spline.intersect_spline_aabb(sampler.aabbMin, sampler.aabbMax);
-        if (result && spline != null) {
+        if (spline != null) {
             spline.draw(ctx);
+        }
+        if (result) {
             ctx.fillStyle = "red";
-            spline.draw_point_at(ctx, spline.ts.x);
-            spline.draw_point_at(ctx, spline.ts.y);
+            spline === null || spline === void 0 ? void 0 : spline.draw_point_at(ctx, spline.ts.x);
+            spline === null || spline === void 0 ? void 0 : spline.draw_point_at(ctx, spline.ts.y);
             ctx.fillStyle = "black";
         }
     }

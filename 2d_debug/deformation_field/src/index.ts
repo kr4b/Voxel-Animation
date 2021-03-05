@@ -77,11 +77,14 @@ function render() {
         const spline: Spline | null = ray.intersect_ray_sampler(sampler);
         const result: boolean | undefined = spline?.intersect_spline_aabb(sampler.aabbMin, sampler.aabbMax);
 
-        if (result && spline != null) {
+        if (spline != null) {
             spline.draw(ctx);
+        }
+
+        if (result) {
             ctx.fillStyle = "red";
-            spline.draw_point_at(ctx, spline.ts.x);
-            spline.draw_point_at(ctx, spline.ts.y);
+            spline?.draw_point_at(ctx, spline.ts.x);
+            spline?.draw_point_at(ctx, spline.ts.y);
             ctx.fillStyle = "black";
         }
     }
