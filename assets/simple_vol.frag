@@ -70,7 +70,7 @@ void main() {
 		const vec3 ventry = (worldEntry - uVolMeta.volMin) / scale;
 		const vec3 vexit = (worldExit - uVolMeta.volMin) / scale;
 
-		float accum = 0.f;
+		// Walk the ray from entry to exit to determine the intersection point
 		for( int i = 0; i < VOLUME_STEPS; ++i ) {
 			const float ii = float(i) / float(VOLUME_STEPS);
       const vec3 worldPos = mix(worldEntry, worldExit, ii);
