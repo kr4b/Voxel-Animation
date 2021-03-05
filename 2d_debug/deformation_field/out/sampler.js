@@ -7,12 +7,12 @@ var Sampler = /** @class */ (function () {
         this.size = size;
         this.make_spline = make_spline;
     }
-    Sampler.prototype.get = function (samplePos) {
+    Sampler.prototype.get = function (ray, samplePos) {
         var index = Math.round(samplePos.y * this.size) + Math.round(samplePos.x);
         if (this.sampler[index]) {
             return null;
         }
-        return this.make_spline(this.data[index]);
+        return this.make_spline(ray, this.data[index]);
     };
     return Sampler;
 }());
