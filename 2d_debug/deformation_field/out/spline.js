@@ -6,10 +6,7 @@ var MAX_VALUE = vec2(1e6, 1e6);
 var MIN_VALUE = scale(MAX_VALUE, -1);
 var Spline = /** @class */ (function () {
     function Spline(a, b, c, d) {
-        this.intersection = false;
         this.ts = vec2(0, 0);
-        this.entry = vec2(0, 0);
-        this.exit = vec2(0, 0);
         this.a = a;
         this.b = b;
         this.c = c;
@@ -64,15 +61,33 @@ var Spline = /** @class */ (function () {
     Spline.prototype.position_on_spline = function (t) {
         return add(scale(this.a, t * t * t), scale(this.b, t * t), scale(this.c, t), copy(this.d));
     };
+    /**
+     * Find out if the spline intersects with the aabb described by its minimum and
+     * maximum corners.
+     *
+     * @param aabbMin the minimum corner of the aabb
+     * @param aabbMax the maximum corner of the aabb
+     * @returns true if it intersected, false otherwise
+     */
     Spline.prototype.intersect_spline_aabb = function (aabbMin, aabbMax) {
         var conversion = divide(scale(this.b, -1), scale(this.a, 3));
         var t1 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabbMin)));
         var t2 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabbMax)));
         this.calculate_near_far(t1, t2, aabbMin, aabbMax, this.ts);
-        this.intersection = this.ts.x <= this.ts.y && this.ts.y >= 0;
-        this.entry = this.position_on_spline(this.ts.x);
-        this.exit = this.position_on_spline(this.ts.y);
+        return this.ts.x <= this.ts.y && this.ts.y >= 0;
     };
+    /**
+     * Calculates the closest to and furthest from 0 intersection points with the aabb.
+     *
+     * @param t1 the first two `t` values, usually computed by intersecting with the
+     * minimum corner of the aabb
+     * @param t2 the second two `t` values, usually computed by intersecting with the
+     * maximum corner of the aabb
+     * @param aabbMin the minimum bounds of the aabb
+     * @param aabbMax the maximum bounds of the aabb
+     * @param ts object in which the results are stored, `x` will contain the nearest
+     * intersection `t`, `y` the furthest
+     */
     Spline.prototype.calculate_near_far = function (t1, t2, aabbMin, aabbMax, ts) {
         var it1 = this.intersected_aabb(t1, aabbMin, aabbMax);
         var it2 = this.intersected_aabb(t2, aabbMin, aabbMax);
@@ -85,6 +100,17 @@ var Spline = /** @class */ (function () {
         ts.x = min(inear.x, inear.y);
         ts.y = max(ifar.x, ifar.y);
     };
+    /**
+     * Determines if the point at time `t` on the spline intersects with the
+     * aabb described by a min and max corner.
+     * A return value of 0 indicates no intersection, while 1 indicates that
+     * there is an intersection.
+     *
+     * @param t interpolation values, range from 0 to 1
+     * @param aabbMin the minimum bounds of the aabb
+     * @param aabbMax the maximum bounds of the aabb
+     * @returns a vector with 0 or 1 for each of the two `t` values.
+     */
     Spline.prototype.intersected_aabb = function (t, aabbMin, aabbMax) {
         var P0 = this.position_on_spline(t.x);
         var P1 = this.position_on_spline(t.y);

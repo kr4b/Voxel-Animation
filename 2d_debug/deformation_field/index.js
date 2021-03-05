@@ -57,9 +57,8 @@ function render() {
         ctx.strokeRect(aabbMin.y, -canvas.height / 2, aabbMax.y - aabbMin.y, canvas.height);
         ctx.strokeStyle = "black";
 
-        s.intersect_spline_aabb(vec2(-0.15, -0.15), vec2(0.15, 0.15));
-
-        if (s.intersection) {
+        const result = s.intersect_spline_aabb(vec2(-0.15, -0.15), vec2(0.15, 0.15));
+        if (result) {
             ctx.fillStyle = "red";
             s.draw_point_at(ctx, s.ts.x);
             s.draw_point_at(ctx, s.ts.y);

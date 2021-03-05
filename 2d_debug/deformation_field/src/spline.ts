@@ -12,10 +12,7 @@ class Spline {
     c: vec2;
     d: vec2;
 
-    intersection = false;
-    ts    = vec2(0, 0);
-    entry = vec2(0, 0);
-    exit  = vec2(0, 0);
+    ts = vec2(0, 0);
 
     constructor(a: vec2, b: vec2, c: vec2, d: vec2) {
         this.a = a;
@@ -44,7 +41,7 @@ class Spline {
         return new Spline(a, b, c, d);
     }
 
-    draw_point_at(ctx: CanvasRenderingContext2D, t: number) {
+    draw_point_at(ctx: CanvasRenderingContext2D, t: number): void {
         const tt = t * t;
         const ttt = tt * t;
 
@@ -58,7 +55,7 @@ class Spline {
         ctx.fill();
     }
 
-    draw(ctx: CanvasRenderingContext2D, step: number = 0.01) {
+    draw(ctx: CanvasRenderingContext2D, step: number = 0.01): void {
         let t = 0, tt, ttt;
 
         ctx.globalAlpha = 0.2;
@@ -93,7 +90,15 @@ class Spline {
 	    return add(scale(this.a, t * t * t), scale(this.b, t * t), scale(this.c, t), copy(this.d));
     }
 
-    intersect_spline_aabb(aabbMin: vec2, aabbMax: vec2): void {
+    /**
+     * Find out if the spline intersects with the aabb described by its minimum and
+     * maximum corners.
+     * 
+     * @param aabbMin the minimum corner of the aabb
+     * @param aabbMax the maximum corner of the aabb
+     * @returns true if it intersected, false otherwise
+     */
+    intersect_spline_aabb(aabbMin: vec2, aabbMax: vec2): boolean {
         const conversion: vec2 = divide(scale(this.b, -1), scale(this.a, 3));
 
         const t1 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabbMin)));
@@ -101,11 +106,21 @@ class Spline {
 
         this.calculate_near_far(t1, t2, aabbMin, aabbMax, this.ts);
 
-        this.intersection = this.ts.x <= this.ts.y && this.ts.y >= 0;
-        this.entry = this.position_on_spline(this.ts.x);
-        this.exit  = this.position_on_spline(this.ts.y);
+        return this.ts.x <= this.ts.y && this.ts.y >= 0;
     }
 
+    /**
+     * Calculates the closest to and furthest from 0 intersection points with the aabb.
+     * 
+     * @param t1 the first two `t` values, usually computed by intersecting with the
+     * minimum corner of the aabb
+     * @param t2 the second two `t` values, usually computed by intersecting with the
+     * maximum corner of the aabb
+     * @param aabbMin the minimum bounds of the aabb
+     * @param aabbMax the maximum bounds of the aabb
+     * @param ts object in which the results are stored, `x` will contain the nearest
+     * intersection `t`, `y` the furthest
+     */
     private calculate_near_far(t1: vec2, t2: vec2, aabbMin: vec2, aabbMax: vec2, ts: vec2): void {
         const it1 = this.intersected_aabb(t1, aabbMin, aabbMax);
         const it2 = this.intersected_aabb(t2, aabbMin, aabbMax);
@@ -123,6 +138,17 @@ class Spline {
         ts.y = max(ifar.x,  ifar.y);
     }
 
+    /**
+     * Determines if the point at time `t` on the spline intersects with the
+     * aabb described by a min and max corner.
+     * A return value of 0 indicates no intersection, while 1 indicates that
+     * there is an intersection.
+     * 
+     * @param t interpolation values, range from 0 to 1
+     * @param aabbMin the minimum bounds of the aabb
+     * @param aabbMax the maximum bounds of the aabb
+     * @returns a vector with 0 or 1 for each of the two `t` values.
+     */
     private intersected_aabb(t: vec2, aabbMin: vec2, aabbMax: vec2): vec2 {
         const P0 = this.position_on_spline(t.x);
         const P1 = this.position_on_spline(t.y);
