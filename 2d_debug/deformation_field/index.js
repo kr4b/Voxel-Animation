@@ -1,4 +1,4 @@
-import { add, vec2 } from "./out/vec2.js";
+import { add, divide, multiply, subtract, vec2 } from "./out/vec2.js";
 import Spline from "./out/spline.js";
 
 const { atan2, cos, PI, sin, sqrt } = Math;
