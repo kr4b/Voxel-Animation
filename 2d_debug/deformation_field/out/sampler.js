@@ -9,7 +9,7 @@ var Sampler = /** @class */ (function () {
         this.make_spline = make_spline;
     }
     Sampler.prototype.get = function (ray, samplePos) {
-        var index = (this.size - 1) * (Math.floor(samplePos.y * this.size) + Math.floor(samplePos.x));
+        var index = Math.floor((this.size - 1) * (samplePos.y * this.size + samplePos.x));
         if (index < 0 || index >= this.data.length || !this.sampler[index]) {
             return null;
         }

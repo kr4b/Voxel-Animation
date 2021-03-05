@@ -22,7 +22,7 @@ class Sampler<T> {
   }
 
   get(ray: Ray, samplePos: vec2): Spline | null {
-    const index: number = (this.size - 1) * (Math.floor(samplePos.y * this.size) + Math.floor(samplePos.x));
+    const index: number = Math.floor((this.size - 1) * (samplePos.y * this.size + samplePos.x));
     if (index < 0 || index >= this.data.length || !this.sampler[index]) {
       return null;
     }

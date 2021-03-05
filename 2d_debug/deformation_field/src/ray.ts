@@ -52,7 +52,7 @@ class Ray {
   intersect_ray_sampler<T>(sampler: Sampler<T>): Spline | null {
     const ts: vec2 = this.intersect_ray_aabb(sampler.aabbMin, sampler.aabbMax);
 
-    if (ts.x <= ts.y && ts.y > 0.0) {
+    if (ts.x <= ts.y && ts.y >= 0.0) {
       if (ts.x < 0.0) {
         ts.x = 0.0;
       }

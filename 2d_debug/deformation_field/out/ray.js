@@ -33,7 +33,7 @@ var Ray = /** @class */ (function () {
     /// Intersection of this ray with the given sampler and AABB
     Ray.prototype.intersect_ray_sampler = function (sampler) {
         var ts = this.intersect_ray_aabb(sampler.aabbMin, sampler.aabbMax);
-        if (ts.x <= ts.y && ts.y > 0.0) {
+        if (ts.x <= ts.y && ts.y >= 0.0) {
             if (ts.x < 0.0) {
                 ts.x = 0.0;
             }
