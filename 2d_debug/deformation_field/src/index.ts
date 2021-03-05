@@ -1,9 +1,10 @@
-import { add, divide, multiply, subtract, vec2 } from "./out/vec2.js";
-import Spline from "./out/spline.js";
+import Spline from "./spline.js";
+import { vec2 } from "./vec2.js";
 
 const { atan2, cos, PI, sin, sqrt } = Math;
 
-let ctx;
+let canvas: HTMLCanvasElement;
+let ctx: CanvasRenderingContext2D;
 const halfFieldOfView = PI / 3;
 let camera_position = vec2(-3, 0);
 let camera_rotation = atan2(3, -0);
@@ -12,7 +13,8 @@ const aabbMin = vec2(-0.15, -0.15);
 const aabbMax = vec2(0.15, 0.15);
 
 onload = () => {
-    ctx = canvas.getContext("2d");
+    canvas = <HTMLCanvasElement> document.getElementById("canvas");
+    ctx = <CanvasRenderingContext2D> canvas.getContext("2d");
     canvas.width = 400;
     canvas.height = 400;
 
@@ -20,18 +22,15 @@ onload = () => {
     ctx.translate(1, 1);
     ctx.lineWidth = 0.0075;
 
-    render();
-}
+    canvas.onmousemove = e => {
+        const x = e.pageX / canvas.width * 2 - 1;
+        const y = e.pageY / canvas.height * 2 - 1;
 
-let alpha = 0;
-canvas.onmousemove = e => {
-    const x = e.pageX / canvas.width * 2 - 1;
-    const y = e.pageY / canvas.height * 2 - 1;
+        camera_position = vec2(x, y);
+        camera_rotation = atan2(-y, -x);
 
-    camera_position = vec2(x, y);
-    camera_rotation = atan2(-y, -x);
-
-    alpha += 0.05;
+        render();
+    }
 
     render();
 }
@@ -39,7 +38,6 @@ canvas.onmousemove = e => {
 function render() {
     ctx.clearRect(-1, -1, 2, 2);
 
-    let K = 0;
     for (let i = -halfFieldOfView; i < halfFieldOfView; i += 0.1) {
         const P1 = camera_position;
         const direction = vec2(cos(camera_rotation + i), sin(camera_rotation + i));
