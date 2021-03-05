@@ -9,9 +9,17 @@ class Sampler<T> {
   data:    Array<T>;
   colors:  Array<[number, number, number]>;
   size:    number;
-  make_spline: { (ray: Ray, t: T): Spline };
+  make_spline: { (ray: Ray, t: T, c: [number, number, number]): Spline };
 
-  constructor(aabbMin: vec2, aabbMax: vec2, sampler: Array<boolean>, data: Array<T>, colors: Array<[number, number, number]>, size: number, make_spline: { (ray: Ray, t: T): Spline }) {
+  constructor(
+    aabbMin: vec2,
+    aabbMax: vec2,
+    sampler: Array<boolean>,
+    data: Array<T>,
+    colors: Array<[number, number, number]>,
+    size: number,
+    make_spline: { (ray: Ray, t: T, c: [number, number, number]): Spline }
+  ) {
     this.aabbMin = aabbMin;
     this.aabbMax = aabbMax;
     this.sampler = sampler;
@@ -22,12 +30,14 @@ class Sampler<T> {
   }
 
   get(ray: Ray, samplePos: vec2): Spline | null {
-    const index: number = Math.floor((this.size - 1) * (samplePos.y * this.size + samplePos.x));
+    const x: number = Math.round((this.size - 1) * samplePos.x);
+    const y: number = Math.round((this.size - 1) * samplePos.y);
+    const index: number = y * this.size + x;
     if (index < 0 || index >= this.data.length || !this.sampler[index]) {
       return null;
     }
 
-    return this.make_spline(ray, this.data[index]);
+    return this.make_spline(ray, this.data[index], this.colors[index]);
   }
 
   draw(ctx: CanvasRenderingContext2D) {

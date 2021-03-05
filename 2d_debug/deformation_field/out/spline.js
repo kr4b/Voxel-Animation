@@ -6,6 +6,7 @@ var MAX_VALUE = vec2(1e6, 1e6);
 var MIN_VALUE = scale(MAX_VALUE, -1);
 var Spline = /** @class */ (function () {
     function Spline(a, b, c, d) {
+        this.color = [0, 0, 0];
         this.ts = vec2(0, 0);
         this.a = a;
         this.b = b;
@@ -38,7 +39,8 @@ var Spline = /** @class */ (function () {
     Spline.prototype.draw = function (ctx, step) {
         if (step === void 0) { step = 0.01; }
         var t = 0, tt, ttt;
-        ctx.globalAlpha = 0.2;
+        ctx.globalAlpha = 0.5;
+        ctx.strokeStyle = "rgb(" + this.color[0] + "," + this.color[1] + "," + this.color[2] + ")";
         ctx.beginPath();
         ctx.moveTo(this.d.x, this.d.y);
         for (t = step; t < 1; t += step) {
@@ -56,10 +58,14 @@ var Spline = /** @class */ (function () {
         }
         ctx.stroke();
         ctx.setLineDash([]);
+        ctx.strokeStyle = "black";
         ctx.globalAlpha = 1;
     };
     Spline.prototype.position_on_spline = function (t) {
         return add(scale(this.a, t * t * t), scale(this.b, t * t), scale(this.c, t), copy(this.d));
+    };
+    Spline.prototype.set_color = function (color) {
+        this.color = color;
     };
     /**
      * Find out if the spline intersects with the aabb described by its minimum and

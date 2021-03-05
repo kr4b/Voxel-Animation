@@ -16,12 +16,14 @@ onload = function () {
     ctx = canvas.getContext("2d");
     canvas.width = 400;
     canvas.height = 400;
-    sampler = new Sampler(aabbMin, aabbMax, [true, true, true, true], [[0, 1], [1, 0], [-1, 0], [0, -1]], [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0]], 2, function (ray, t) {
+    sampler = new Sampler(aabbMin, aabbMax, [true, true, true, true], [[0, 1], [1, 0], [-1, 0], [0, -1]], [[255, 0, 0], [0, 255, 0], [0, 0, 255], [200, 200, 0]], 2, function (ray, t, c) {
         var P1 = ray.origin;
         var P2 = add(P1, ray.dir);
         var P0 = vec2(t[0], t[1]);
         var P3 = vec2(0.0, 0.0);
-        return Spline.with_tangents(P1, P2, P0, P3);
+        var spline = Spline.with_tangents(P1, P2, P0, P3);
+        spline.set_color(c);
+        return spline;
     });
     ctx.scale(canvas.width / 2, canvas.height / 2);
     ctx.translate(1, 1);

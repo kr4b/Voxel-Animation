@@ -9,11 +9,13 @@ var Sampler = /** @class */ (function () {
         this.make_spline = make_spline;
     }
     Sampler.prototype.get = function (ray, samplePos) {
-        var index = Math.floor((this.size - 1) * (samplePos.y * this.size + samplePos.x));
+        var x = Math.round((this.size - 1) * samplePos.x);
+        var y = Math.round((this.size - 1) * samplePos.y);
+        var index = y * this.size + x;
         if (index < 0 || index >= this.data.length || !this.sampler[index]) {
             return null;
         }
-        return this.make_spline(ray, this.data[index]);
+        return this.make_spline(ray, this.data[index], this.colors[index]);
     };
     Sampler.prototype.draw = function (ctx) {
         var width = (this.aabbMax.x - this.aabbMin.x) / this.size;

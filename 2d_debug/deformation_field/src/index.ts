@@ -26,16 +26,18 @@ onload = () => {
         aabbMax,
         [true, true, true, true],
         [[0, 1], [1, 0], [-1, 0], [0, -1]],
-        [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0]],
+        [[255, 0, 0], [0, 255, 0], [0, 0, 255], [200, 200, 0]],
         2,
-        (ray, t) => {
+        (ray: Ray, t: [number, number], c: [number, number, number]) => {
             const P1 = ray.origin;
             const P2 = add(P1, ray.dir);
 
             const P0 = vec2(t[0], t[1]);
             const P3 = vec2(0.0, 0.0);
 
-            return Spline.with_tangents(P1, P2, P0, P3);
+            const spline = Spline.with_tangents(P1, P2, P0, P3);
+            spline.set_color(c);
+            return spline;
         }
     );
 
