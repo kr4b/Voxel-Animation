@@ -5,21 +5,6 @@ var Ray = /** @class */ (function () {
         this.origin = origin;
         this.dir = dir;
     }
-    Ray.prototype.draw_point_at = function (ctx, t) {
-        var point = add(this.origin, scale(this.dir, t));
-        ctx.beginPath();
-        ctx.arc(Math.max(-ctx.canvas.width / 2, Math.min(ctx.canvas.width / 2, point.x)), Math.max(-ctx.canvas.height / 2, Math.min(ctx.canvas.height / 2, point.y)), 0.02, 0.0, 2.0 * Math.PI);
-        ctx.fill();
-    };
-    Ray.prototype.draw = function (ctx) {
-        var end = add(this.origin, this.dir);
-        ctx.globalAlpha = 0.2;
-        ctx.beginPath();
-        ctx.moveTo(this.origin.x, this.origin.y);
-        ctx.lineTo(end.x, end.y);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-    };
     /// Intersection of this ray with the given AABB
     Ray.prototype.intersect_ray_aabb = function (aabbMin, aabbMax) {
         var t1 = divide(subtract(aabbMin, this.origin), this.dir);
