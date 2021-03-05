@@ -9,6 +9,8 @@
 
 #include <flux/std/throw.hpp>
 
+#include <iostream>
+
 //--//////////////////////////////////////////////////////////////////////////
 //--    >>> namespace = flux::gl >>>                ///{{{1///////////////////
 FLUX_NAMESPACE_ENTER1(gl)
@@ -19,6 +21,11 @@ namespace detail
 	void throw_gl_checkpoint_error( char const* aFile, char const* aFunc, int aLine, int aErrNum )
 	{
 		//TODO: log the error as well??
+
+        std::cout << aFile << ", "
+            << aLine << ", "
+            << aFunc << ", "
+            << make_gl_error(aErrNum) << std::endl;
 		
 		FLUX_THROW( gl::error::GLCheckpoint )
 			<< einfo::SourceFile( aFile )

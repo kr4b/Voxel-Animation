@@ -94,6 +94,7 @@
     <ClInclude Include="defaults.hpp" />
     <ClInclude Include="depressed_cubic.hpp" />
     <ClInclude Include="spline.hpp" />
+    <ClInclude Include="spline_source.hpp" />
     <ClInclude Include="startup.hpp" />
     <ClInclude Include="volume.hpp" />
   </ItemGroup>
@@ -102,6 +103,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="miniz.c" />
     <ClCompile Include="spline.cpp" />
+    <ClCompile Include="spline_source.cpp" />
     <ClCompile Include="startup.cpp" />
     <ClCompile Include="volume.cpp" />
   </ItemGroup>
