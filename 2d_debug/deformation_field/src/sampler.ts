@@ -23,7 +23,7 @@ class Sampler<T> {
 
   get(ray: Ray, samplePos: vec2): Spline | null {
     const index: number = (this.size - 1) * (Math.floor(samplePos.y * (this.size - 1)) + Math.floor(samplePos.x));
-    if (index < 0 || index >= this.data.length || this.sampler[index]) {
+    if (index < 0 || index >= this.data.length || !this.sampler[index]) {
       return null;
     }
 
@@ -31,20 +31,17 @@ class Sampler<T> {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    const image: ImageData         = ctx.createImageData(this.size, this.size);
-    const data:  Uint8ClampedArray = image.data;
-
+    const width:  number = (this.aabbMax.x - this.aabbMin.x) / this.size;
+    const height: number = (this.aabbMax.y - this.aabbMin.y) / this.size;
     for (let i = 0; i < this.size; i++) {
       for (let j = 0; j < this.size; j++) {
         const color: [number, number, number] = this.colors[i * this.size + j];
 
-        for (let k = 0; k < 3; k++) {
-          data[(i * this.size + j) * 3 + k] = color[k];
-        }
+        ctx.fillStyle = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
+        ctx.fillRect(this.aabbMin.x + width * j, this.aabbMin.y + height * i, width, height);
+        ctx.fillStyle = "black";
       }
     }
-
-    ctx.putImageData(image, this.aabbMin.x, this.aabbMin.y);
   }
 }
 

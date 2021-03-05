@@ -13,7 +13,7 @@ var Ray = /** @class */ (function () {
     };
     Ray.prototype.draw = function (ctx) {
         var end = add(this.origin, this.dir);
-        ctx.globalAlpha = 0.2;
+        ctx.globalAlpha = 0.05;
         ctx.beginPath();
         ctx.moveTo(this.origin.x, this.origin.y);
         ctx.lineTo(end.x, end.y);

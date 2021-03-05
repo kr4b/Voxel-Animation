@@ -16,10 +16,9 @@ onload = function () {
     ctx = canvas.getContext("2d");
     canvas.width = 400;
     canvas.height = 400;
-    sampler = new Sampler(aabbMin, aabbMax, [true, true, true, true], [[0, 0], [0, 0], [-0, 0], [0, -0]], [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0]], 2, function (ray, t) {
+    sampler = new Sampler(aabbMin, aabbMax, [true, true, true, true], [[0, 1], [1, 0], [-1, 0], [0, -1]], [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0]], 2, function (ray, t) {
         var P1 = ray.origin;
-        var distance = sqrt(Math.pow(P1.x, 2) + Math.pow(P1.y, 2)) * 2;
-        var P2 = add(P1, scale(ray.dir, distance));
+        var P2 = add(P1, ray.dir);
         var P0 = vec2(t[0], t[1]);
         var P3 = vec2(0.0, 0.0);
         return Spline.with_tangents(P1, P2, P0, P3);
@@ -38,10 +37,14 @@ onload = function () {
 };
 function render() {
     ctx.clearRect(-1, -1, 2, 2);
+    sampler.draw(ctx);
     for (var i = -halfFieldOfView; i < halfFieldOfView; i += 0.1) {
+        var distance = sqrt(Math.pow(camera_position.x, 2) + Math.pow(camera_position.y, 2)) * 2;
         var direction = vec2(cos(camera_rotation + i), sin(camera_rotation + i));
-        var ray = new Ray(camera_position, direction);
-        sampler.draw(ctx);
+        var ray = new Ray(camera_position, scale(direction, distance));
+        ctx.strokeStyle = "green";
+        ray.draw(ctx);
+        ctx.strokeStyle = "black";
         ctx.strokeStyle = "gray";
         ctx.strokeRect(-canvas.width / 2, aabbMin.x, canvas.width, aabbMax.x - aabbMin.x);
         ctx.strokeRect(aabbMin.y, -canvas.height / 2, aabbMax.y - aabbMin.y, canvas.height);

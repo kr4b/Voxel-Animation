@@ -25,13 +25,12 @@ onload = () => {
         aabbMin,
         aabbMax,
         [true, true, true, true],
-        [[0, 0], [0, 0], [-0, 0], [0, -0]],
+        [[0, 1], [1, 0], [-1, 0], [0, -1]],
         [[255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 0]],
         2,
         (ray, t) => {
             const P1 = ray.origin;
-            const distance = sqrt(P1.x ** 2 + P1.y ** 2) * 2;
-            const P2 = add(P1, scale(ray.dir, distance));
+            const P2 = add(P1, ray.dir);
 
             const P0 = vec2(t[0], t[1]);
             const P3 = vec2(0.0, 0.0);
@@ -59,12 +58,17 @@ onload = () => {
 
 function render() {
     ctx.clearRect(-1, -1, 2, 2);
+    sampler.draw(ctx);
 
     for (let i = -halfFieldOfView; i < halfFieldOfView; i += 0.1) {
-        const direction: vec2 = vec2(cos(camera_rotation + i), sin(camera_rotation + i));
-        const ray:       Ray  = new Ray(camera_position, direction);
+        const distance:  number = sqrt(camera_position.x ** 2 + camera_position.y ** 2) * 2;
+        const direction: vec2   = vec2(cos(camera_rotation + i), sin(camera_rotation + i));
+        const ray:       Ray    = new Ray(camera_position, scale(direction, distance));
 
-        sampler.draw(ctx);
+        ctx.strokeStyle = "green";
+        ray.draw(ctx);
+        ctx.strokeStyle = "black";
+
         ctx.strokeStyle = "gray";
         ctx.strokeRect(-canvas.width / 2, aabbMin.x, canvas.width, aabbMax.x - aabbMin.x);
         ctx.strokeRect(aabbMin.y, -canvas.height / 2, aabbMax.y - aabbMin.y, canvas.height);

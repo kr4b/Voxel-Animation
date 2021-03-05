@@ -10,23 +10,22 @@ var Sampler = /** @class */ (function () {
     }
     Sampler.prototype.get = function (ray, samplePos) {
         var index = (this.size - 1) * (Math.floor(samplePos.y * (this.size - 1)) + Math.floor(samplePos.x));
-        if (index < 0 || index >= this.data.length || this.sampler[index]) {
+        if (index < 0 || index >= this.data.length || !this.sampler[index]) {
             return null;
         }
         return this.make_spline(ray, this.data[index]);
     };
     Sampler.prototype.draw = function (ctx) {
-        var image = ctx.createImageData(this.size, this.size);
-        var data = image.data;
+        var width = (this.aabbMax.x - this.aabbMin.x) / this.size;
+        var height = (this.aabbMax.y - this.aabbMin.y) / this.size;
         for (var i = 0; i < this.size; i++) {
             for (var j = 0; j < this.size; j++) {
                 var color = this.colors[i * this.size + j];
-                for (var k = 0; k < 3; k++) {
-                    data[(i * this.size + j) * 3 + k] = color[k];
-                }
+                ctx.fillStyle = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
+                ctx.fillRect(this.aabbMin.x + width * j, this.aabbMin.y + height * i, width, height);
+                ctx.fillStyle = "black";
             }
         }
-        ctx.putImageData(image, this.aabbMin.x, this.aabbMin.y);
     };
     return Sampler;
 }());
