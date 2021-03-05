@@ -1,4 +1,4 @@
-import { add, divide, max, min, mix, scale, subtract, vec2 } from "./vec2";
+import { add, divide, max, min, mix, scale, subtract, vec2 } from "./vec2.js";
 var VOLUME_STEPS = 1024;
 var Ray = /** @class */ (function () {
     function Ray(origin, dir) {

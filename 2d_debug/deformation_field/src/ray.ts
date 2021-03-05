@@ -1,5 +1,5 @@
 import { Sampler } from "./sampler.js";
-import { add, divide, max, min, mix, scale, subtract, vec2 } from "./vec2"
+import { add, divide, max, min, mix, scale, subtract, vec2 } from "./vec2.js"
 
 const VOLUME_STEPS: number = 1024;
 
