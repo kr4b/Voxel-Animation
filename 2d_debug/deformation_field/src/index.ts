@@ -62,20 +62,24 @@ onload = () => {
 function render() {
     ctx.clearRect(-1, -1, 2, 2);
     sampler.draw(ctx);
+    const rays: boolean = (document.querySelector("#rays") as HTMLInputElement).checked;
+    const splines: boolean = (document.querySelector("#splines") as HTMLInputElement).checked;
 
     for (let i = -halfFieldOfView; i < halfFieldOfView; i += 0.1) {
         const distance:  number = sqrt(camera_position.x ** 2 + camera_position.y ** 2) * 2;
         const direction: vec2   = vec2(cos(camera_rotation + i), sin(camera_rotation + i));
         const ray:       Ray    = new Ray(camera_position, scale(direction, distance));
 
-        ctx.strokeStyle = "green";
-        ray.draw(ctx);
-        ctx.strokeStyle = "black";
+        if (rays) {
+            ctx.strokeStyle = "green";
+            ray.draw(ctx);
+            ctx.strokeStyle = "black";
+        }
 
         const spline: Spline | null = ray.intersect_ray_sampler(sampler);
         const result: boolean | undefined = spline?.intersect_spline_aabb(sampler.realAABB);
 
-        if (spline != null) {
+        if (splines && spline != null) {
             spline.draw(ctx);
         }
 

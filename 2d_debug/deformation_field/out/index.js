@@ -41,16 +41,20 @@ onload = function () {
 function render() {
     ctx.clearRect(-1, -1, 2, 2);
     sampler.draw(ctx);
+    var rays = document.querySelector("#rays").checked;
+    var splines = document.querySelector("#splines").checked;
     for (var i = -halfFieldOfView; i < halfFieldOfView; i += 0.1) {
         var distance = sqrt(Math.pow(camera_position.x, 2) + Math.pow(camera_position.y, 2)) * 2;
         var direction = vec2(cos(camera_rotation + i), sin(camera_rotation + i));
         var ray = new Ray(camera_position, scale(direction, distance));
-        ctx.strokeStyle = "green";
-        ray.draw(ctx);
-        ctx.strokeStyle = "black";
+        if (rays) {
+            ctx.strokeStyle = "green";
+            ray.draw(ctx);
+            ctx.strokeStyle = "black";
+        }
         var spline = ray.intersect_ray_sampler(sampler);
         var result = spline === null || spline === void 0 ? void 0 : spline.intersect_spline_aabb(sampler.realAABB);
-        if (spline != null) {
+        if (splines && spline != null) {
             spline.draw(ctx);
         }
         if (result) {

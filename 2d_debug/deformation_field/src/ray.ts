@@ -28,7 +28,7 @@ class Ray {
   draw(ctx: CanvasRenderingContext2D): void {
     const end: vec2 = add(this.origin, this.dir);
 
-    ctx.globalAlpha = 0.05;
+    ctx.globalAlpha = 0.2;
     ctx.beginPath();
     ctx.moveTo(this.origin.x, this.origin.y);
     ctx.lineTo(end.x, end.y);
