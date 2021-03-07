@@ -1,3 +1,4 @@
+import { AABB } from "./aabb.js";
 import { Ray } from "./ray.js";
 import { Sampler } from "./sampler.js";
 import Spline from "./spline.js";
@@ -22,8 +23,8 @@ onload = () => {
     canvas.height = 400;
 
     sampler = new Sampler(
-        aabbMin,
-        aabbMax,
+        new AABB(scale(aabbMin, 2), scale(aabbMax, 2)),
+        new AABB(aabbMin, aabbMax),
         [true, true, true, true],
         [[0, 1], [1, 0], [-1, 0], [0, -1]],
         [[255, 0, 0], [0, 255, 0], [0, 0, 255], [200, 200, 0]],
@@ -71,13 +72,8 @@ function render() {
         ray.draw(ctx);
         ctx.strokeStyle = "black";
 
-        ctx.strokeStyle = "gray";
-        ctx.strokeRect(-canvas.width / 2, aabbMin.x, canvas.width, aabbMax.x - aabbMin.x);
-        ctx.strokeRect(aabbMin.y, -canvas.height / 2, aabbMax.y - aabbMin.y, canvas.height);
-        ctx.strokeStyle = "black";
-
         const spline: Spline | null = ray.intersect_ray_sampler(sampler);
-        const result: boolean | undefined = spline?.intersect_spline_aabb(sampler.aabbMin, sampler.aabbMax);
+        const result: boolean | undefined = spline?.intersect_spline_aabb(sampler.realAABB);
 
         if (spline != null) {
             spline.draw(ctx);
@@ -90,4 +86,9 @@ function render() {
             ctx.fillStyle = "black";
         }
     }
+
+    ctx.strokeStyle = "gray";
+    ctx.strokeRect(-canvas.width / 2, sampler.realAABB.min.x, canvas.width, sampler.realAABB.size().x);
+    ctx.strokeRect(sampler.realAABB.min.y, -canvas.height / 2, sampler.realAABB.size().y, canvas.height);
+    ctx.strokeStyle = "black";
 }

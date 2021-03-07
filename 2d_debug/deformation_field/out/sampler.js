@@ -1,7 +1,7 @@
 var Sampler = /** @class */ (function () {
-    function Sampler(aabbMin, aabbMax, sampler, data, colors, size, make_spline) {
-        this.aabbMin = aabbMin;
-        this.aabbMax = aabbMax;
+    function Sampler(samplerAABB, realAABB, sampler, data, colors, size, make_spline) {
+        this.samplerAABB = samplerAABB;
+        this.realAABB = realAABB;
         this.sampler = sampler;
         this.data = data;
         this.colors = colors;
@@ -18,13 +18,14 @@ var Sampler = /** @class */ (function () {
         return this.make_spline(ray, this.data[index], this.colors[index]);
     };
     Sampler.prototype.draw = function (ctx) {
-        var width = (this.aabbMax.x - this.aabbMin.x) / this.size;
-        var height = (this.aabbMax.y - this.aabbMin.y) / this.size;
+        var size = this.samplerAABB.size();
+        var width = size.x / this.size;
+        var height = size.y / this.size;
         for (var i = 0; i < this.size; i++) {
             for (var j = 0; j < this.size; j++) {
                 var color = this.colors[i * this.size + j];
                 ctx.fillStyle = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
-                ctx.fillRect(this.aabbMin.x + width * j, this.aabbMin.y + height * i, width, height);
+                ctx.fillRect(this.samplerAABB.min.x + width * j, this.samplerAABB.min.y + height * i, width, height);
                 ctx.fillStyle = "black";
             }
         }

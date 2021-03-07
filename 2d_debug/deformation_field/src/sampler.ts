@@ -1,10 +1,11 @@
 import { Ray } from "./ray.js";
 import Spline from "./spline.js";
 import { vec2 } from "./vec2.js";
+import { AABB } from "./aabb.js"
 
 class Sampler<T> {
-  aabbMin: vec2;
-  aabbMax: vec2;
+  samplerAABB: AABB;
+  realAABB: AABB;
   sampler: Array<boolean>;
   data:    Array<T>;
   colors:  Array<[number, number, number]>;
@@ -12,16 +13,16 @@ class Sampler<T> {
   make_spline: { (ray: Ray, t: T, c: [number, number, number]): Spline };
 
   constructor(
-    aabbMin: vec2,
-    aabbMax: vec2,
+    samplerAABB: AABB,
+    realAABB: AABB,
     sampler: Array<boolean>,
     data: Array<T>,
     colors: Array<[number, number, number]>,
     size: number,
     make_spline: { (ray: Ray, t: T, c: [number, number, number]): Spline }
   ) {
-    this.aabbMin = aabbMin;
-    this.aabbMax = aabbMax;
+    this.samplerAABB = samplerAABB;
+    this.realAABB = realAABB;
     this.sampler = sampler;
     this.data    = data;
     this.colors  = colors;
@@ -41,14 +42,16 @@ class Sampler<T> {
   }
 
   draw(ctx: CanvasRenderingContext2D) {
-    const width:  number = (this.aabbMax.x - this.aabbMin.x) / this.size;
-    const height: number = (this.aabbMax.y - this.aabbMin.y) / this.size;
+    const size: vec2 = this.samplerAABB.size();
+    const width:  number = size.x / this.size;
+    const height: number = size.y / this.size;
+
     for (let i = 0; i < this.size; i++) {
       for (let j = 0; j < this.size; j++) {
         const color: [number, number, number] = this.colors[i * this.size + j];
 
         ctx.fillStyle = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
-        ctx.fillRect(this.aabbMin.x + width * j, this.aabbMin.y + height * i, width, height);
+        ctx.fillRect(this.samplerAABB.min.x + width * j, this.samplerAABB.min.y + height * i, width, height);
         ctx.fillStyle = "black";
       }
     }

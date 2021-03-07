@@ -1,3 +1,4 @@
+import { AABB } from "./aabb.js";
 import { Sampler } from "./sampler.js";
 import Spline from "./spline.js";
 import { add, divide, max, min, mix, scale, subtract, vec2 } from "./vec2.js"
@@ -36,9 +37,9 @@ class Ray {
   }
 
   /// Intersection of this ray with the given AABB
-  intersect_ray_aabb(aabbMin: vec2, aabbMax: vec2): vec2 {
-    const t1: vec2 = divide(subtract(aabbMin, this.origin), this.dir);
-    const t2: vec2 = divide(subtract(aabbMax, this.origin), this.dir);
+  intersect_ray_aabb(aabb: AABB): vec2 {
+    const t1: vec2 = divide(subtract(aabb.min, this.origin), this.dir);
+    const t2: vec2 = divide(subtract(aabb.max, this.origin), this.dir);
     
     const mins: vec2 = min(t1, t2);
     const maxs: vec2 = max(t1, t2);
@@ -50,7 +51,7 @@ class Ray {
 
   /// Intersection of this ray with the given sampler and AABB
   intersect_ray_sampler<T>(sampler: Sampler<T>): Spline | null {
-    const ts: vec2 = this.intersect_ray_aabb(sampler.aabbMin, sampler.aabbMax);
+    const ts: vec2 = this.intersect_ray_aabb(sampler.samplerAABB);
 
     if (ts.x <= ts.y && ts.y >= 0.0) {
       if (ts.x < 0.0) {
@@ -60,9 +61,9 @@ class Ray {
       const worldEntry: vec2 = add(this.origin, scale(this.dir, ts.x));
       const worldExit:  vec2 = add(this.origin, scale(this.dir, ts.y));
 
-      const vscale: vec2 = subtract(sampler.aabbMax, sampler.aabbMin);
-      const ventry: vec2 = divide(subtract(worldEntry, sampler.aabbMin), vscale);
-      const vexit:  vec2 = divide(subtract(worldExit,  sampler.aabbMax), vscale);
+      const vscale: vec2 = sampler.samplerAABB.size();
+      const ventry: vec2 = divide(subtract(worldEntry, sampler.samplerAABB.min), vscale);
+      const vexit:  vec2 = divide(subtract(worldExit,  sampler.samplerAABB.max), vscale);
 
       // Walk the ray from entry to exit to determine the intersection point
       for (let i = 0; i < VOLUME_STEPS; i++) {

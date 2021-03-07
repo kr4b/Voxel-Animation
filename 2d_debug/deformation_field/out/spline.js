@@ -35,6 +35,7 @@ var Spline = /** @class */ (function () {
         ctx.beginPath();
         ctx.arc(max(-ctx.canvas.width / 2, min(ctx.canvas.width / 2, point.x)), max(-ctx.canvas.height / 2, min(ctx.canvas.height / 2, point.y)), 0.02, 0.0, 2.0 * PI);
         ctx.fill();
+        ctx.stroke();
     };
     Spline.prototype.draw = function (ctx, step) {
         if (step === void 0) { step = 0.01; }
@@ -68,18 +69,16 @@ var Spline = /** @class */ (function () {
         this.color = color;
     };
     /**
-     * Find out if the spline intersects with the aabb described by its minimum and
-     * maximum corners.
+     * Find out if the spline intersects with the AABB.
      *
-     * @param aabbMin the minimum corner of the aabb
-     * @param aabbMax the maximum corner of the aabb
+     * @param aabb the AABB of this
      * @returns true if it intersected, false otherwise
      */
-    Spline.prototype.intersect_spline_aabb = function (aabbMin, aabbMax) {
+    Spline.prototype.intersect_spline_aabb = function (aabb) {
         var conversion = divide(scale(this.b, -1), scale(this.a, 3));
-        var t1 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabbMin)));
-        var t2 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabbMax)));
-        this.calculate_near_far(t1, t2, aabbMin, aabbMax, this.ts);
+        var t1 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabb.min)));
+        var t2 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabb.max)));
+        this.calculate_near_far(t1, t2, aabb.min, aabb.max, this.ts);
         return this.ts.x <= this.ts.y && this.ts.y >= 0;
     };
     /**

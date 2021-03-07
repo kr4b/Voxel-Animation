@@ -1,3 +1,4 @@
+import { AABB } from "./aabb.js";
 import DepressedCubic from "./depressed_cubic.js";
 import { add, copy, divide, multiply, scale, step, subtract, vec2 } from "./vec2.js";
 
@@ -56,6 +57,7 @@ class Spline {
             max(-ctx.canvas.height / 2, min(ctx.canvas.height / 2, point.y)),
             0.02, 0.0, 2.0 * PI);
         ctx.fill();
+        ctx.stroke();
     }
 
     draw(ctx: CanvasRenderingContext2D, step: number = 0.01): void {
@@ -100,20 +102,18 @@ class Spline {
     }
 
     /**
-     * Find out if the spline intersects with the aabb described by its minimum and
-     * maximum corners.
+     * Find out if the spline intersects with the AABB.
      * 
-     * @param aabbMin the minimum corner of the aabb
-     * @param aabbMax the maximum corner of the aabb
+     * @param aabb the AABB of this
      * @returns true if it intersected, false otherwise
      */
-    intersect_spline_aabb(aabbMin: vec2, aabbMax: vec2): boolean {
+    intersect_spline_aabb(aabb: AABB): boolean {
         const conversion: vec2 = divide(scale(this.b, -1), scale(this.a, 3));
 
-        const t1 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabbMin)));
-        const t2 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabbMax)));
+        const t1 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabb.min)));
+        const t2 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabb.max)));
 
-        this.calculate_near_far(t1, t2, aabbMin, aabbMax, this.ts);
+        this.calculate_near_far(t1, t2, aabb.min, aabb.max, this.ts);
 
         return this.ts.x <= this.ts.y && this.ts.y >= 0;
     }

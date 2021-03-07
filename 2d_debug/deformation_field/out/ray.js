@@ -21,9 +21,9 @@ var Ray = /** @class */ (function () {
         ctx.globalAlpha = 1;
     };
     /// Intersection of this ray with the given AABB
-    Ray.prototype.intersect_ray_aabb = function (aabbMin, aabbMax) {
-        var t1 = divide(subtract(aabbMin, this.origin), this.dir);
-        var t2 = divide(subtract(aabbMax, this.origin), this.dir);
+    Ray.prototype.intersect_ray_aabb = function (aabb) {
+        var t1 = divide(subtract(aabb.min, this.origin), this.dir);
+        var t2 = divide(subtract(aabb.max, this.origin), this.dir);
         var mins = min(t1, t2);
         var maxs = max(t1, t2);
         var near = Math.max(mins.x, mins.y);
@@ -32,16 +32,16 @@ var Ray = /** @class */ (function () {
     };
     /// Intersection of this ray with the given sampler and AABB
     Ray.prototype.intersect_ray_sampler = function (sampler) {
-        var ts = this.intersect_ray_aabb(sampler.aabbMin, sampler.aabbMax);
+        var ts = this.intersect_ray_aabb(sampler.samplerAABB);
         if (ts.x <= ts.y && ts.y >= 0.0) {
             if (ts.x < 0.0) {
                 ts.x = 0.0;
             }
             var worldEntry = add(this.origin, scale(this.dir, ts.x));
             var worldExit = add(this.origin, scale(this.dir, ts.y));
-            var vscale = subtract(sampler.aabbMax, sampler.aabbMin);
-            var ventry = divide(subtract(worldEntry, sampler.aabbMin), vscale);
-            var vexit = divide(subtract(worldExit, sampler.aabbMax), vscale);
+            var vscale = sampler.samplerAABB.size();
+            var ventry = divide(subtract(worldEntry, sampler.samplerAABB.min), vscale);
+            var vexit = divide(subtract(worldExit, sampler.samplerAABB.max), vscale);
             // Walk the ray from entry to exit to determine the intersection point
             for (var i = 0; i < VOLUME_STEPS; i++) {
                 var ii = i / VOLUME_STEPS;
