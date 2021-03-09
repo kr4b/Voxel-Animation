@@ -18,9 +18,13 @@ class Sampler<T> {
     sampler: Array<boolean>,
     data: Array<T>,
     colors: Array<[number, number, number]>,
-    size: number,
     make_spline: { (ray: Ray, t: T, c: [number, number, number]): Spline }
   ) {
+    console.assert(data.length == sampler.length, "Check if the sampler length is correct");
+    console.assert(data.length == colors.length, "Check if the colors length is correct");
+    let size: number = Math.floor(Math.sqrt(data.length));
+    console.assert(data.length / size == size, "Check if the length of the data is a square");
+
     this.samplerAABB = samplerAABB;
     this.realAABB = realAABB;
     this.sampler = sampler;
@@ -48,7 +52,10 @@ class Sampler<T> {
 
     for (let i = 0; i < this.size; i++) {
       for (let j = 0; j < this.size; j++) {
-        const color: [number, number, number] = this.colors[i * this.size + j];
+        const index: number = i * this.size + j;
+        if (!this.sampler[index]) continue;
+
+        const color: [number, number, number] = this.colors[index];
 
         ctx.fillStyle = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
         ctx.fillRect(this.samplerAABB.min.x + width * j, this.samplerAABB.min.y + height * i, width, height);

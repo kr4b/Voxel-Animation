@@ -1,5 +1,9 @@
 var Sampler = /** @class */ (function () {
-    function Sampler(samplerAABB, realAABB, sampler, data, colors, size, make_spline) {
+    function Sampler(samplerAABB, realAABB, sampler, data, colors, make_spline) {
+        console.assert(data.length == sampler.length, "Check if the sampler length is correct");
+        console.assert(data.length == colors.length, "Check if the colors length is correct");
+        var size = Math.floor(Math.sqrt(data.length));
+        console.assert(data.length / size == size, "Check if the length of the data is a square");
         this.samplerAABB = samplerAABB;
         this.realAABB = realAABB;
         this.sampler = sampler;
@@ -23,7 +27,10 @@ var Sampler = /** @class */ (function () {
         var height = size.y / this.size;
         for (var i = 0; i < this.size; i++) {
             for (var j = 0; j < this.size; j++) {
-                var color = this.colors[i * this.size + j];
+                var index = i * this.size + j;
+                if (!this.sampler[index])
+                    continue;
+                var color = this.colors[index];
                 ctx.fillStyle = "rgb(" + color[0] + "," + color[1] + "," + color[2] + ")";
                 ctx.fillRect(this.samplerAABB.min.x + width * j, this.samplerAABB.min.y + height * i, width, height);
                 ctx.fillStyle = "black";

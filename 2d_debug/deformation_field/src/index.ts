@@ -28,7 +28,6 @@ onload = () => {
         [true, true, true, true],
         [[0, 1], [1, 0], [-1, 0], [0, -1]],
         [[255, 0, 0], [0, 255, 0], [0, 0, 255], [200, 200, 0]],
-        2,
         (ray: Ray, t: [number, number], c: [number, number, number]) => {
             const P1 = ray.origin;
             const P2 = add(P1, ray.dir);
