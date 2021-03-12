@@ -2,7 +2,7 @@ import { AABB } from "./aabb.js";
 import { Ray } from "./ray.js";
 import { Sampler } from "./sampler.js";
 import Spline from "./spline.js";
-import { add, divide, max, min, multiply, scale, subtract, vec2 } from "./vec2.js";
+import { add, divide, max, min, scale, subtract, vec2 } from "./vec2.js";
 
 const { atan2, cos, PI, sin, sqrt } = Math;
 
@@ -119,6 +119,16 @@ onload = () => {
     render();
 }
 
+onkeyup = e => {
+    if (e.key == "r") {
+        (<HTMLInputElement> document.getElementById("rays")).checked = !(<HTMLInputElement> document.getElementById("rays")).checked;
+    }
+    if (e.key == "s") {
+        (<HTMLInputElement> document.getElementById("splines")).checked = !(<HTMLInputElement> document.getElementById("splines")).checked;
+    }
+    render();
+}
+
 function get_interpolated_color(alpha: vec2) {
     const y_colors = [
         aabbColors[0].map((v, i) => Math.floor(aabbColors[2][i] * alpha.y + aabbColors[0][i] * (1 - alpha.y))),
@@ -185,13 +195,13 @@ function render() {
             spline.draw(ctx);
         }
 
-        if (result) {
+        if (spline != null && result) {
             ctx.fillStyle = "red";
-            spline?.draw_point_at(ctx, spline.ts.x);
-            spline?.draw_point_at(ctx, spline.ts.y);
+            spline.draw_point_at(ctx, spline.ts.x);
+            spline.draw_point_at(ctx, spline.ts.y);
             ctx.fillStyle = "black";
 
-            const worldEntry: vec2 = (<Spline> spline).position_on_spline(ts.x);
+            const worldEntry: vec2 = spline.position_on_spline(spline.ts.x);
             const vscale: vec2 = subtract(aabbMax, aabbMin);
             const ventry: vec2 = min(vec2(1, 1), max(vec2(0, 0), divide(subtract(worldEntry, aabbMin), vscale)));
 

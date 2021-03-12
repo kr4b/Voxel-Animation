@@ -92,6 +92,15 @@ onload = function () {
     };
     render();
 };
+onkeyup = function (e) {
+    if (e.key == "r") {
+        document.getElementById("rays").checked = !document.getElementById("rays").checked;
+    }
+    if (e.key == "s") {
+        document.getElementById("splines").checked = !document.getElementById("splines").checked;
+    }
+    render();
+};
 function get_interpolated_color(alpha) {
     var y_colors = [
         aabbColors[0].map(function (v, i) { return Math.floor(aabbColors[2][i] * alpha.y + aabbColors[0][i] * (1 - alpha.y)); }),
@@ -144,12 +153,12 @@ function render() {
         if (splines && spline != null) {
             spline.draw(ctx);
         }
-        if (result) {
+        if (spline != null && result) {
             ctx.fillStyle = "red";
-            spline === null || spline === void 0 ? void 0 : spline.draw_point_at(ctx, spline.ts.x);
-            spline === null || spline === void 0 ? void 0 : spline.draw_point_at(ctx, spline.ts.y);
+            spline.draw_point_at(ctx, spline.ts.x);
+            spline.draw_point_at(ctx, spline.ts.y);
             ctx.fillStyle = "black";
-            var worldEntry = spline.position_on_spline(ts.x);
+            var worldEntry = spline.position_on_spline(spline.ts.x);
             var vscale = subtract(aabbMax, aabbMin);
             var ventry = min(vec2(1, 1), max(vec2(0, 0), divide(subtract(worldEntry, aabbMin), vscale)));
             transformed_1d.fillStyle = get_interpolated_color(ventry);
