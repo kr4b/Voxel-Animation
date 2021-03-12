@@ -100,14 +100,26 @@ function get_interpolated_color(alpha) {
     var color = y_colors[0].map(function (v, i) { return Math.floor(y_colors[1][i] * alpha.x + y_colors[0][i] * (1 - alpha.x)); });
     return "rgb(" + color[0] + ", " + color[1] + ", " + color[2] + ")";
 }
+function draw_aabb_colors() {
+    var vscale = subtract(aabbMax, aabbMin);
+    ctx.fillStyle = "rgb(" + aabbColors[0][0] + ", " + aabbColors[0][1] + ", " + aabbColors[0][2] + ")";
+    ctx.fillRect(aabbMin.x, aabbMin.y, vscale.x / 2, vscale.y / 2);
+    ctx.fillStyle = "rgb(" + aabbColors[1][0] + ", " + aabbColors[1][1] + ", " + aabbColors[1][2] + ")";
+    ctx.fillRect(aabbMin.x + vscale.x / 2, aabbMin.y, vscale.x / 2, vscale.y / 2);
+    ctx.fillStyle = "rgb(" + aabbColors[2][0] + ", " + aabbColors[2][1] + ", " + aabbColors[2][2] + ")";
+    ctx.fillRect(aabbMin.x, aabbMin.y + vscale.y / 2, vscale.x / 2, vscale.y / 2);
+    ctx.fillStyle = "rgb(" + aabbColors[3][0] + ", " + aabbColors[3][1] + ", " + aabbColors[3][2] + ")";
+    ctx.fillRect(aabbMin.x + vscale.x / 2, aabbMin.y + vscale.y / 2, vscale.x / 2, vscale.y / 2);
+}
 function render() {
     original_1d.clearRect(0, -1, original_1d.canvas.width, 2);
     transformed_1d.clearRect(0, -1, original_1d.canvas.width, 2);
     ctx.clearRect(-1, -1, 2, 2);
+    draw_aabb_colors();
     sampler.draw(ctx);
     var rays = document.querySelector("#rays").checked;
     var splines = document.querySelector("#splines").checked;
-    var increment = 0.1;
+    var increment = 0.05;
     var pixel_width = 400 / (halfFieldOfView * 2 / increment);
     for (var i = -halfFieldOfView; i < halfFieldOfView; i += increment) {
         var distance = sqrt(Math.pow(camera_position.x, 2) + Math.pow(camera_position.y, 2)) * 2;

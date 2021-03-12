@@ -129,16 +129,32 @@ function get_interpolated_color(alpha: vec2) {
     return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
 }
 
+function draw_aabb_colors() {
+    const vscale: vec2 = subtract(aabbMax, aabbMin);
+    ctx.fillStyle = `rgb(${aabbColors[0][0]}, ${aabbColors[0][1]}, ${aabbColors[0][2]})`;
+    ctx.fillRect(aabbMin.x, aabbMin.y, vscale.x / 2, vscale.y / 2);
+
+    ctx.fillStyle = `rgb(${aabbColors[1][0]}, ${aabbColors[1][1]}, ${aabbColors[1][2]})`;
+    ctx.fillRect(aabbMin.x + vscale.x / 2, aabbMin.y, vscale.x / 2, vscale.y / 2);
+
+    ctx.fillStyle = `rgb(${aabbColors[2][0]}, ${aabbColors[2][1]}, ${aabbColors[2][2]})`;
+    ctx.fillRect(aabbMin.x, aabbMin.y + vscale.y / 2, vscale.x / 2, vscale.y / 2);
+
+    ctx.fillStyle = `rgb(${aabbColors[3][0]}, ${aabbColors[3][1]}, ${aabbColors[3][2]})`;
+    ctx.fillRect(aabbMin.x + vscale.x / 2, aabbMin.y + vscale.y / 2, vscale.x / 2, vscale.y / 2);
+}
+
 function render() {
     original_1d.clearRect(0, -1, original_1d.canvas.width, 2);
     transformed_1d.clearRect(0, -1, original_1d.canvas.width, 2);
 
     ctx.clearRect(-1, -1, 2, 2);
+    draw_aabb_colors();
     sampler.draw(ctx);
     const rays: boolean = (document.querySelector("#rays") as HTMLInputElement).checked;
     const splines: boolean = (document.querySelector("#splines") as HTMLInputElement).checked;
 
-    const increment = 0.1;
+    const increment = 0.05;
     const pixel_width = 400 / (halfFieldOfView * 2 / increment);
     for (let i = -halfFieldOfView; i < halfFieldOfView; i += increment) {
         const distance:  number = sqrt(camera_position.x ** 2 + camera_position.y ** 2) * 2;
