@@ -199,6 +199,21 @@ int main()
 
     std::cout << vol.width() << ", " << vol.height() << ", " << vol.depth() << std::endl;
 
+    std::vector<float> dataCheckerData = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    GL::UInt dataChecker;
+    gl->createTextures(GL::TEXTURE_3D, 1, &dataChecker);
+    gl->bindTextureUnit(0, dataChecker);
+
+    // Comment this for blurry voxels
+    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MIN_FILTER, GL::NEAREST);
+    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::NEAREST);
+
+    gl->textureStorage3D(dataChecker, 1, GL::R32F, 2, 2, 2);
+    gl->textureSubImage3D(dataChecker, 0,
+        0, 0, 0, // offset in the volume
+        2, 2, 2,
+        GL::RED, GL::FLOAT, dataCheckerData.data());
+
     FLUX_GL_CHECKPOINT_ALWAYS();
 
     // Main loop
@@ -263,11 +278,11 @@ int main()
             gl->uniform3f(gl->getUniformLocation(program, "tangent1"), tangent1.x, tangent1.y, tangent1.z);
             gl->uniform3f(gl->getUniformLocation(program, "tangent2"), tangent2.x, tangent2.y, tangent2.z);
 
-            gl->uniform1i(gl->getUniformLocation(program, "sampler.dataCheck"), 0);
+            gl->uniform1i(gl->getUniformLocation(program, "sampler.dataCheck"), dataChecker);
             gl->uniform1i(gl->getUniformLocation(program, "sampler.data[0]"), 0);
-            gl->uniform1i(gl->getUniformLocation(program, "sampler.size"), 0);
-            gl->uniform3f(gl->getUniformLocation(program, "sampler.aabb.min"), 0, 0, 0);
-            gl->uniform3f(gl->getUniformLocation(program, "sampler.aabb.max"), 0, 0, 0);
+            gl->uniform1i(gl->getUniformLocation(program, "sampler.size"), 2);
+            gl->uniform3f(gl->getUniformLocation(program, "sampler.aabb.min"), volMeta.volMin.x, volMeta.volMin.y, volMeta.volMin.z);
+            gl->uniform3f(gl->getUniformLocation(program, "sampler.aabb.max"), volMeta.volMax.x, volMeta.volMax.y, volMeta.volMax.z);
         }
 
         gl->bindBufferBase(GL::UNIFORM_BUFFER, 0, uVolMeta);
