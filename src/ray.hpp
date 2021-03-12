@@ -33,4 +33,8 @@ public:
 
 private:
     const size_t VOLUME_STEPS = 1024;
+    gl::GL::UInt vao;
+    gl::GL::UInt buffers[2];
+
+    void init_vao(const gl::GLapi*);
 };
