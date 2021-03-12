@@ -4,8 +4,8 @@
 Ray::Ray(const vec3f& origin, const vec3f& dir) : origin(origin), dir(dir) {}
 
 vec2f Ray::intersect_ray_aabb(const AABB& aabb) {
-    const vec3f t1 = (aabb.min - origin) / dir;
-    const vec3f t2 = (aabb.max - origin) / dir;
+    const vec3f t1 = (aabb.min - this->origin) / this->dir;
+    const vec3f t2 = (aabb.max - this->origin) / this->dir;
 
     const vec3f mins = fml::min(t1, t2);
     const vec3f maxs = fml::max(t1, t2);
@@ -24,8 +24,8 @@ std::optional<Spline> Ray::intersect_ray_sampler(const Sampler<T>& sampler) {
             ts.x = 0.0;
         }
 
-        const vec3f worldEntry = origin + dir * ts.x;
-        const vec3f worldExit = origin + dir * ts.y;
+        const vec3f worldEntry = this->origin + this->dir * ts.x;
+        const vec3f worldExit = this->origin + this->dir * ts.y;
 
         const vec3f vscale = sampler.samplerAABB.size();
         const vec3f ventry = (worldEntry - sampler.samplerAABB.min) / vscale;

@@ -13,7 +13,6 @@ using namespace fml::literals;
 
 #include <algorithm>
 #include <iostream>
-#include <vector>
 
 #include "math_util.hpp"
 
@@ -28,12 +27,9 @@ class Spline {
 public:
 	Spline(const gl::GLapi*);
 
-	void render(const gl::GLapi*, const mat44f, const mat44f);
+	void render(const gl::GLapi*) const;
 
-	void init_program(const gl::GLapi*);
-	void init_vao(const gl::GLapi*);
-
-	void update_from_screen_coords(const vec2f, const mat44f, const vec3f, const vec3f, const vec3f, const mat44f);
+	void update_from_screen_coords(const vec2f, const mat44f, const vec3f, const vec3f, const vec3f);
 	void parameters_from_tangents(const vec3f, const vec3f, const vec3f, const vec3f);
 	void parameters_from_points(const vec3f, const vec3f, const vec3f, const vec3f);
 
@@ -49,10 +45,10 @@ private:
 	vec2f lastCursorPos;
 	vec3f a, b, c, d;
     vec3f start;
-	gl::Program debugProgram;
 	gl::GL::UInt lineVao, pointsVao;
 	gl::GL::UInt buffers[4];
-    std::vector<vec3f> points;
+
+    void init_vao(const gl::GLapi*);
 
 	vec3f intersected_aabb(const vec3f t, vec3f aAABBMin, vec3f aAABBMax);
 	void calculate_near_far(const vec3f, const vec3f, const vec3f, const vec3f, vec2f*);

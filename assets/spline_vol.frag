@@ -21,7 +21,6 @@ uniform int steps;
 uniform float time;
 uniform vec3 tangent1;
 uniform vec3 tangent2;
-uniform mat4 P2Matrix;
 
 struct Spline {
     vec3 a; // t^3
@@ -47,7 +46,7 @@ Spline make_spline(in vec2 aFragCoord) {
 	const vec3 direction = normalize( wray.xyz / wray.w - origin );
 
     const vec3 P1 = origin;
-    vec3 P2 = origin + (P2Matrix * vec4(direction, 1.0f)).xyz * length(origin) * 2.0f;
+    vec3 P2 = origin + direction * length(origin) * 2.0f;
     // float tmp = P2.y;
     // P2.y = P2.z;
     // P2.z = tmp - 0.5f;

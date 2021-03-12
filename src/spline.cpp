@@ -1,8 +1,6 @@
 #include "spline.hpp"
 #include "depressed_cubic.hpp"
 
-#define POINT_COUNT 21
-
 Spline::Spline(const gl::GLapi* gl) {
 	this->intersection = false;
 	this->worldEntry = fml::make_zero<vec3f>();
@@ -16,15 +14,7 @@ Spline::Spline(const gl::GLapi* gl) {
 	this->d = fml::make_zero<vec3f>();
     this->start = fml::make_zero<vec3f>();
 
-	this->init_program(gl);
 	this->init_vao(gl);
-}
-
-void Spline::init_program(const gl::GLapi* gl) {
-    this->debugProgram = gl::load_program_from_vfs({
-	    { gl::GL::VERTEX_SHADER, "/@flux/opt/assets/debug.vert" },
-	    { gl::GL::FRAGMENT_SHADER, "/@flux/opt/assets/debug.frag" }
-    });
 }
 
 void Spline::init_vao(const gl::GLapi* gl) {
@@ -50,13 +40,13 @@ void Spline::init_vao(const gl::GLapi* gl) {
 
     // Point vertices
 	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * POINT_COUNT * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
 	gl->vertexAttribPointer(0, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
 	gl->enableVertexAttribArray(0);
 
     // Point colors
 	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * POINT_COUNT * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
 	gl->vertexAttribPointer(1, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
 	gl->enableVertexAttribArray(1);
 
@@ -87,7 +77,7 @@ void Spline::parameters_from_points(const vec3f P1, const vec3f P2, const vec3f 
 	this->d = P1;
 }
 
-void Spline::update_from_screen_coords(const vec2f coords, const mat44f inverseProjCamera, const vec3f cameraWorldPos, const vec3f tangent1, const vec3f tangent2, const mat44f P2Matrix) {
+void Spline::update_from_screen_coords(const vec2f coords, const mat44f inverseProjCamera, const vec3f cameraWorldPos, const vec3f tangent1, const vec3f tangent2) {
 	const vec2f transformed = coords * 2.0f - fml::make_vector<vec2f>(1.0f, 1.0f);
 	const vec4f hray = fml::make_vector<vec4f>(transformed.x, transformed.y, 1.0f, 1.0f);
 	const vec4f wray = inverseProjCamera * hray;
@@ -97,8 +87,7 @@ void Spline::update_from_screen_coords(const vec2f coords, const mat44f inverseP
     this->start = origin + direction * 0.015f;
 
 	const vec3f P1 = origin;
-	const vec4f transformedDirection = P2Matrix * fml::make_vector<vec4f>(origin.x + direction.x, origin.y + direction.y, origin.z + direction.z, 1.0f);
-	const vec3f P2 = fml::make_vector<vec3f>(transformedDirection.x, transformedDirection.y, transformedDirection.z) * fml::length(origin) * 2.0f;
+	const vec3f P2 = origin + direction * fml::length(origin) * 2.0f;
 
     parameters_from_tangents(P1, P2, tangent1, tangent2);
 }
@@ -133,41 +122,30 @@ void Spline::update_buffers(const gl::GLapi *gl) {
 	}
 
 	{
-		gl::GL::Float vertices[3 * POINT_COUNT];
-		gl::GL::Float colors[3 * POINT_COUNT];
+		gl::GL::Float vertices[3 * 3];
+		gl::GL::Float colors[3 * 3];
 
         vertices[0] = this->start.x; vertices[1] = this->start.y; vertices[2] = this->start.z;
+        vertices[3] = this->worldEntry.x; vertices[4] = this->worldEntry.y; vertices[5] = this->worldEntry.z;
+        vertices[6] = this->worldExit.x; vertices[7] = this->worldExit.y; vertices[8] = this->worldExit.z;
+
         colors[0] = 0.0f; colors[1] = 1.0f; colors[2] = 0.0f;
-
-        auto random = []() {
-            return float(rand()) / float(RAND_MAX);
-        };
-
-        for (int i = 0; i < POINT_COUNT - 1; i++) {
-		    vertices[3 + i * 3] = this->points[i].x; vertices[4 + i * 3] = this->points[i].y; vertices[5 + i * 3] = this->points[i].z;
-		    colors[3 + i * 3] = random(); colors[4 + i * 3] = random(); colors[5 + i * 3] = random();
-        }
-
-        colors[(POINT_COUNT - 2) * 3] = 1.0f; colors[(POINT_COUNT - 2) * 3 + 1] = 0.0f; colors[(POINT_COUNT - 2) * 3 + 2] = 0.0f;
-        colors[(POINT_COUNT - 1) * 3] = 1.0f; colors[(POINT_COUNT - 1) * 3 + 1] = 0.0f; colors[(POINT_COUNT - 1) * 3 + 2] = 0.0f;
+        colors[3] = 1.0f; colors[4] = 0.0f; colors[5] = 0.0f;
+        colors[6] = 1.0f; colors[7] = 0.0f; colors[8] = 0.0f;
 
 		gl->bindVertexArray(this->pointsVao);
 
 		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * POINT_COUNT * sizeof(gl::GL::Float), vertices);
+		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), vertices);
 		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * POINT_COUNT * sizeof(gl::GL::Float), colors);
+		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), colors);
 
 		gl->bindVertexArray(0);
 	}
 }
 
-void Spline::render(const gl::GLapi* gl, const mat44f view, const mat44f proj) {
-	gl->useProgram(this->debugProgram);
-
+void Spline::render(const gl::GLapi* gl) const {
 	gl->bindVertexArray(this->lineVao);
-	gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "view"), 1, gl::GL::GLFALSE, view.data());
-	gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
 
     gl->lineWidth(3.0f);
 	gl->drawArrays(gl::GL::LINE_STRIP, 0, detail);
@@ -175,10 +153,8 @@ void Spline::render(const gl::GLapi* gl, const mat44f view, const mat44f proj) {
 
     gl->bindVertexArray(this->pointsVao);
     gl->pointSize(10.0f);
-    gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "view"), 1, gl::GL::GLFALSE, view.data());
-    gl->uniformMatrix4fv(gl->getUniformLocation(debugProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
 
-    gl->drawArrays(gl::GL::POINTS, 0, POINT_COUNT);
+    gl->drawArrays(gl::GL::POINTS, 0, 3);
     gl->pointSize(1.0f);
 
 	gl->bindVertexArray(0);
@@ -203,70 +179,10 @@ void Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
 	vec2f ts = fml::make_zero<vec2f>();
 	calculate_near_far(t1, t2, aAABBMin, aAABBMax, &ts);
 
-	std::cout << ts.x << ", " << ts.y << std::endl;
+	//std::cout << ts.x << ", " << ts.y << std::endl;
 	this->intersection = ts.x <= ts.y && ts.y >= 0.0f;
 	this->worldEntry = this->position_on_spline(ts.x);
 	this->worldExit = this->position_on_spline(ts.y);
-
-    const vec3f p1 = conversion + vec3f(
-        DepressedCubic::find_roots_first(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
-        DepressedCubic::find_roots_first(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
-        DepressedCubic::find_roots_first(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
-    const vec3f p2 = conversion + vec3f(
-        DepressedCubic::find_roots_first(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
-        DepressedCubic::find_roots_first(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
-        DepressedCubic::find_roots_first(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
-
-    const vec3f p3 = conversion + vec3f(
-        DepressedCubic::find_roots_second(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
-        DepressedCubic::find_roots_second(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
-        DepressedCubic::find_roots_second(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
-    const vec3f p4 = conversion + vec3f(
-        DepressedCubic::find_roots_second(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
-        DepressedCubic::find_roots_second(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
-        DepressedCubic::find_roots_second(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
-
-    const vec3f p5 = conversion + vec3f(
-        DepressedCubic::find_roots_third(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
-        DepressedCubic::find_roots_third(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
-        DepressedCubic::find_roots_third(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
-    const vec3f p6 = conversion + vec3f(
-        DepressedCubic::find_roots_third(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
-        DepressedCubic::find_roots_third(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
-        DepressedCubic::find_roots_third(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
-
-    std::vector<float> tVector;
-    printf("p1: (%f, %f, %f)\n", p1.x, p1.y, p1.z);
-    tVector.push_back(p1.x);
-    tVector.push_back(p1.y);
-    tVector.push_back(p1.z);
-    printf("p2: (%f, %f, %f)\n", p2.x, p2.y, p2.z);
-    tVector.push_back(p2.x);
-    tVector.push_back(p2.y);
-    tVector.push_back(p2.z);
-    printf("p3: (%f, %f, %f)\n", p3.x, p3.y, p3.z);
-    tVector.push_back(p3.x);
-    tVector.push_back(p3.y);
-    tVector.push_back(p3.z);
-    printf("p4: (%f, %f, %f)\n", p4.x, p4.y, p4.z);
-    tVector.push_back(p4.x);
-    tVector.push_back(p4.y);
-    tVector.push_back(p4.z);
-    printf("p5: (%f, %f, %f)\n", p5.x, p5.y, p5.z);
-    tVector.push_back(p5.x);
-    tVector.push_back(p5.y);
-    tVector.push_back(p5.z);
-    printf("p6: (%f, %f, %f)\n", p6.x, p6.y, p6.z);
-    tVector.push_back(p6.x);
-    tVector.push_back(p6.y);
-    tVector.push_back(p6.z);
-
-    this->points.clear();
-    for (float t : tVector) {
-        this->points.push_back(this->position_on_spline(t));
-    }
-    this->points.push_back(this->worldEntry);
-    this->points.push_back(this->worldExit);
 }
 
 void Spline::calculate_near_far(const vec3f t1, const vec3f t2, const vec3f aAABBMin, const vec3f aAABBMax, vec2f* ts) {
