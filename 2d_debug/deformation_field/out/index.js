@@ -20,6 +20,9 @@ var aabbColors = [
 ];
 var aabbMin = vec2(-0.15, -0.15);
 var aabbMax = vec2(0.15, 0.15);
+function map(value, min1, max1, min2, max2) {
+    return min2 + (value - min1) / (max1 - min1) * (max2 - min2);
+}
 onload = function () {
     canvas = document.getElementById("canvas");
     ctx = canvas.getContext("2d");
@@ -35,11 +38,44 @@ onload = function () {
     transformed_1d.canvas.height = 40;
     transformed_1d.scale(1, transformed_1d.canvas.height / 2);
     transformed_1d.translate(0, 1);
-    sampler = new Sampler(new AABB(scale(aabbMin, 2), scale(aabbMax, 2)), new AABB(aabbMin, aabbMax), [true, true, true, true], [[0, 1], [1, 0], [-1, 0], [0, -1]], [[255, 0, 0], [0, 255, 0], [0, 0, 255], [200, 200, 0]], function (ray, t, c) {
+    var size = 20;
+    var strength = 2;
+    var samplers = [];
+    var data = [];
+    var colors = [];
+    for (var i = 0; i < size; i++) {
+        for (var j = 0; j < size; j++) {
+            samplers.push((i > 0 && i < size - 1 && j == 0)
+                || (i > 0 && i < size - 1 && j == size - 1)
+                || (j > 0 && j < size - 1 && i == 0)
+                || (j > 0 && j < size - 1 && i == size - 1));
+            var d = [0, 0];
+            var c = [0, 0, 0];
+            if (i > 0 && i < size - 1 && j == 0) {
+                d = [0, map(i, 1, size - 1, -strength, strength)];
+                c = [255, map(i, 1, size - 1, 0, 255), 0];
+            }
+            else if (i > 0 && i < size - 1 && j == size - 1) {
+                d = [0, map(i, 1, size - 1, -strength, strength)];
+                c = [255, map(i, 1, size - 1, 255, 0), 0];
+            }
+            else if (j > 0 && j < size - 1 && i == 0) {
+                d = [map(j, 1, size - 1, -strength, strength), 0];
+                c = [0, map(j, 1, size - 1, 0, 255), map(j, 1, size - 1, 255, 0)];
+            }
+            else if (j > 0 && j < size - 1 && i == size - 1) {
+                d = [map(j, 1, size - 1, -strength, strength), 0];
+                c = [0, map(j, 1, size - 1, 255, 0), map(j, 1, size - 1, 0, 255)];
+            }
+            data.push(d);
+            colors.push(c);
+        }
+    }
+    sampler = new Sampler(new AABB(scale(aabbMin, 2), scale(aabbMax, 2)), new AABB(aabbMin, aabbMax), samplers, data, colors, function (ray, t, c) {
         var P1 = ray.origin;
         var P2 = add(P1, ray.dir);
-        var P0 = vec2(t[0], t[1]);
-        var P3 = vec2(0.0, 0.0);
+        var P0 = vec2(0.0, 0.0);
+        var P3 = vec2(t[0], t[1]);
         var spline = Spline.with_tangents(P1, P2, P0, P3);
         spline.set_color(c);
         return spline;

@@ -25,6 +25,10 @@ const aabbColors = [
 const aabbMin = vec2(-0.15, -0.15);
 const aabbMax = vec2(0.15, 0.15);
 
+function map(value: number, min1: number, max1: number, min2: number, max2: number) {
+    return min2 + (value - min1) / (max1 - min1) * (max2 - min2);
+}
+
 onload = () => {
     canvas = <HTMLCanvasElement> document.getElementById("canvas");
     ctx = <CanvasRenderingContext2D> canvas.getContext("2d");
@@ -43,19 +47,54 @@ onload = () => {
     transformed_1d.scale(1, transformed_1d.canvas.height / 2);
     transformed_1d.translate(0, 1);
 
+    const size: number = 20;
+    const strength: number = 2;
+    const samplers: boolean[] = [];
+    const data: [number, number][] = [];
+    const colors: [number, number, number][] = [];
+
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+            samplers.push(
+                (i > 0 && i < size - 1 && j == 0)
+                || (i > 0 && i < size - 1 && j == size - 1)
+                || (j > 0 && j < size - 1 && i == 0)
+                || (j > 0 && j < size - 1 && i == size - 1)
+            );
+
+            let d: [number, number] = [0, 0];
+            let c: [number, number, number] = [0, 0, 0];
+            if (i > 0 && i < size - 1 && j == 0) {
+                d = [0, map(i, 1, size - 1, -strength, strength)];
+                c = [255, map(i, 1, size - 1, 0, 255), 0]
+            } else if (i > 0 && i < size - 1 && j == size - 1) {
+                d = [0, map(i, 1, size - 1, -strength, strength)];
+                c = [255, map(i, 1, size - 1, 255, 0), 0]
+            } else if (j > 0 && j < size - 1 && i == 0) {
+                d = [map(j, 1, size - 1, -strength, strength), 0];
+                c = [0, map(j, 1, size - 1, 0, 255), map(j, 1, size - 1, 255, 0)]
+            } else if (j > 0 && j < size - 1 && i == size - 1) {
+                d = [map(j, 1, size - 1, -strength, strength), 0];
+                c = [0, map(j, 1, size - 1, 255, 0), map(j, 1, size - 1, 0, 255)]
+            }
+
+            data.push(d);
+            colors.push(c);
+        }
+    }
 
     sampler = new Sampler(
         new AABB(scale(aabbMin, 2), scale(aabbMax, 2)),
         new AABB(aabbMin, aabbMax),
-        [true, true, true, true],
-        [[0, 1], [1, 0], [-1, 0], [0, -1]],
-        [[255, 0, 0], [0, 255, 0], [0, 0, 255], [200, 200, 0]],
+        samplers,
+        data,
+        colors,
         (ray: Ray, t: [number, number], c: [number, number, number]) => {
             const P1 = ray.origin;
             const P2 = add(P1, ray.dir);
 
-            const P0 = vec2(t[0], t[1]);
-            const P3 = vec2(0.0, 0.0);
+            const P0 = vec2(0.0, 0.0);
+            const P3 = vec2(t[0], t[1]);
 
             const spline = Spline.with_tangents(P1, P2, P0, P3);
             spline.set_color(c);
