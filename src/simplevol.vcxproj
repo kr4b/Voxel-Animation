@@ -91,8 +91,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="aabb.hpp" />
     <ClInclude Include="defaults.hpp" />
     <ClInclude Include="depressed_cubic.hpp" />
+    <ClInclude Include="ray.hpp" />
+    <ClInclude Include="sampler.hpp" />
     <ClInclude Include="spline.hpp" />
     <ClInclude Include="startup.hpp" />
     <ClInclude Include="volume.hpp" />
@@ -101,6 +104,8 @@
     <ClCompile Include="depressed_cubic.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="miniz.c" />
+    <ClCompile Include="ray.cpp" />
+    <ClCompile Include="sampler.cpp" />
     <ClCompile Include="spline.cpp" />
     <ClCompile Include="startup.cpp" />
     <ClCompile Include="volume.cpp" />
