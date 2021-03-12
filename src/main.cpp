@@ -139,7 +139,7 @@ int main()
 
     auto const program = gl::load_program_from_vfs({
         { GL::VERTEX_SHADER, "/@flux/opt/assets/simple_vol.vert" },
-        { GL::FRAGMENT_SHADER, "/@flux/opt/assets/spline_vol.frag" }
+        { GL::FRAGMENT_SHADER, "/@flux/opt/assets/deformation.frag" }
     });
 
     auto const debugProgram = gl::load_program_from_vfs({
@@ -262,6 +262,12 @@ int main()
             gl->uniform3f(gl->getUniformLocation(program, "tangent1"), tangent1.x, tangent1.y, tangent1.z);
             gl->uniform3f(gl->getUniformLocation(program, "tangent2"), tangent2.x, tangent2.y, tangent2.z);
             gl->uniformMatrix4fv(gl->getUniformLocation(program, "P2Matrix"), 1, false, P2.data());
+
+            gl->uniform1i(gl->getUniformLocation(program, "sampler.dataCheck"), 0);
+            gl->uniform1i(gl->getUniformLocation(program, "sampler.data[0]"), 0);
+            gl->uniform1i(gl->getUniformLocation(program, "sampler.size"), 0);
+            gl->uniform3f(gl->getUniformLocation(program, "sampler.aabb.min"), 0, 0, 0);
+            gl->uniform3f(gl->getUniformLocation(program, "sampler.aabb.max"), 0, 0, 0);
         }
 
         gl->bindBufferBase(GL::UNIFORM_BUFFER, 0, uVolMeta);
