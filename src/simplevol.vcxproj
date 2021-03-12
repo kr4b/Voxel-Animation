@@ -97,6 +97,7 @@
     <ClInclude Include="ray.hpp" />
     <ClInclude Include="sampler.hpp" />
     <ClInclude Include="spline.hpp" />
+    <ClInclude Include="spline_source.hpp" />
     <ClInclude Include="startup.hpp" />
     <ClInclude Include="volume.hpp" />
   </ItemGroup>
@@ -107,6 +108,7 @@
     <ClCompile Include="ray.cpp" />
     <ClCompile Include="sampler.cpp" />
     <ClCompile Include="spline.cpp" />
+    <ClCompile Include="spline_source.cpp" />
     <ClCompile Include="startup.cpp" />
     <ClCompile Include="volume.cpp" />
   </ItemGroup>

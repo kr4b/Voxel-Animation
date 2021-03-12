@@ -27,11 +27,12 @@ namespace GLFW = flux::dlapi::os::GLFW;
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <algorithm>
 
 #include "startup.hpp"
 #include "defaults.hpp"
 #include "volume.hpp"
-#include "spline.hpp"
+#include "spline_source.hpp"
 
 namespace
 {
@@ -61,6 +62,10 @@ namespace
         bool inControl = false;
         bool debugMode = false;
         bool refreshSpline = true;
+        bool refreshSplineSource = true;
+
+        size_t splineCount = 2;
+        float splineDist = 0.1f;
 
         static constexpr float scrollMult = 0.1f;
         static constexpr float motionRotMult = 0.6f;
@@ -147,6 +152,11 @@ int main()
         { GL::FRAGMENT_SHADER, "/@flux/opt/assets/simple_vol.frag" }
     });
 
+    auto const debugSplineProgram = gl::load_program_from_vfs({
+        { gl::GL::VERTEX_SHADER, "/@flux/opt/assets/debug.vert" },
+        { gl::GL::FRAGMENT_SHADER, "/@flux/opt/assets/debug.frag" }
+    });
+
     GL::UInt vao;
     gl->createVertexArrays(1, &vao);
     // This vao remains empty; we need to be allowed to legally draw vertices, though.
@@ -159,7 +169,8 @@ int main()
     gl->createBuffers(1, &uCamera);
     gl->namedBufferStorage(uCamera, sizeof(UCamera), nullptr, GL::DYNAMIC_STORAGE_BIT);
 
-    Spline spline(gl);
+    SplineSource splines;
+    splines.set_values(gl, state.splineCount, state.splineDist);
 
     FLUX_GL_CHECKPOINT_ALWAYS();
 
@@ -239,16 +250,6 @@ int main()
         auto now = std::chrono::high_resolution_clock::now();
 
         std::chrono::duration<double, std::milli> diff = now - start;
-        mat44f P2 = fml::make_matrix<mat44f>(
-            1.0f, 0.0f, 0.0f, 0.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f, 0.0f,
-            0.0f, 0.0f, 0.0f, 1.0f);
-        //mat44f P2 = fml::make_matrix<mat44f>(
-        //    cos(diff.count() / 1000.0), -sin(diff.count() / 1000.0), 0.0f, 0.0f,
-        //    sin(diff.count() / 1000.0), cos(diff.count() / 1000.0), 0.0f, 0.0f,
-        //    0.0f, 0.0f, 1.0f, 0.0f,
-        //    0.0f, 0.0f, 0.0f, 1.0f);
 
         if (state.debugMode) {
             gl->useProgram(debugProgram);
@@ -261,7 +262,6 @@ int main()
             gl->uniform1f(gl->getUniformLocation(program, "time"), diff.count());
             gl->uniform3f(gl->getUniformLocation(program, "tangent1"), tangent1.x, tangent1.y, tangent1.z);
             gl->uniform3f(gl->getUniformLocation(program, "tangent2"), tangent2.x, tangent2.y, tangent2.z);
-            gl->uniformMatrix4fv(gl->getUniformLocation(program, "P2Matrix"), 1, false, P2.data());
         }
 
         gl->bindBufferBase(GL::UNIFORM_BUFFER, 0, uVolMeta);
@@ -274,22 +274,29 @@ int main()
 
         if (state.debugMode) {
             if (state.refreshSpline) {
-                //vec4f offset1 = view * fml::make_vector<vec4f>(tangent1.x, tangent1.y, tangent1.z, 1.0);
-                //vec4f offset2 = view * fml::make_vector<vec4f>(tangent2.x, tangent2.y, tangent2.z, 1.0);
-
-                spline.update_from_screen_coords(
+                splines.update_from_screen_coords(
                     fml::make_vector<vec2f>(state.lastX, height - state.lastY) * camera.reciprocalWindowSize,
                     camera.inverseProjCamera,
-                    camera.cameraWorldPos,
-                    tangent1,
-                    tangent2,
-                    P2
+                    camera.cameraWorldPos
                 );
-                spline.intersect_spline_aabb(volMeta.volMin, volMeta.volMax);
-                spline.update_buffers(gl);
-                state.refreshSpline = false;
             }
-            spline.render(gl, view, proj);
+
+            if (state.refreshSplineSource) {
+                splines.set_values(gl, state.splineCount, state.splineDist);
+            }
+
+            if (state.refreshSpline || state.refreshSplineSource) {
+                splines.update_from_screen_coords(tangent1, tangent2);
+                splines.intersect_spline_aabb(volMeta.volMin, volMeta.volMax);
+                splines.update_buffers(gl);
+                state.refreshSpline = false;
+                state.refreshSplineSource = false;
+            }
+
+            gl->useProgram(debugSplineProgram);
+            gl->uniformMatrix4fv(gl->getUniformLocation(debugSplineProgram, "view"), 1, gl::GL::GLFALSE, view.data());
+            gl->uniformMatrix4fv(gl->getUniformLocation(debugSplineProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
+            splines.render(gl);
         }
 
         // Clean up state
@@ -346,6 +353,26 @@ namespace {
             case GLFW::KEY_BACKSPACE:
                 state->cameraRot = state->lastCameraRot;
                 state->cameraOff = state->lastCameraOff;
+                break;
+            // Up arrow => increase debug spline count
+            case GLFW::KEY_UP:
+                state->refreshSplineSource = true;
+                state->splineCount += 1;
+                break;
+                // Up arrow => decrease debug spline count
+            case GLFW::KEY_DOWN:
+                state->refreshSplineSource = true;
+                state->splineCount = std::max(1, int(state->splineCount) - 1);
+                break;
+                // Up arrow => increase debug spline distance
+            case GLFW::KEY_RIGHT:
+                state->refreshSplineSource = true;
+                state->splineDist = std::min(1.0f, state->splineDist + 0.01f);;
+                break;
+                // Up arrow => decrease debug spline distance
+            case GLFW::KEY_LEFT:
+                state->refreshSplineSource = true;
+                state->splineDist = std::max(0.01f, state->splineDist - 0.01f);;
                 break;
             }
 
