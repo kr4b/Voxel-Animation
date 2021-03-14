@@ -10,9 +10,9 @@ Sampler<T>::Sampler(
     const std::vector<vec3f> colors,
     const std::function<Spline(Ray, T, vec3f)> make_spline,
     const gl::GLapi* gl) :
-    samplerAABB(samplerAABB), realAABB(realAABB), sampler(sampler), data(data), colors(colors), make_spline(make_spline), size(size) {
+    samplerAABB(samplerAABB), realAABB(realAABB), size(size), sampler(sampler), data(data), colors(colors), make_spline(make_spline) {
 
-    this->init_vao(gl);
+    //this->init_vao(gl);
 }
 
 template <typename T>

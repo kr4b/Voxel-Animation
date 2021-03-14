@@ -39,12 +39,15 @@ public:
 
 	void intersect_spline_aabb(const vec3f, const vec3f);
 
+    void set_color(const vec3f);
+
 private:
 	bool intersection;
 	vec3f worldEntry, worldExit;
 	vec2f lastCursorPos;
 	vec3f a, b, c, d;
     vec3f start;
+    vec3f color;
 	gl::GL::UInt lineVao, pointsVao;
 	gl::GL::UInt buffers[4];
 

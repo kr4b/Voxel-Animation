@@ -29,10 +29,14 @@ namespace GLFW = flux::dlapi::os::GLFW;
 #include <cmath>
 #include <algorithm>
 
-#include "startup.hpp"
 #include "defaults.hpp"
-#include "volume.hpp"
 #include "spline_source.hpp"
+#include "startup.hpp"
+#include "sampler.hpp"
+#include "volume.hpp"
+
+// Templates also need cpp files?
+#include "sampler.cpp"
 
 namespace
 {
@@ -94,6 +98,9 @@ extern "C"
 #	endif // ~ PLATFORM_WIN32
 }
 
+float map(float current, float min1, float max1, float min2, float max2) {
+    return min2 + current / (max1 - min1) * (max2 - min2);
+}
 
 int main()
 {
@@ -138,6 +145,79 @@ int main()
     UVolMeta volMeta;
     volMeta.volMin = fml::make_splat<vec3f>(-1.0f);
     volMeta.volMax = fml::make_splat<vec3f>(+1.0f);
+
+    const size_t size = 20;
+    const float strength = 2.0f;
+    std::vector<bool> samplers;
+    std::vector<vec3f> data;
+    std::vector<vec3f> colors;
+
+    for (size_t i = 0; i < size; i++) {
+        for (size_t j = 0; j < size; j++) {
+            for (size_t k = 0; k < size; k++) {
+                bool sample = true;
+                vec3f d = fml::make_zero<vec3f>();
+                vec3f c = fml::make_zero<vec3f>();
+
+                if (k > 0 && k < size - 1 && i > 0 && i < size - 1 && j == 0) {
+                    d = vec3f(0, map(i, 1, size - 1, -strength, strength), 0);
+                    c = vec3f(255, map(i, 1, size - 1, 0, 255), 0);
+                }
+                else if (k > 0 && k < size - 1 && i > 0 && i < size - 1 && j == size - 1) {
+                    d = vec3f(0, map(i, 1, size - 1, -strength, strength), 0);
+                    c = vec3f(255, map(i, 1, size - 1, 255, 0), 0);
+                }
+                else if (k > 0 && k < size - 1 && j > 0 && j < size - 1 && i == 0) {
+                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, 0);
+                    c = vec3f(0, map(j, 1, size - 1, 0, 255), map(j, 1, size - 1, 255, 0));
+                }
+                else if (k > 0 && k < size - 1 && j > 0 && j < size - 1 && i == size - 1) {
+                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, 0);
+                    c = vec3f(0, map(j, 1, size - 1, 255, 0), map(j, 1, size - 1, 0, 255));
+                }
+                else if (i > 0 && i < size - 1 && j > 0 && j < size - 1 && k == 0) {
+                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, 0);
+                    c = vec3f(0, map(j, 1, size - 1, 255, 0), map(j, 1, size - 1, 0, 255));
+                }
+                else if (i > 0 && i < size - 1 && j > 0 && j < size - 1 && k == size - 1) {
+                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, 0);
+                    c = vec3f(0, map(j, 1, size - 1, 255, 0), map(j, 1, size - 1, 0, 255));
+                }
+                else {
+                    sample = false;
+                }
+
+                samplers.push_back(sample);
+                data.push_back(d);
+                colors.push_back(c);
+            }
+        }
+    }
+
+    const vec3f aabbMin = fml::make_splat<vec3f>(-1.0f);
+    const vec3f aabbMax = fml::make_splat<vec3f>(1.0f);
+
+    Sampler<vec3f> sampler(
+        AABB(aabbMin * 2.0f, aabbMax * 2.0f),
+        AABB(aabbMin, aabbMax),
+        size,
+        samplers,
+        data,
+        colors,
+        [gl](Ray ray, vec3f t, vec3f c) {
+            const vec3f P1 = ray.origin;
+            const vec3f P2 = P1 + ray.dir;
+
+            const vec3f P0 = fml::make_zero<vec3f>();;
+            const vec3f P3 = t;
+
+            Spline spline(gl);
+            spline.parameters_from_tangents(P1, P2, P0, P3);
+            spline.set_color(c);
+            return spline;
+        },
+        gl
+    );
 
     //FLUX_ENABLE_EXCEPTION_INFO();
     FLUX_GL_CHECKPOINT_ALWAYS();

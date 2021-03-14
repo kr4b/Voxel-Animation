@@ -13,6 +13,7 @@ Spline::Spline(const gl::GLapi* gl) {
 	this->c = fml::make_zero<vec3f>();
 	this->d = fml::make_zero<vec3f>();
     this->start = fml::make_zero<vec3f>();
+    this->color = fml::make_zero<vec3f>();
 
 	this->init_vao(gl);
 }
@@ -106,9 +107,9 @@ void Spline::update_buffers(const gl::GLapi *gl) {
 			vertices[i * 3 + 1] = point.y;
 			vertices[i * 3 + 2] = point.z;
 
-            colors[i * 3 + 0] = 1.0f;
-			colors[i * 3 + 1] = 1.0f;
-			colors[i * 3 + 2] = 1.0f;
+            colors[i * 3 + 0] = this->color.x;
+			colors[i * 3 + 1] = this->color.y;
+			colors[i * 3 + 2] = this->color.z;
 		}
 
 		gl->bindVertexArray(this->lineVao);
@@ -158,6 +159,10 @@ void Spline::render(const gl::GLapi* gl) const {
     gl->pointSize(1.0f);
 
 	gl->bindVertexArray(0);
+}
+
+void Spline::set_color(const vec3f color) {
+    this->color = color;
 }
 
 inline vec3f Spline::position_on_spline(float t) {
