@@ -55,9 +55,10 @@ onload = function () {
     }
     sampler = new Sampler(new AABB(scale(aabbMin, 2), scale(aabbMax, 2)), new AABB(aabbMin, aabbMax), samplers, data, colors, function (ray, t, c) {
         var P1 = ray.origin;
-        var P2 = add(P1, ray.dir);
+        var P2 = add(P1, scale(ray.dir, 1));
         var P0 = vec2(0.0, 0.0);
-        var P3 = vec2(t[0], t[1]);
+        // const P3 = vec2(t[0], t[1]);
+        var P3 = vec2(0.0, 0.0);
         var spline = Spline.with_tangents(P1, P2, P0, P3);
         spline.set_color(c);
         return spline;

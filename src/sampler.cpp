@@ -5,7 +5,7 @@ Sampler<T>::Sampler(
     const AABB samplerAABB,
     const AABB realAABB,
     const float size,
-    const std::vector<bool> sampler,
+    const std::vector<unsigned char> sampler,
     const std::vector<T> data,
     const std::vector<vec3f> colors,
     const std::function<Spline(Ray, T, vec3f)> make_spline,
