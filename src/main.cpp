@@ -67,6 +67,7 @@ namespace
         bool debugMode = false;
         bool refreshSpline = true;
         bool refreshSplineSource = true;
+        bool displayRays = false;
 
         size_t splineCount = 2;
         float splineDist = 0.1f;
@@ -160,28 +161,28 @@ int main()
                 vec3f c = fml::make_zero<vec3f>();
 
                 if (k > 0 && k < size - 1 && i > 0 && i < size - 1 && j == 0) {
-                    d = vec3f(0, map(i, 1, size - 1, -strength, strength), 0);
-                    c = vec3f(255, map(i, 1, size - 1, 0, 255), 0);
+                    d = vec3f(0, map(i, 1, size - 1, -strength, strength), map(k, 1, size - 1, -strength, strength));
+                    c = vec3f(map(k, 1, size - 1, 1.0f, 0), map(i, 1, size - 1, 0, 1.0f), 0);
                 }
                 else if (k > 0 && k < size - 1 && i > 0 && i < size - 1 && j == size - 1) {
-                    d = vec3f(0, map(i, 1, size - 1, -strength, strength), 0);
-                    c = vec3f(255, map(i, 1, size - 1, 255, 0), 0);
+                    d = vec3f(0, map(i, 1, size - 1, -strength, strength), map(k, 1, size - 1, -strength, strength));
+                    c = vec3f(map(i, 1, size - 1, 1.0f, 0), map(k, 1, size - 1, 1.0f, 0), 0);
                 }
                 else if (k > 0 && k < size - 1 && j > 0 && j < size - 1 && i == 0) {
-                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, 0);
-                    c = vec3f(0, map(j, 1, size - 1, 0, 255), map(j, 1, size - 1, 255, 0));
+                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, map(k, 1, size - 1, -strength, strength));
+                    c = vec3f(0, map(j, 1, size - 1, 0, 1.0f), map(k, 1, size - 1, 1.0f, 0));
                 }
                 else if (k > 0 && k < size - 1 && j > 0 && j < size - 1 && i == size - 1) {
-                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, 0);
-                    c = vec3f(0, map(j, 1, size - 1, 255, 0), map(j, 1, size - 1, 0, 255));
+                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, map(k, 1, size - 1, -strength, strength));
+                    c = vec3f(0, map(k, 1, size - 1, 1.0f, 0), map(j, 1, size - 1, 0, 1.0f));
                 }
                 else if (i > 0 && i < size - 1 && j > 0 && j < size - 1 && k == 0) {
-                    d = vec3f(0, 0, map(j, 1, size - 1, -strength, strength));
-                    c = vec3f(map(j, 1, size - 1, 0, 255), 0, map(j, 1, size - 1, 255, 0));
+                    d = vec3f(map(j, 1, size - 1, -strength, strength), map(i, 1, size - 1, -strength, strength), 0);
+                    c = vec3f(map(j, 1, size - 1, 0, 1.0f), 0, map(i, 1, size - 1, 1.0f, 0));
                 }
                 else if (i > 0 && i < size - 1 && j > 0 && j < size - 1 && k == size - 1) {
-                    d = vec3f(0, 0, map(j, 1, size - 1, -strength, strength));
-                    c = vec3f(map(j, 1, size - 1, 255, 0), 0, map(j, 1, size - 1, 0, 255));
+                    d = vec3f(map(j, 1, size - 1, -strength, strength), map(i, 1, size - 1, -strength, strength), 0);
+                    c = vec3f(map(i, 1, size - 1, 1.0f, 0), 0, map(j, 1, size - 1, 0, 1.0f));
                 }
                 else {
                     sample = 0;
@@ -393,7 +394,7 @@ int main()
             }
 
             if (state.refreshSpline || state.refreshSplineSource) {
-                splines.update_from_screen_coords(tangent1, tangent2);
+                splines.update_from_screen_coords(gl, sampler);
                 splines.intersect_spline_aabb(volMeta.volMin, volMeta.volMax);
                 splines.update_buffers(gl);
                 state.refreshSpline = false;
@@ -403,7 +404,7 @@ int main()
             gl->useProgram(debugSplineProgram);
             gl->uniformMatrix4fv(gl->getUniformLocation(debugSplineProgram, "view"), 1, gl::GL::GLFALSE, view.data());
             gl->uniformMatrix4fv(gl->getUniformLocation(debugSplineProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
-            splines.render(gl);
+            splines.render(state.displayRays, gl);
         }
 
         // Clean up state
@@ -480,6 +481,10 @@ namespace {
             case GLFW::KEY_LEFT:
                 state->refreshSplineSource = true;
                 state->splineDist = std::max(0.01f, state->splineDist - 0.01f);;
+                break;
+
+            case GLFW::KEY_R:
+                state->displayRays = !state->displayRays;
                 break;
             }
 

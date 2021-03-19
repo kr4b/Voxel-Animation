@@ -1,6 +1,13 @@
 #include "spline.hpp"
 #include "depressed_cubic.hpp"
 
+const int detail = 100;
+const vec3f EPSILON = fml::make_vector<vec3f>(1.0e-6f, 1.0e-6f, 1.0e-6f);
+const vec3f ZERO_VECTOR = fml::make_zero<vec3f>();
+const vec3f ONE_VECTOR = fml::make_one<vec3f>();
+const vec3f MAX_VALUE = fml::make_vector<vec3f>(1.0e6f, 1.0e6f, 1.0e6f);
+const vec3f MIN_VALUE = -MAX_VALUE;
+
 Spline::Spline(const gl::GLapi* gl) {
 	this->intersection = false;
 	this->worldEntry = fml::make_zero<vec3f>();
@@ -16,6 +23,12 @@ Spline::Spline(const gl::GLapi* gl) {
     this->color = fml::make_one<vec3f>();
 
 	this->init_vao(gl);
+}
+
+void Spline::clean(const gl::GLapi* gl) {
+    gl->deleteVertexArrays(1, &this->lineVao);
+    gl->deleteVertexArrays(1, &this->pointsVao);
+    gl->deleteBuffers(4, this->buffers);
 }
 
 void Spline::init_vao(const gl::GLapi* gl) {
@@ -66,6 +79,8 @@ void Spline::parameters_from_tangents(const vec3f P1, const vec3f P2, const vec3
 	this->b = -3.0f * P1 + 3.0f * P2 - 2.0f * P0 - 1.0f * P3;
 	this->c = P0;
 	this->d = P1;
+
+    this->start = this->position_on_spline(0.0f);
 }
 
 
@@ -76,6 +91,8 @@ void Spline::parameters_from_points(const vec3f P1, const vec3f P2, const vec3f 
 	this->b = 2.0f * tau * P0 + (tau - 3.0f) * P1 + (3.0f - tau) * P2 - tau * P3;
 	this->c = -tau * P0 + tau * P2;
 	this->d = P1;
+
+    this->start = this->position_on_spline(0.0f);
 }
 
 void Spline::update_from_screen_coords(const vec2f coords, const mat44f inverseProjCamera, const vec3f cameraWorldPos, const vec3f tangent1, const vec3f tangent2) {
@@ -85,7 +102,6 @@ void Spline::update_from_screen_coords(const vec2f coords, const mat44f inverseP
 
 	const vec3f origin = cameraWorldPos;
 	const vec3f direction = fml::normalize(fml::make_vector<vec3f>(wray.x, wray.y, wray.z) / wray.w - origin);
-    this->start = origin + direction * 0.015f;
 
 	const vec3f P1 = origin;
 	const vec3f P2 = origin + direction * fml::length(origin) * 2.0f;
