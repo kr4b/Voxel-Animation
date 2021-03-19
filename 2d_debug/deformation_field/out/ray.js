@@ -41,7 +41,7 @@ var Ray = /** @class */ (function () {
             var worldExit = add(this.origin, scale(this.dir, ts.y));
             var vscale = sampler.samplerAABB.size();
             var ventry = divide(subtract(worldEntry, sampler.samplerAABB.min), vscale);
-            var vexit = divide(subtract(worldExit, sampler.samplerAABB.max), vscale);
+            var vexit = divide(subtract(worldExit, sampler.samplerAABB.min), vscale);
             // Walk the ray from entry to exit to determine the intersection point
             for (var i = 0; i < VOLUME_STEPS; i++) {
                 var ii = i / VOLUME_STEPS;
