@@ -11,6 +11,11 @@ namespace fml = flux::fml;
 using namespace fml::stdtypes;
 using namespace fml::literals;
 
+#include <flux/gl/glapi.hpp>
+#include <flux/gl/checkpoint.hpp>
+#include <flux/gl/setup/program.hpp>
+namespace gl = flux::gl;
+
 #include "aabb.hpp"
 #include "spline.hpp"
 #include "ray.hpp"
@@ -33,8 +38,7 @@ private:
     const std::vector<vec3f> colors;
     const std::function<Spline(Ray, T, vec3f)> make_spline;
     const size_t size;
-    gl::GL::UInt vao;
-    gl::GL::UInt buffers[2];
 
-    void init_vao(const gl::GLapi*);
+    gl::GL::UInt vol3d;
+
 };
