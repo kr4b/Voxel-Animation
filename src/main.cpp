@@ -176,12 +176,12 @@ int main()
                     c = vec3f(0, map(j, 1, size - 1, 255, 0), map(j, 1, size - 1, 0, 255));
                 }
                 else if (i > 0 && i < size - 1 && j > 0 && j < size - 1 && k == 0) {
-                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, 0);
-                    c = vec3f(0, map(j, 1, size - 1, 255, 0), map(j, 1, size - 1, 0, 255));
+                    d = vec3f(0, 0, map(j, 1, size - 1, -strength, strength));
+                    c = vec3f(map(j, 1, size - 1, 0, 255), 0, map(j, 1, size - 1, 255, 0));
                 }
                 else if (i > 0 && i < size - 1 && j > 0 && j < size - 1 && k == size - 1) {
-                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, 0);
-                    c = vec3f(0, map(j, 1, size - 1, 255, 0), map(j, 1, size - 1, 0, 255));
+                    d = vec3f(0, 0, map(j, 1, size - 1, -strength, strength));
+                    c = vec3f(map(j, 1, size - 1, 255, 0), 0, map(j, 1, size - 1, 0, 255));
                 }
                 else {
                     sample = false;

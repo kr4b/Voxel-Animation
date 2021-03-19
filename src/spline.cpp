@@ -13,7 +13,7 @@ Spline::Spline(const gl::GLapi* gl) {
 	this->c = fml::make_zero<vec3f>();
 	this->d = fml::make_zero<vec3f>();
     this->start = fml::make_zero<vec3f>();
-    this->color = fml::make_zero<vec3f>();
+    this->color = fml::make_one<vec3f>();
 
 	this->init_vao(gl);
 }
