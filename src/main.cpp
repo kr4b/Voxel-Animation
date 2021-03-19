@@ -293,8 +293,8 @@ int main()
     gl->createTextures(GL::TEXTURE_3D, 1, &dataData);
     gl->bindTexture(GL::TEXTURE_3D, dataData);
     gl->texImage3D(GL::TEXTURE_3D, 0, GL::RGB32F, sampler.size, sampler.size, sampler.size, 0, GL::RGB, GL::FLOAT, sampler.data.data());
-    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MIN_FILTER, GL::NEAREST);
-    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::NEAREST);
+    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MIN_FILTER, GL::LINEAR);
+    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::LINEAR);
     
     FLUX_GL_CHECKPOINT_ALWAYS();
 

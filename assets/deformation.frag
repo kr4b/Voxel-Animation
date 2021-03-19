@@ -146,7 +146,7 @@ bool intersect_ray_sampler(in Ray ray, in Sampler sampler, out Spline spline) {
 
         const vec3 vscale = sampler.aabb.max - sampler.aabb.min;
         const vec3 ventry = (wentry - sampler.aabb.min) / vscale;
-        const vec3 vexit  = (wexit  - sampler.aabb.max) / vscale;
+        const vec3 vexit  = (wexit  - sampler.aabb.min) / vscale;
 
         for (int i = 0; i < VOLUME_STEPS; i++) {
 			const float ii = float(i) / float(VOLUME_STEPS);
