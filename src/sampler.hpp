@@ -21,14 +21,13 @@ public:
     const AABB samplerAABB;
     const AABB realAABB;
 
-    Sampler(const AABB, const AABB, const float, const std::vector<bool>, const std::vector<T>, const std::vector<vec3f>, const std::function <Spline(Ray, T, vec3f)>, const gl::GLapi*);
+    Sampler(const AABB, const AABB, const float, const std::vector<unsigned char>, const std::vector<T>, const std::vector<vec3f>, const std::function <Spline(Ray, T, vec3f)>, const gl::GLapi*);
 
     std::optional<Spline> get(const Ray, const vec3f) const;
 
     void render(const gl::GLapi*);
 
-private:
-    const std::vector<bool> sampler;
+    const std::vector<unsigned char> sampler;
     const std::vector<T> data;
     const std::vector<vec3f> colors;
     const std::function<Spline(Ray, T, vec3f)> make_spline;

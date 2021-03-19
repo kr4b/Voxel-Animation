@@ -55,7 +55,7 @@ struct Ray {
 };
 
 struct Sampler {
-    isampler3D dataCheck;
+    usampler3D dataCheck;
     sampler3D data[MAX_SAMPLERS];
     int size;
     AABB aabb;
@@ -72,7 +72,7 @@ Spline spline_with_control_points(in vec3 point1, in vec3 point2, in vec3 contro
 /// Overwrite
 bool make_spline(in Ray ray, in vec4 data, out Spline spline) {
     const vec3 P1 = ray.origin;
-    const vec3 P2 = P1 + ray.direction;
+    const vec3 P2 = P1 + ray.direction * 2.0 * length(P1);
 
     const vec3 P0 = vec3(0.0);
     const vec3 P3 = data.xyz;
@@ -106,14 +106,12 @@ Spline spline_with_control_points(in vec3 point1, in vec3 point2, in vec3 contro
 
 /// Sampler
 bool get_spline_from_sampler(in Sampler sampler, in Ray ray, in vec3 samplePos, out Spline spline) {
-    const ivec3 xyz = ivec3(round((sampler.size - 1) * samplePos));
-
-    const int dataIndex = int(texture(sampler.dataCheck, xyz).x);
-    if (dataIndex == 0) {
+    const uvec4 dataIndex = texture(sampler.dataCheck, samplePos);
+    if (dataIndex.r == 0) {
         return false;
     }
 
-    return make_spline(ray, texture(sampler.data[dataIndex - 1], samplePos), spline);
+    return make_spline(ray, texture(sampler.data[dataIndex.r - 1], samplePos), spline);
 }
 
 /// Ray
@@ -362,33 +360,31 @@ void main() {
     Spline spline;
     bool result = intersect_ray_sampler(ray, sampler, spline);
 
-    if (result == false) {
-        discard;
-    }
-
-    vec2 ts = intersect_spline_aabb(spline, uVolMeta.volMin, uVolMeta.volMax);
-
-	// Step through volume
-	// Only do this if we hit the volume
     vec3 col = vec3(0.0);
-    // float depth = 1.0;
+    if (result == true) {
+        vec2 ts = intersect_spline_aabb(spline, uVolMeta.volMin, uVolMeta.volMax);
 
-	if( ts.x <= ts.y && ts.y >= 0.0f ) {
-        ts.x = max(0.0, ts.x);
+        // Step through volume
+        // Only do this if we hit the volume
+        // float depth = 1.0;
 
-        const vec3 scale = uVolMeta.volMax - uVolMeta.volMin;
-		for( int i = 0; i < steps; ++i ) {
-			const float ii = float(i) / float(steps);
-            const vec3 splinePos = position_on_spline(mix(ts.x, ts.y, ii), spline);
-			const vec3 samplePos = (splinePos - uVolMeta.volMin) / scale;
-			const float voxel = texture(texVol, samplePos).x;
-			
-			if (voxel > 0.1f) {
-                col = samplePos;
-                // depth = length(splinePos - uCamera.cameraWorldPos) / length(uCamera.cameraWorldPos) * 0.5;
-				break;
-			}
-		}
+        if( ts.x <= ts.y && ts.y >= 0.0f ) {
+            ts.x = max(0.0, ts.x);
+
+            const vec3 scale = uVolMeta.volMax - uVolMeta.volMin;
+            for( int i = 0; i < steps; ++i ) {
+                const float ii = float(i) / float(steps);
+                const vec3 splinePos = position_on_spline(mix(ts.x, ts.y, ii), spline);
+                const vec3 samplePos = (splinePos - uVolMeta.volMin) / scale;
+                const float voxel = texture(texVol, samplePos).x;
+                
+                if (voxel > 0.1f) {
+                    col = samplePos;
+                    // depth = length(splinePos - uCamera.cameraWorldPos) / length(uCamera.cameraWorldPos) * 0.5;
+                    break;
+                }
+            }
+        }
 	}
 
     oColor = col;
