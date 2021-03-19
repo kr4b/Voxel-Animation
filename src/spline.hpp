@@ -16,24 +16,17 @@ using namespace fml::literals;
 
 #include "math_util.hpp"
 
-const int detail = 100;
-const vec3f EPSILON = fml::make_vector<vec3f>(1.0e-6f, 1.0e-6f, 1.0e-6f);
-const vec3f ZERO_VECTOR = fml::make_zero<vec3f>();
-const vec3f ONE_VECTOR = fml::make_one<vec3f>();
-const vec3f MAX_VALUE = fml::make_vector<vec3f>(1.0e6f, 1.0e6f, 1.0e6f);
-const vec3f MIN_VALUE = -MAX_VALUE;
-
 class Spline {
 public:
 	Spline(const gl::GLapi*);
 
 	void render(const gl::GLapi*) const;
+	void update_buffers(const gl::GLapi*);
+    void clean(const gl::GLapi*);
 
 	void update_from_screen_coords(const vec2f, const mat44f, const vec3f, const vec3f, const vec3f);
 	void parameters_from_tangents(const vec3f, const vec3f, const vec3f, const vec3f);
 	void parameters_from_points(const vec3f, const vec3f, const vec3f, const vec3f);
-
-	void update_buffers(const gl::GLapi* gl);
 
 	vec3f position_on_spline(const float t);
 

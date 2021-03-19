@@ -27,8 +27,8 @@ public:
 
     void render(const gl::GLapi*);
 
-private:
     const std::vector<bool> sampler;
+private:
     const std::vector<T> data;
     const std::vector<vec3f> colors;
     const std::function<Spline(Ray, T, vec3f)> make_spline;
