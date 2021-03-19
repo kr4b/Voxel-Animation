@@ -148,14 +148,14 @@ int main()
     volMeta.volMax = fml::make_splat<vec3f>(+1.0f);
 
     const size_t size = 20;
-    const float strength = 2.0f;
+    const float strength = 10.0f;
     std::vector<unsigned char> samplers;
     std::vector<vec3f> data;
     std::vector<vec3f> colors;
 
-    for (size_t i = 0; i < size; i++) {
-        for (size_t j = 0; j < size; j++) {
-            for (size_t k = 0; k < size; k++) {
+    for (size_t k = 0; k < size; k++) {
+        for (size_t i = 0; i < size; i++) {
+            for (size_t j = 0; j < size; j++) {
                 unsigned char sample = 1;
                 vec3f d = fml::make_zero<vec3f>();
                 vec3f c = fml::make_zero<vec3f>();
