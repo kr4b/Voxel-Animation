@@ -188,17 +188,43 @@ inline vec3f Spline::position_on_spline(float t) {
 void Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
 	const vec3f conversion = -this->b / (3.0f * this->a);
 	
-	const vec3f t1 = conversion + vec3f(
+	vec3f t1 = conversion + vec3f(
 		DepressedCubic::find_roots_static(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
 		DepressedCubic::find_roots_static(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
 		DepressedCubic::find_roots_static(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
-	const vec3f t2 = conversion + vec3f(
+	vec3f t2 = conversion + vec3f(
 		DepressedCubic::find_roots_static(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
 		DepressedCubic::find_roots_static(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
 		DepressedCubic::find_roots_static(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
 
 	vec2f ts = fml::make_zero<vec2f>();
 	calculate_near_far(t1, t2, aAABBMin, aAABBMax, &ts);
+
+    if (ts.x == ts.y || ts.x > 1.0f || ts.y > 1.0f) {
+        t1 = conversion + vec3f(
+            DepressedCubic::find_roots_first(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
+            DepressedCubic::find_roots_first(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
+            DepressedCubic::find_roots_first(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
+        t2 = conversion + vec3f(
+            DepressedCubic::find_roots_first(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
+            DepressedCubic::find_roots_first(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
+            DepressedCubic::find_roots_first(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
+
+        calculate_near_far(t1, t2, aAABBMin, aAABBMax, &ts);
+
+        if (ts.x == ts.y || ts.x > 1.0f || ts.y > 1.0f) {
+            t1 = conversion + vec3f(
+                DepressedCubic::find_roots_third(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
+                DepressedCubic::find_roots_third(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
+                DepressedCubic::find_roots_third(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
+            t2 = conversion + vec3f(
+                DepressedCubic::find_roots_third(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
+                DepressedCubic::find_roots_third(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
+                DepressedCubic::find_roots_third(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
+
+            calculate_near_far(t1, t2, aAABBMin, aAABBMax, &ts);
+        }
+    }
 
 	//std::cout << ts.x << ", " << ts.y << std::endl;
 	this->intersection = ts.x <= ts.y && ts.y >= 0.0f;
