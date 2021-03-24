@@ -63,7 +63,7 @@ class Ray {
 
       const vscale: vec2 = sampler.samplerAABB.size();
       const ventry: vec2 = divide(subtract(worldEntry, sampler.samplerAABB.min), vscale);
-      const vexit:  vec2 = divide(subtract(worldExit,  sampler.samplerAABB.max), vscale);
+      const vexit:  vec2 = divide(subtract(worldExit,  sampler.samplerAABB.min), vscale);
 
       // Walk the ray from entry to exit to determine the intersection point
       for (let i = 0; i < VOLUME_STEPS; i++) {

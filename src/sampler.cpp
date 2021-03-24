@@ -12,13 +12,6 @@ Sampler<T>::Sampler(
     const gl::GLapi* gl) :
     samplerAABB(samplerAABB), realAABB(realAABB), size(size), sampler(sampler), data(data), colors(colors), make_spline(make_spline) {
 
-    gl->createTextures(gl::GL::TEXTURE_3D, 1, &vol3d);
-    gl->bindTextureUnit(0, vol3d);
-
-    // Comment this for blurry voxels
-    gl->texParameteri(gl::GL::TEXTURE_3D, gl::GL::TEXTURE_MIN_FILTER, gl::GL::NEAREST);
-    gl->texParameteri(gl::GL::TEXTURE_3D, gl::GL::TEXTURE_MAG_FILTER, gl::GL::NEAREST);
-
     std::vector<float> rawColors;
     rawColors.reserve(colors.size() * 3);
     for (const vec3f& c : colors) {
@@ -26,12 +19,6 @@ Sampler<T>::Sampler(
         rawColors.push_back(c.y);
         rawColors.push_back(c.z);
     }
-
-    gl->textureStorage3D(vol3d, 1, gl::GL::RGB32F, size, size, size);
-    gl->textureSubImage3D(vol3d, 0, 0, 0, 0,
-        size, size, size,
-        gl::GL::RGB, gl::GL::FLOAT, rawColors.data()
-    );
 }
 
 template <typename T>

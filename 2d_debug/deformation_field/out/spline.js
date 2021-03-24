@@ -76,10 +76,25 @@ var Spline = /** @class */ (function () {
      */
     Spline.prototype.intersect_spline_aabb = function (aabb) {
         var conversion = divide(scale(this.b, -1), scale(this.a, 3));
-        var t1 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabb.min)));
-        var t2 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabb.max)));
-        this.calculate_near_far(t1, t2, aabb.min, aabb.max, this.ts);
-        return this.ts.x <= this.ts.y && this.ts.y >= 0;
+        var cubic_min_x = new DepressedCubic(this.a.x, this.b.x, this.c.x, this.d.x - aabb.min.x);
+        var cubic_min_y = new DepressedCubic(this.a.y, this.b.y, this.c.y, this.d.y - aabb.min.y);
+        var cubic_max_x = new DepressedCubic(this.a.x, this.b.x, this.c.x, this.d.x - aabb.max.x);
+        var cubic_max_y = new DepressedCubic(this.a.y, this.b.y, this.c.y, this.d.y - aabb.max.y);
+        var t1 = add(conversion, vec2(cubic_min_x.second_root(), cubic_min_y.second_root()));
+        var t2 = add(conversion, vec2(cubic_max_x.second_root(), cubic_max_y.second_root()));
+        this.ts = vec2(Number.MAX_VALUE, Number.MIN_VALUE);
+        var result = this.calculate_near_far(t1, t2, aabb.min, aabb.max, this.ts);
+        if (this.ts.x == this.ts.y || !result) {
+            var first_t1 = add(conversion, vec2(cubic_min_x.first_root(), cubic_min_y.first_root()));
+            var first_t2 = add(conversion, vec2(cubic_max_x.first_root(), cubic_max_y.first_root()));
+            result = this.calculate_near_far(first_t1, first_t2, aabb.min, aabb.max, this.ts);
+            if (this.ts.x == this.ts.y || !result) {
+                var third_t1 = add(conversion, vec2(cubic_min_x.third_root(), cubic_min_y.third_root()));
+                var third_t2 = add(conversion, vec2(cubic_max_x.third_root(), cubic_max_y.third_root()));
+                result = this.calculate_near_far(third_t1, third_t2, aabb.min, aabb.max, this.ts);
+            }
+        }
+        return result;
     };
     /**
      * Calculates the closest to and furthest from 0 intersection points with the aabb.
@@ -102,8 +117,9 @@ var Spline = /** @class */ (function () {
         var ft2 = add(multiply(t2, it2), multiply(subtract(vec2(1, 1), it2), MIN_VALUE));
         var inear = vec2(min(nt1.x, nt2.x), min(nt1.y, nt2.y));
         var ifar = vec2(max(ft1.x, ft2.x), max(ft1.y, ft2.y));
-        ts.x = min(inear.x, inear.y);
-        ts.y = max(ifar.x, ifar.y);
+        ts.x = min(ts.x, min(inear.x, inear.y));
+        ts.y = max(ts.y, max(ifar.x, ifar.y));
+        return ts.x <= ts.y && ts.y >= 0;
     };
     /**
      * Determines if the point at time `t` on the spline intersects with the

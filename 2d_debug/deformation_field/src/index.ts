@@ -2,7 +2,7 @@ import { AABB } from "./aabb.js";
 import { Ray } from "./ray.js";
 import { Sampler } from "./sampler.js";
 import Spline from "./spline.js";
-import { add, divide, max, min, scale, subtract, vec2 } from "./vec2.js";
+import { add, divide, max, min, norm, scale, subtract, vec2 } from "./vec2.js";
 
 const { atan2, cos, PI, sin, sqrt } = Math;
 
@@ -64,17 +64,21 @@ onload = () => {
 
             let d: [number, number] = [0, 0];
             let c: [number, number, number] = [0, 0, 0];
-            if (i > 0 && i < size - 1 && j == 0) {
-                d = [0, map(i, 1, size - 1, -strength, strength)];
+            if (i > 0 && i < size - 1 && j == 0) { // LEFT
+                d = [-strength, map(i, 1, size - 1, -strength, strength)];
+
                 c = [255, map(i, 1, size - 1, 0, 255), 0]
-            } else if (i > 0 && i < size - 1 && j == size - 1) {
-                d = [0, map(i, 1, size - 1, -strength, strength)];
+            } if (i > 0 && i < size - 1 && j == size - 1) { // RIGHT
+                d = [strength, map(i, 1, size - 1, -strength, strength)];
+
                 c = [255, map(i, 1, size - 1, 255, 0), 0]
-            } else if (j > 0 && j < size - 1 && i == 0) {
-                d = [map(j, 1, size - 1, -strength, strength), 0];
+            } if (j > 0 && j < size - 1 && i == 0) { // TOP
+                d = [map(j, 1, size - 1, -strength, strength), -strength];
+
                 c = [0, map(j, 1, size - 1, 0, 255), map(j, 1, size - 1, 255, 0)]
-            } else if (j > 0 && j < size - 1 && i == size - 1) {
-                d = [map(j, 1, size - 1, -strength, strength), 0];
+            } if (j > 0 && j < size - 1 && i == size - 1) { // BOTTOM
+                d = [map(j, 1, size - 1, -strength, strength), strength];
+
                 c = [0, map(j, 1, size - 1, 255, 0), map(j, 1, size - 1, 0, 255)]
             }
 
@@ -94,7 +98,7 @@ onload = () => {
             const P2 = add(P1, ray.dir);
 
             const P0 = vec2(0.0, 0.0);
-            const P3 = vec2(t[0], t[1]);
+            const P3 = scale(norm(vec2(t[0], t[1])), strength);
 
             const spline = Spline.with_tangents(P1, P2, P0, P3);
             spline.set_color(c);

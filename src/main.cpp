@@ -161,27 +161,51 @@ int main()
                 vec3f c = fml::make_zero<vec3f>();
 
                 if (k > 0 && k < size - 1 && i > 0 && i < size - 1 && j == 0) {
-                    d = vec3f(0, map(i, 1, size - 1, -strength, strength), map(k, 1, size - 1, -strength, strength));
+                    d = vec3f(
+                        -strength,
+                        map(i, 1, size - 1, -strength, strength),
+                        map(k, 1, size - 1, -strength, strength));
+
                     c = vec3f(map(k, 1, size - 1, 1.0f, 0), map(i, 1, size - 1, 0, 1.0f), 0);
                 }
                 else if (k > 0 && k < size - 1 && i > 0 && i < size - 1 && j == size - 1) {
-                    d = vec3f(0, map(i, 1, size - 1, -strength, strength), map(k, 1, size - 1, -strength, strength));
+                    d = vec3f(
+                        strength,
+                        map(i, 1, size - 1, -strength, strength),
+                        map(k, 1, size - 1, -strength, strength));
+
                     c = vec3f(map(i, 1, size - 1, 1.0f, 0), map(k, 1, size - 1, 1.0f, 0), 0);
                 }
                 else if (k > 0 && k < size - 1 && j > 0 && j < size - 1 && i == 0) {
-                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, map(k, 1, size - 1, -strength, strength));
+                    d = vec3f(
+                        map(j, 1, size - 1, -strength, strength),
+                        strength,
+                        map(k, 1, size - 1, -strength, strength));
+
                     c = vec3f(0, map(j, 1, size - 1, 0, 1.0f), map(k, 1, size - 1, 1.0f, 0));
                 }
                 else if (k > 0 && k < size - 1 && j > 0 && j < size - 1 && i == size - 1) {
-                    d = vec3f(map(j, 1, size - 1, -strength, strength), 0, map(k, 1, size - 1, -strength, strength));
+                    d = vec3f(
+                        map(j, 1, size - 1, -strength, strength),
+                        -strength,
+                        map(k, 1, size - 1, -strength, strength));
+
                     c = vec3f(0, map(k, 1, size - 1, 1.0f, 0), map(j, 1, size - 1, 0, 1.0f));
                 }
                 else if (i > 0 && i < size - 1 && j > 0 && j < size - 1 && k == 0) {
-                    d = vec3f(map(j, 1, size - 1, -strength, strength), map(i, 1, size - 1, -strength, strength), 0);
+                    d = vec3f(
+                        map(j, 1, size - 1, -strength, strength),
+                        map(i, 1, size - 1, -strength, strength),
+                        -strength);
+
                     c = vec3f(map(j, 1, size - 1, 0, 1.0f), 0, map(i, 1, size - 1, 1.0f, 0));
                 }
                 else if (i > 0 && i < size - 1 && j > 0 && j < size - 1 && k == size - 1) {
-                    d = vec3f(map(j, 1, size - 1, -strength, strength), map(i, 1, size - 1, -strength, strength), 0);
+                    d = vec3f(
+                        map(j, 1, size - 1, -strength, strength), 
+                        map(i, 1, size - 1, -strength, strength),
+                        strength);
+
                     c = vec3f(map(i, 1, size - 1, 1.0f, 0), 0, map(j, 1, size - 1, 0, 1.0f));
                 }
                 else {
@@ -293,8 +317,8 @@ int main()
     gl->createTextures(GL::TEXTURE_3D, 1, &dataData);
     gl->bindTexture(GL::TEXTURE_3D, dataData);
     gl->texImage3D(GL::TEXTURE_3D, 0, GL::RGB32F, sampler.size, sampler.size, sampler.size, 0, GL::RGB, GL::FLOAT, sampler.data.data());
-    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MIN_FILTER, GL::LINEAR);
-    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::LINEAR);
+    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MIN_FILTER, GL::NEAREST);
+    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::NEAREST);
     
     FLUX_GL_CHECKPOINT_ALWAYS();
 
