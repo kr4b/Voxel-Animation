@@ -58,4 +58,5 @@ var length = function (v, w) { return Math.sqrt(Math.pow((v.x - w.x), 2) + Math.
 var copy = function (v) { return vec2(v.x, v.y); };
 var step = function (v, w) { return vec2(+(w.x >= v.x), +(w.y >= v.y)); };
 var mix = function (v, w, n) { return add(scale(v, 1 - n), scale(w, n)); };
-export { vec2, scale, add, subtract, multiply, divide, min, max, length, copy, step, mix };
+var norm = function (v) { return scale(v, 1.0 / length(v, vec2(0.0, 0.0))); };
+export { vec2, scale, add, subtract, multiply, divide, min, max, length, copy, step, mix, norm };

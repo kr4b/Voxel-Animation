@@ -110,12 +110,32 @@ class Spline {
     intersect_spline_aabb(aabb: AABB): boolean {
         const conversion: vec2 = divide(scale(this.b, -1), scale(this.a, 3));
 
-        const t1 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabb.min)));
-        const t2 = add(conversion, DepressedCubic.find_roots_static(this.a, this.b, this.c, subtract(this.d, aabb.max)));
+        const cubic_min_x = new DepressedCubic(this.a.x, this.b.x, this.c.x, this.d.x - aabb.min.x);
+        const cubic_min_y = new DepressedCubic(this.a.y, this.b.y, this.c.y, this.d.y - aabb.min.y);
+        const cubic_max_x = new DepressedCubic(this.a.x, this.b.x, this.c.x, this.d.x - aabb.max.x);
+        const cubic_max_y = new DepressedCubic(this.a.y, this.b.y, this.c.y, this.d.y - aabb.max.y);
 
-        this.calculate_near_far(t1, t2, aabb.min, aabb.max, this.ts);
+        const t1 = add(conversion, vec2(cubic_min_x.second_root(), cubic_min_y.second_root()));
+        const t2 = add(conversion, vec2(cubic_max_x.second_root(), cubic_max_y.second_root()));
 
-        return this.ts.x <= this.ts.y && this.ts.y >= 0;
+        this.ts = vec2(Number.MAX_VALUE, Number.MIN_VALUE);
+        let result = this.calculate_near_far(t1, t2, aabb.min, aabb.max, this.ts);
+
+        if (this.ts.x == this.ts.y || !result) {
+            const first_t1: vec2 = add(conversion, vec2(cubic_min_x.first_root(), cubic_min_y.first_root()));
+            const first_t2: vec2 = add(conversion, vec2(cubic_max_x.first_root(), cubic_max_y.first_root()));
+
+            result = this.calculate_near_far(first_t1, first_t2, aabb.min, aabb.max, this.ts);
+
+            if (this.ts.x == this.ts.y || !result) {
+                const third_t1: vec2 = add(conversion, vec2(cubic_min_x.third_root(), cubic_min_y.third_root()));
+                const third_t2: vec2 = add(conversion, vec2(cubic_max_x.third_root(), cubic_max_y.third_root()));
+
+                result = this.calculate_near_far(third_t1, third_t2, aabb.min, aabb.max, this.ts);
+            }
+        }                                                        
+
+        return result;
     }
 
     /**
@@ -130,7 +150,7 @@ class Spline {
      * @param ts object in which the results are stored, `x` will contain the nearest
      * intersection `t`, `y` the furthest
      */
-    private calculate_near_far(t1: vec2, t2: vec2, aabbMin: vec2, aabbMax: vec2, ts: vec2): void {
+    private calculate_near_far(t1: vec2, t2: vec2, aabbMin: vec2, aabbMax: vec2, ts: vec2): boolean {
         const it1 = this.intersected_aabb(t1, aabbMin, aabbMax);
         const it2 = this.intersected_aabb(t2, aabbMin, aabbMax);
 
@@ -143,8 +163,10 @@ class Spline {
         const inear = vec2(min(nt1.x, nt2.x), min(nt1.y, nt2.y));
         const ifar  = vec2(max(ft1.x, ft2.x), max(ft1.y, ft2.y));
 
-        ts.x = min(inear.x, inear.y);
-        ts.y = max(ifar.x,  ifar.y);
+        ts.x = min(ts.x, min(inear.x, inear.y));
+        ts.y = max(ts.y, max(ifar.x,  ifar.y));
+
+        return ts.x <= ts.y && ts.y >= 0;
     }
 
     /**
