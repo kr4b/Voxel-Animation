@@ -1,8 +1,8 @@
 import DepressedCubic from "./depressed_cubic.js";
 import { add, copy, divide, multiply, scale, step, subtract, vec2 } from "./vec2.js";
 var min = Math.min, max = Math.max, PI = Math.PI;
-var EPSILON = vec2(1e-6, 1e-6);
-var MAX_VALUE = vec2(1e6, 1e6);
+var EPSILON = vec2(1e-2, 1e-2);
+var MAX_VALUE = vec2(2.0, 2.0);
 var MIN_VALUE = scale(MAX_VALUE, -1);
 var Spline = /** @class */ (function () {
     function Spline(a, b, c, d) {

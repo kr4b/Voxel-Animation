@@ -36,12 +36,12 @@ struct Spline {
 };
 
 struct Cubic {
-    vec3 p;
-    vec3 q_1;
-    vec3 root;
-    vec3 discriminant;
-    vec3 fac0;
-    vec3 arccos;
+    float p;
+    float q;
+    float root;
+    float discriminant;
+    float fac;
+    float arccos;
 };
 
 struct AABB {
@@ -96,10 +96,10 @@ Spline spline_with_control_points(in vec3 point1, in vec3 point2, in vec3 contro
     const float tau = 0.2;
 
     Spline spline;
-    spline.a = control1 * -1.0 * tau + point1 * (2.0 - tau) + point2 * (tau - 3.0) + control2 *  tau;
+    spline.a = control1 * -1.0 * tau + point1 * (2.0 - tau) + point2 * (tau - 2.0) + control2 *  tau;
     spline.b = control1 *  2.0 * tau + point1 * (tau - 3.0) + point2 * (3.0 - tau) + control2 * -tau;
     spline.c = control1 * -tau + point2 * tau;
-    spline.c = point1;
+    spline.d = point1;
 
     return spline;
 }
@@ -161,7 +161,7 @@ bool intersect_ray_sampler(in Ray ray, in Sampler sampler, out Spline spline) {
     return false;
 }
 
-void get_origin_direcion(in vec2 fragCoord, out vec3 origin, out vec3 direction) {
+void get_origin_direction(in vec2 fragCoord, out vec3 origin, out vec3 direction) {
 	const vec4 hray = vec4(fragCoord * 2.0 - vec2(1.0), 1.0, 1.0);
 	const vec4 wray = uCamera.inverseProjCamera * hray;
 
@@ -170,77 +170,56 @@ void get_origin_direcion(in vec2 fragCoord, out vec3 origin, out vec3 direction)
 }
 
 /// Cubic
-Cubic make_cubic(in Spline spline) {
+float single_real_root(inout Cubic cubic) {
+    const float D = sqrt(cubic.q * cubic.q / 4.0 + cubic.p * cubic.p * cubic.p / 27.0);
+    const float C0 = -0.5 * cubic.q + D;
+    const float C1 = -0.5 * cubic.q - D;
+
+    cubic.root = sign(C0) * pow(abs(C0), 1.0 / 3.0) + sign(C1) * pow(abs(C1), 1.0 / 3.0);
+
+    return cubic.root;
+}
+
+float first_root(inout Cubic cubic){
+    if (cubic.discriminant <= 0.0) cubic.root = cubic.fac * cos(cubic.arccos);
+    return cubic.root;
+}
+
+float second_root(inout Cubic cubic){
+    const float v = -2.0 / 3.0 * M_PI;
+    if (cubic.discriminant <= 0.0) cubic.root = cubic.fac * cos(cubic.arccos + v);
+    return cubic.root;
+}
+
+float third_root(inout Cubic cubic){
+    const float v = -4.0 / 3.0 * M_PI;
+    if (cubic.discriminant <= 0.0) cubic.root = cubic.fac * cos(cubic.arccos + v);
+    return cubic.root;
+}
+
+float calculate_default_root(inout Cubic cubic) {
+    if (cubic.discriminant > 0.0) {
+        single_real_root(cubic);
+    } else {
+        cubic.fac = 2.0 * sqrt(-cubic.p / 3.0);
+        cubic.arccos = acos(3.0 * cubic.q / (2.0 * cubic.p) * sqrt(-3.0 / cubic.p)) / 3.0;
+
+        second_root(cubic);
+    }
+
+    return cubic.root;
+}
+
+Cubic make_cubic(in float a, in float b, in float c, in float d) {
     Cubic cubic;
-    cubic.p = (3.0f * spline.a * spline.c - spline.b * spline.b) / (3.0f * spline.a * spline.a);
-    cubic.q_1 = (2.0f * spline.b * spline.b * spline.b - 9.0f * spline.a * spline.b * spline.c) / (27.0f * spline.a * spline.a * spline.a);
+    cubic.p = (3.0 * a * c - b * b) / (3.0 * a * a);
+    cubic.q = (2.0 * b * b * b - 9.0 * a * b * c + 27.0 * a * a * d) / (27.0 * a * a * a);
+
+    cubic.discriminant = 27.0 * cubic.q * cubic.q + 4.0 * cubic.p * cubic.p * cubic.p;
+
+    calculate_default_root(cubic);
+
     return cubic;
-}
-
-float single_real_root(in float p, in float q) {
-    const float D = sqrt(q * q / 4.0f + p * p * p / 27.0f);
-    const float C0 = -0.5f * q + D;
-    const float C1 = -0.5f * q - D;
-    const float t0 = sign(C0) * pow(abs(C0), 1.0f / 3.0f) + sign(C1) * pow(abs(C1), 1.0f / 3.0f);
-
-    return t0;
-}
-
-void three_real_root_variables(in float p, in float q, out float fac0, out float arccos) {
-    fac0 = 2.0f * sqrt(-p / 3.0f);
-    arccos = acos(3.0f * q / (2.0f * p) * sqrt(-3.0f / p)) / 3.0f;
-}
-
-float first_real_root(in float fac0, in float arccos) {
-    return fac0 * cos(arccos);
-}
-
-float second_real_root(in float fac0, in float arccos) {
-    return fac0 * cos(arccos - 2.0f * M_PI / 3.0f);
-}
-
-float third_real_root(in float fac0, in float arccos) {
-    return fac0 * cos(arccos - 4.0f * M_PI / 3.0f);
-}
-
-float solve_first_cubic(in float discriminant, in float root, in float fac0, in float arccos) {
-    if (discriminant > 0.0f) {
-        return root;
-    } else {
-        return first_real_root(fac0, arccos);
-    }
-}
-
-float solve_third_cubic(in float discriminant, in float root, in float fac0, in float arccos) {
-    if (discriminant > 0.0f) {
-        return root;
-    } else {
-        return third_real_root(fac0, arccos);
-    }
-}
-
-float solve_cubic(in float discriminant, in float p, in float q, out float root, out float fac0, out float arccos) {
-    if (discriminant > 0.0f) {
-        root = single_real_root(p, q);
-        return root;
-    } else {
-        three_real_root_variables(p, q, fac0, arccos);
-
-        return second_real_root(fac0, arccos);
-    }
-}
-
-
-// From at^3 + bt^2 + ct + d = 0
-// To x^3 + px + q = 0
-vec3 depressed_cubic(inout Cubic cubic, in Spline spline, in vec3 offset) {
-    const vec3 q = cubic.q_1 + (spline.d - offset) / spline.a;
-    cubic.discriminant = 27.0f * q * q + 4.0f * cubic.p * cubic.p * cubic.p;
-
-    return vec3(
-        solve_cubic(cubic.discriminant.x, cubic.p.x, q.x, cubic.root.x, cubic.fac0.x, cubic.arccos.x),
-        solve_cubic(cubic.discriminant.y, cubic.p.y, q.y, cubic.root.y, cubic.fac0.y, cubic.arccos.y),
-        solve_cubic(cubic.discriminant.z, cubic.p.z, q.z, cubic.root.z, cubic.fac0.z, cubic.arccos.z));
 }
 
 vec3 position_on_spline(in float t, in Spline spline) {
@@ -270,90 +249,84 @@ vec3 intersected_aabb(in vec3 t, in Spline aSpline, in vec3 aAABBMin, in vec3 aA
         resultT.z * result2);
 }
 
-#define MAX_VALUE 2.0f
+#define MAX_VALUE 2.0
 #define MIN_VALUE -MAX_VALUE
 
-void determine_new_near_far(in vec3 t1, in vec3 t2, inout float near, inout float far, in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax) {
+bool calculate_near_far(in vec3 t1, in vec3 t2, in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax, inout vec2 ts) {
     const vec3 it1 = intersected_aabb(t1, aSpline, aAABBMin, aAABBMax);
     const vec3 it2 = intersected_aabb(t2, aSpline, aAABBMin, aAABBMax);
 
-    const vec3 nt1 = t1 * it1 + (1.0f - it1) * MAX_VALUE;
-    const vec3 nt2 = t2 * it2 + (1.0f - it2) * MAX_VALUE;
+    const vec3 nt1 = t1 * it1 + (1.0 - it1) * MAX_VALUE;
+    const vec3 nt2 = t2 * it2 + (1.0 - it2) * MAX_VALUE;
 
-    const vec3 ft1 = t1 * it1 + (1.0f - it1) * MIN_VALUE;
-    const vec3 ft2 = t2 * it2 + (1.0f - it2) * MIN_VALUE;
+    const vec3 ft1 = t1 * it1 + (1.0 - it1) * MIN_VALUE;
+    const vec3 ft2 = t2 * it2 + (1.0 - it2) * MIN_VALUE;
 
     const vec3 inear = min(nt1, nt2);
-    near = min(near, min(inear.x, min(inear.y, inear.z)));
+    const vec3 ifar  = max(ft1, ft2);
 
-    const vec3 ifar = max(ft1, ft2);
-    far = max(far, max(ifar.x, max(ifar.y, ifar.z)));
+    ts.x = min(ts.x, min(inear.x, min(inear.y, inear.z)));
+    ts.y = max(ts.y, max(ifar.x,  max(ifar.y, ifar.z)));
+
+    return ts.x <= ts.y && ts.y >= 0.0;
 }
 
 vec2 intersect_spline_aabb(in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax) {
-    const vec3 conversion = -aSpline.b / (3.0f * aSpline.a);
+    const vec3 conversion = -aSpline.b / (3.0 * aSpline.a);
 
-    Cubic cubic_min = make_cubic(aSpline);
-    Cubic cubic_max = cubic_min;
-    const vec3 t1 = conversion + depressed_cubic(cubic_min, aSpline, aAABBMin);
-    const vec3 t2 = conversion + depressed_cubic(cubic_max, aSpline, aAABBMax);
+    Cubic cubic_min_x = make_cubic(aSpline.a.x, aSpline.b.x, aSpline.c.x, aSpline.d.x - aAABBMin.x);
+    Cubic cubic_min_y = make_cubic(aSpline.a.y, aSpline.b.y, aSpline.c.y, aSpline.d.y - aAABBMin.y);
+    Cubic cubic_min_z = make_cubic(aSpline.a.z, aSpline.b.z, aSpline.c.z, aSpline.d.z - aAABBMin.z);
+    Cubic cubic_max_x = make_cubic(aSpline.a.x, aSpline.b.x, aSpline.c.x, aSpline.d.x - aAABBMax.x);
+    Cubic cubic_max_y = make_cubic(aSpline.a.y, aSpline.b.y, aSpline.c.y, aSpline.d.y - aAABBMax.y);
+    Cubic cubic_max_z = make_cubic(aSpline.a.z, aSpline.b.z, aSpline.c.z, aSpline.d.z - aAABBMax.z);
 
-    const vec3 it1 = intersected_aabb(t1, aSpline, aAABBMin, aAABBMax);
-    const vec3 it2 = intersected_aabb(t2, aSpline, aAABBMin, aAABBMax);
+    const vec3 t1 = conversion + vec3(
+        second_root(cubic_min_x),
+        second_root(cubic_min_y),
+        second_root(cubic_min_z));
+    const vec3 t2 = conversion + vec3(
+        second_root(cubic_max_x),
+        second_root(cubic_max_y),
+        second_root(cubic_max_z));
 
-    const vec3 nt1 = t1 * it1 + (1.0f - it1) * MAX_VALUE;
-    const vec3 nt2 = t2 * it2 + (1.0f - it2) * MAX_VALUE;
+    vec2 ts = vec2(MAX_VALUE, MIN_VALUE);
+    bool result = calculate_near_far(t1, t2, aSpline, aAABBMin, aAABBMax, ts);
 
-    const vec3 ft1 = t1 * it1 + (1.0f - it1) * MIN_VALUE;
-    const vec3 ft2 = t2 * it2 + (1.0f - it2) * MIN_VALUE;
-
-    const vec3 inear = min(nt1, nt2);
-    float near = min(inear.x, min(inear.y, inear.z));
-
-    const vec3 ifar = max(ft1, ft2);
-    float far = max(ifar.x, max(ifar.y, ifar.z));
-
-    // p1: (-2.469688, 11.644688, 2.899517)
-    // p2: (3.919728, 11.687952, 2.755641)
-    // p3: (-2.469688, 1.856308, 2.899517)
-    // p4: (3.919728, 1.478349, 0.658754)
-    // p5: (-2.469688, 0.207449, 2.899517)
-    // p6: (3.919728, 0.542143, -0.531658)
-
-    if (near == far || near > 1.0 || far < 0.0) {
+    if (ts.x == ts.y || !result) {
         const vec3 first_t1 = conversion + vec3(
-            solve_first_cubic(cubic_min.discriminant.x, cubic_min.root.x, cubic_min.fac0.x, cubic_min.arccos.x),
-            solve_first_cubic(cubic_min.discriminant.y, cubic_min.root.y, cubic_min.fac0.y, cubic_min.arccos.y),
-            solve_first_cubic(cubic_min.discriminant.z, cubic_min.root.z, cubic_min.fac0.z, cubic_min.arccos.z));
+            first_root(cubic_min_x),
+            first_root(cubic_min_y),
+            first_root(cubic_min_z));
         const vec3 first_t2 = conversion + vec3(
-            solve_first_cubic(cubic_max.discriminant.x, cubic_max.root.x, cubic_max.fac0.x, cubic_max.arccos.x),
-            solve_first_cubic(cubic_max.discriminant.y, cubic_max.root.y, cubic_max.fac0.y, cubic_max.arccos.y),
-            solve_first_cubic(cubic_max.discriminant.z, cubic_max.root.z, cubic_max.fac0.z, cubic_max.arccos.z));
+            first_root(cubic_max_x),
+            first_root(cubic_max_y),
+            first_root(cubic_max_z));
 
-        determine_new_near_far(first_t1, first_t2, near, far, aSpline, aAABBMin, aAABBMax);
+        result = calculate_near_far(first_t1, first_t2, aSpline, aAABBMin, aAABBMax, ts);
 
-        if (near == far || near > 1.0 || far < 0.0) {
+        if (ts.x == ts.y || !result) {
             const vec3 third_t1 = conversion + vec3(
-                solve_third_cubic(cubic_min.discriminant.x, cubic_min.root.x, cubic_min.fac0.x, cubic_min.arccos.x),
-                solve_third_cubic(cubic_min.discriminant.y, cubic_min.root.y, cubic_min.fac0.y, cubic_min.arccos.y),
-                solve_third_cubic(cubic_min.discriminant.z, cubic_min.root.z, cubic_min.fac0.z, cubic_min.arccos.z));
+                third_root(cubic_min_x),
+                third_root(cubic_min_y),
+                third_root(cubic_min_z));
             const vec3 third_t2 = conversion + vec3(
-                solve_third_cubic(cubic_max.discriminant.x, cubic_max.root.x, cubic_max.fac0.x, cubic_max.arccos.x),
-                solve_third_cubic(cubic_max.discriminant.y, cubic_max.root.y, cubic_max.fac0.y, cubic_max.arccos.y),
-                solve_third_cubic(cubic_max.discriminant.z, cubic_max.root.z, cubic_max.fac0.z, cubic_max.arccos.z));
+                third_root(cubic_max_x),
+                third_root(cubic_max_y),
+                third_root(cubic_max_z));
 
-            determine_new_near_far(third_t1, third_t2, near, far, aSpline, aAABBMin, aAABBMax);
+            result = calculate_near_far(third_t1, third_t2, aSpline, aAABBMin, aAABBMax, ts);
         }
-    }                                                        
-                                                             
-    return vec2(near, far);
+    }
+
+    return ts;
 }
 
 void main() {
 
     vec3 origin;
     vec3 direction;
-    get_origin_direcion(gl_FragCoord.xy * uCamera.reciprocalWindowSize, origin, direction);
+    get_origin_direction(gl_FragCoord.xy * uCamera.reciprocalWindowSize, origin, direction);
 
     Ray ray = make_ray(origin, direction);
 
@@ -361,31 +334,33 @@ void main() {
     bool result = intersect_ray_sampler(ray, sampler, spline);
 
     vec3 col = vec3(0.0);
-    if (result == true) {
-        vec2 ts = intersect_spline_aabb(spline, uVolMeta.volMin, uVolMeta.volMax);
+    if (result == false) {
+        spline = spline_with_tangents(ray.origin, ray.origin + ray.direction * length(ray.origin) * 2.0, vec3(0.0), vec3(0.0));
+    }
 
-        // Step through volume
-        // Only do this if we hit the volume
-        // float depth = 1.0;
+    vec2 ts = intersect_spline_aabb(spline, uVolMeta.volMin, uVolMeta.volMax);
 
-        if( ts.x <= ts.y && ts.y >= 0.0f ) {
-            ts.x = max(0.0, ts.x);
+    // Step through volume
+    // Only do this if we hit the volume
+    // float depth = 1.0;
 
-            const vec3 scale = uVolMeta.volMax - uVolMeta.volMin;
-            for( int i = 0; i < steps; ++i ) {
-                const float ii = float(i) / float(steps);
-                const vec3 splinePos = position_on_spline(mix(ts.x, ts.y, ii), spline);
-                const vec3 samplePos = (splinePos - uVolMeta.volMin) / scale;
-                const float voxel = texture(texVol, samplePos).x;
-                
-                if (voxel > 0.1f) {
-                    col = samplePos;
-                    // depth = length(splinePos - uCamera.cameraWorldPos) / length(uCamera.cameraWorldPos) * 0.5;
-                    break;
-                }
+    if( ts.x <= ts.y && ts.y >= 0.0f ) {
+        ts.x = max(0.0, ts.x);
+
+        const vec3 scale = uVolMeta.volMax - uVolMeta.volMin;
+        for( int i = 0; i < steps; ++i ) {
+            const float ii = float(i) / float(steps);
+            const vec3 splinePos = position_on_spline(mix(ts.x, ts.y, ii), spline);
+            const vec3 samplePos = (splinePos - uVolMeta.volMin) / scale;
+            const float voxel = texture(texVol, samplePos).x;
+            
+            if (voxel > 0.1f) {
+                col = samplePos;
+                // depth = length(splinePos - uCamera.cameraWorldPos) / length(uCamera.cameraWorldPos) * 0.5;
+                break;
             }
         }
-	}
+    }
 
     oColor = col;
 }

@@ -179,7 +179,7 @@ int main()
                 else if (k > 0 && k < size - 1 && j > 0 && j < size - 1 && i == 0) {
                     d = vec3f(
                         map(j, 1, size - 1, -strength, strength),
-                        strength,
+                        -strength,
                         map(k, 1, size - 1, -strength, strength));
 
                     c = vec3f(0, map(j, 1, size - 1, 0, 1.0f), map(k, 1, size - 1, 1.0f, 0));
@@ -187,7 +187,7 @@ int main()
                 else if (k > 0 && k < size - 1 && j > 0 && j < size - 1 && i == size - 1) {
                     d = vec3f(
                         map(j, 1, size - 1, -strength, strength),
-                        -strength,
+                        strength,
                         map(k, 1, size - 1, -strength, strength));
 
                     c = vec3f(0, map(k, 1, size - 1, 1.0f, 0), map(j, 1, size - 1, 0, 1.0f));
@@ -233,7 +233,7 @@ int main()
             const vec3f P1 = ray.origin;
             const vec3f P2 = P1 + ray.dir;
 
-            const vec3f P0 = fml::make_zero<vec3f>();;
+            const vec3f P0 = fml::make_zero<vec3f>();
             const vec3f P3 = t;
 
             Spline spline(gl);
