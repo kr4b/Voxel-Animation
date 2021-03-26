@@ -5,63 +5,32 @@ DepressedCubic::DepressedCubic(float a, float b, float c, float d) {
 	this->q = (2.0f * b * b * b - 9.0f * a * b * c + 27.0f * a * a * d) / (27.0f * a * a * a);
 
 	this->discriminant = 27.0f * q * q + 4.0f * p * p * p;
+
+    this->calculate_default_root();
 }
 
-float DepressedCubic::find_roots() {
+float DepressedCubic::single_root() {
 	if (discriminant > 0.0f) {
-		return single_root();
+		const float D = sqrt(q * q / 4.0f + p * p * p / 27.0f);
+		const float C0 = -0.5f * q + D;
+		const float C1 = -0.5f * q - D;
+
+		root = sign(C0) * pow(abs(C0), 1.0f / 3.0f) + sign(C1) * pow(abs(C1), 1.0f / 3.0f);
 	}
-	else {
-		const float fac = 2.0f * sqrt(-p / 3.0f);
-		const float arccos = acos(3.0f * q / (2.0f * p) * sqrt(-3.0f / p)) / 3.0f;
-
-		return second_root(fac, arccos);
-	}
+	return root;
 }
 
-float DepressedCubic::find_roots_first(float a, float b, float c, float d) {
-    DepressedCubic cubic(a, b, c, d);
-
-    if (cubic.discriminant > 0.0f) {
-        return cubic.single_root();
-    }
-    else {
-        const float fac = 2.0f * sqrt(-cubic.p / 3.0f);
-        const float arccos = acos(3.0f * cubic.q / (2.0f * cubic.p) * sqrt(-3.0f / cubic.p)) / 3.0f;
-
-        return cubic.first_root(fac, arccos);
-    }
+float DepressedCubic::first_root() {
+	if (discriminant <= 0.0f) root = fac * cos(arccos);
+	return root;
 }
 
-float DepressedCubic::find_roots_second(float a, float b, float c, float d) {
-    DepressedCubic cubic(a, b, c, d);
-
-    if (cubic.discriminant > 0.0f) {
-        return cubic.single_root();
-    }
-    else {
-        const float fac = 2.0f * sqrt(-cubic.p / 3.0f);
-        const float arccos = acos(3.0f * cubic.q / (2.0f * cubic.p) * sqrt(-3.0f / cubic.p)) / 3.0f;
-
-        return cubic.second_root(fac, arccos);
-    }
+float DepressedCubic::second_root() {
+	if (discriminant <= 0.0f) root = fac * cos(arccos - 2.0f / 3.0f * M_PI);
+	return root;
 }
 
-float DepressedCubic::find_roots_third(float a, float b, float c, float d) {
-    DepressedCubic cubic(a, b, c, d);
-
-    if (cubic.discriminant > 0.0f) {
-        return cubic.single_root();
-    }
-    else {
-        const float fac = 2.0f * sqrt(-cubic.p / 3.0f);
-        const float arccos = acos(3.0f * cubic.q / (2.0f * cubic.p) * sqrt(-3.0f / cubic.p)) / 3.0f;
-
-        return cubic.third_root(fac, arccos);
-    }
-}
-
-float DepressedCubic::find_roots_static(float a, float b, float c, float d) {
-	DepressedCubic cubic(a, b, c, d);
-	return cubic.find_roots();
+float DepressedCubic::third_root() {
+	if (discriminant <= 0.0f) root = fac * cos(arccos - 4.0f / 3.0f * M_PI);
+	return root;
 }

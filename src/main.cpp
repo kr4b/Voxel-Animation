@@ -279,7 +279,7 @@ int main()
 
     FLUX_GL_CHECKPOINT_ALWAYS();
 
-    //Volume vol = load_mhd_volume( "assets/backpack_small.mhd" );
+    // Volume vol = load_mhd_volume( "assets/backpack_small.mhd" );
     Volume vol = load_cube();
     if (0 == vol.total_element_count())
     {
@@ -311,6 +311,7 @@ int main()
     gl->texImage3D(GL::TEXTURE_3D, 0, GL::R8UI, sampler.size, sampler.size, sampler.size, 0, GL::RED_INTEGER, GL::UNSIGNED_BYTE, sampler.sampler.data());
     gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MIN_FILTER, GL::NEAREST);
     gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::NEAREST);
+    gl->bindTexture(GL::TEXTURE_3D, 0);
     
     GL::UInt dataData;
     gl->activeTexture(GL::TEXTURE2);
@@ -319,6 +320,7 @@ int main()
     gl->texImage3D(GL::TEXTURE_3D, 0, GL::RGB32F, sampler.size, sampler.size, sampler.size, 0, GL::RGB, GL::FLOAT, sampler.data.data());
     gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MIN_FILTER, GL::NEAREST);
     gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::NEAREST);
+    gl->bindTexture(GL::TEXTURE_3D, 0);
     
     FLUX_GL_CHECKPOINT_ALWAYS();
 

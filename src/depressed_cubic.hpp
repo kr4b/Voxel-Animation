@@ -7,33 +7,23 @@ class DepressedCubic {
 public:
 	DepressedCubic(float, float, float, float);
 
-	static float find_roots_first(float a, float b, float c, float d);
-    static float find_roots_second(float a, float b, float c, float d);
-    static float find_roots_third(float a, float b, float c, float d);
-    float find_roots();
-
-	static float find_roots_static(float, float, float, float);
+	float single_root();
+	float first_root();
+	float second_root();
+	float third_root();
 
 private:
-	float p, q, discriminant;
+	float p, q, discriminant, fac, root, arccos;
 
-	float single_root() {
-		const float D = sqrt(q * q / 4.0f + p * p * p / 27.0f);
-		const float C0 = -0.5f * q + D;
-		const float C1 = -0.5f * q - D;
+	void calculate_default_root() {
+		if (discriminant > 0.0f) {
+			root = single_root();
+		}
+		else {
+			fac = 2.0f * sqrt(-p / 3.0f);
+			arccos = acos(3.0f * q / (2.0f * p) * sqrt(-3.0f / p)) / 3.0f;
 
-		return sign(C0) * pow(abs(C0), 1.0f / 3.0f) + sign(C1) * pow(abs(C1), 1.0f / 3.0f);
-	}
-
-	float first_root(float fac, float arccos) {
-		return fac * cos(arccos);
-	}
-
-	float second_root(float fac, float arccos) {
-		return fac * cos(arccos - 2.0f / 3.0f * M_PI);
-	}
-
-	float third_root(float fac, float arccos) {
-		return fac * cos(arccos - 4.0f / 3.0f * M_PI);
+			root = second_root();
+		}
 	}
 };

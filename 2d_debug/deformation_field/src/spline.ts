@@ -118,16 +118,16 @@ class Spline {
         const t1 = add(conversion, vec2(cubic_min_x.second_root(), cubic_min_y.second_root()));
         const t2 = add(conversion, vec2(cubic_max_x.second_root(), cubic_max_y.second_root()));
 
-        this.ts = vec2(Number.MAX_VALUE, Number.MIN_VALUE);
+        this.ts = vec2(2.0, -2.0);
         let result = this.calculate_near_far(t1, t2, aabb.min, aabb.max, this.ts);
 
-        if (this.ts.x == this.ts.y || !result) {
+        if (!result) {
             const first_t1: vec2 = add(conversion, vec2(cubic_min_x.first_root(), cubic_min_y.first_root()));
             const first_t2: vec2 = add(conversion, vec2(cubic_max_x.first_root(), cubic_max_y.first_root()));
 
             result = this.calculate_near_far(first_t1, first_t2, aabb.min, aabb.max, this.ts);
 
-            if (this.ts.x == this.ts.y || !result) {
+            if (!result) {
                 const third_t1: vec2 = add(conversion, vec2(cubic_min_x.third_root(), cubic_min_y.third_root()));
                 const third_t2: vec2 = add(conversion, vec2(cubic_max_x.third_root(), cubic_max_y.third_root()));
 
@@ -166,7 +166,7 @@ class Spline {
         ts.x = min(ts.x, min(inear.x, inear.y));
         ts.y = max(ts.y, max(ifar.x,  ifar.y));
 
-        return ts.x <= ts.y && ts.y >= 0;
+        return ts.x < ts.y && ts.y >= 0;
     }
 
     /**

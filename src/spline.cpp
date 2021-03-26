@@ -2,10 +2,10 @@
 #include "depressed_cubic.hpp"
 
 const int detail = 100;
-const vec3f EPSILON = fml::make_vector<vec3f>(1.0e-6f, 1.0e-6f, 1.0e-6f);
+const vec3f EPSILON = fml::make_vector<vec3f>(1.0e-2f, 1.0e-2f, 1.0e-2f);
 const vec3f ZERO_VECTOR = fml::make_zero<vec3f>();
 const vec3f ONE_VECTOR = fml::make_one<vec3f>();
-const vec3f MAX_VALUE = fml::make_vector<vec3f>(1.0e6f, 1.0e6f, 1.0e6f);
+const vec3f MAX_VALUE = fml::make_vector<vec3f>(2.0f, 2.0f, 2.0f);
 const vec3f MIN_VALUE = -MAX_VALUE;
 
 Spline::Spline(const gl::GLapi* gl) {
@@ -187,26 +187,59 @@ inline vec3f Spline::position_on_spline(float t) {
 
 void Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
 	const vec3f conversion = -this->b / (3.0f * this->a);
+
+	DepressedCubic cubic_min_x(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x);
+	DepressedCubic cubic_min_y(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y);
+	DepressedCubic cubic_min_z(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z);
+	DepressedCubic cubic_max_x(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x);
+	DepressedCubic cubic_max_y(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y);
+	DepressedCubic cubic_max_z(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z);
 	
 	const vec3f t1 = conversion + vec3f(
-		DepressedCubic::find_roots_static(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x),
-		DepressedCubic::find_roots_static(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y),
-		DepressedCubic::find_roots_static(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMin.z));
+		cubic_min_x.second_root(),
+		cubic_min_y.second_root(),
+		cubic_min_z.second_root());
 	const vec3f t2 = conversion + vec3f(
-		DepressedCubic::find_roots_static(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMax.x),
-		DepressedCubic::find_roots_static(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y),
-		DepressedCubic::find_roots_static(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z));
+		cubic_max_x.second_root(),
+		cubic_max_y.second_root(),
+		cubic_max_z.second_root());
 
-	vec2f ts = fml::make_zero<vec2f>();
-	calculate_near_far(t1, t2, aAABBMin, aAABBMax, &ts);
+	vec2f ts = fml::make_vector<vec2f>(2.0f, -2.0f);
+	bool result = calculate_near_far(t1, t2, aAABBMin, aAABBMax, &ts);
+
+	if (!result) {
+		const vec3f first_t1 = conversion + vec3f(
+			cubic_min_x.first_root(),
+			cubic_min_y.first_root(),
+			cubic_min_z.first_root());
+		const vec3f first_t2 = conversion + vec3f(
+			cubic_max_x.first_root(),
+			cubic_max_y.first_root(),
+			cubic_max_z.first_root());
+
+		result = calculate_near_far(first_t1, first_t2, aAABBMin, aAABBMax, &ts);
+
+		if (!result) {
+			const vec3f third_t1 = conversion + vec3f(
+				cubic_min_x.third_root(),
+				cubic_min_y.third_root(),
+				cubic_min_z.third_root());
+			const vec3f third_t2 = conversion + vec3f(
+				cubic_max_x.third_root(),
+				cubic_max_y.third_root(),
+				cubic_max_z.third_root());
+
+			result = calculate_near_far(third_t1, third_t2, aAABBMin, aAABBMax, &ts);
+		}
+	}
 
 	//std::cout << ts.x << ", " << ts.y << std::endl;
-	this->intersection = ts.x <= ts.y && ts.y >= 0.0f;
+	this->intersection = result;
 	this->worldEntry = this->position_on_spline(ts.x);
 	this->worldExit = this->position_on_spline(ts.y);
 }
 
-void Spline::calculate_near_far(const vec3f t1, const vec3f t2, const vec3f aAABBMin, const vec3f aAABBMax, vec2f* ts) {
+bool Spline::calculate_near_far(const vec3f t1, const vec3f t2, const vec3f aAABBMin, const vec3f aAABBMax, vec2f* ts) {
 	const vec3f it1 = this->intersected_aabb(t1, aAABBMin, aAABBMax);
 	const vec3f it2 = this->intersected_aabb(t2, aAABBMin, aAABBMax);
 
@@ -217,10 +250,12 @@ void Spline::calculate_near_far(const vec3f t1, const vec3f t2, const vec3f aAAB
 	const vec3f ft2 = t2 * it2 + (ONE_VECTOR - it2) * MIN_VALUE;
 
 	const vec3f inear = fml::make_vector<vec3f>(std::min(nt1.x, nt2.x), std::min(nt1.y, nt2.y), std::min(nt1.z, nt2.z));
-	ts->x = std::min(inear.x, std::min(inear.y, inear.z));
+	ts->x = std::min(ts->x, std::min(inear.x, std::min(inear.y, inear.z)));
 
 	const vec3f ifar = fml::make_vector<vec3f>(std::max(ft1.x, ft2.x), std::max(ft1.y, ft2.y), std::max(ft1.z, ft2.z));
-	ts->y = std::max(ifar.x, std::max(ifar.y, ifar.z));
+	ts->y = std::max(ts->y, std::max(ifar.x, std::max(ifar.y, ifar.z)));
+
+	return ts->x < ts->y && ts->y >= 0.0f;
 }
 
 vec3f Spline::intersected_aabb(const vec3f t, vec3f aAABBMin, vec3f aAABBMax) {

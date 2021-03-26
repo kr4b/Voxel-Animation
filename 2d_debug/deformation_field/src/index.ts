@@ -1,4 +1,5 @@
 import { AABB } from "./aabb.js";
+import DepressedCubic from "./depressed_cubic.js";
 import { Ray } from "./ray.js";
 import { Sampler } from "./sampler.js";
 import Spline from "./spline.js";

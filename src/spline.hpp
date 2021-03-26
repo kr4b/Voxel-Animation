@@ -47,7 +47,7 @@ private:
     void init_vao(const gl::GLapi*);
 
 	vec3f intersected_aabb(const vec3f t, vec3f aAABBMin, vec3f aAABBMax);
-	void calculate_near_far(const vec3f, const vec3f, const vec3f, const vec3f, vec2f*);
+	bool calculate_near_far(const vec3f, const vec3f, const vec3f, const vec3f, vec2f*);
 };
 
 float point_in_aabb(const vec3f, const vec3f, const vec3f);
