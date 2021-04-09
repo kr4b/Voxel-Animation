@@ -1,4 +1,5 @@
 import { AABB } from "./aabb.js";
+import { Plane } from "./plane.js";
 import { Ray } from "./ray.js";
 import { Sampler } from "./sampler.js";
 import Spline from "./spline.js";
@@ -80,6 +81,9 @@ onload = function () {
         spline.set_color(c);
         return spline;
     });
+    var plane = new Plane(vec2(2.0, 1.0), vec2(1.5, 0.0));
+    var ray = new Ray(vec2(0.0, 5.0), vec2(1.0, -4.0 / 2.75));
+    console.log(plane.intersect(ray));
     ctx.scale(canvas.width / 2, canvas.height / 2);
     ctx.translate(1, 1);
     ctx.lineWidth = 0.0075;
