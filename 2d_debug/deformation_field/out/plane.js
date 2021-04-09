@@ -1,4 +1,4 @@
-import { add, divide, dot, scale, subtract, vec2, } from "./vec2.js";
+import { add, divide, dot, scale, subtract, vec2 } from "./vec2.js";
 var Plane = /** @class */ (function () {
     function Plane(center, size) {
         console.assert(size.x == 0.0 || size.y == 0.0);
