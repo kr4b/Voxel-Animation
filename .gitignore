@@ -6,4 +6,4 @@ bin/
 lib/
 assets/**/*.fld
 
-simplevol.vcxproj
+src/simplevol.vcxproj
