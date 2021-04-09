@@ -7,6 +7,13 @@
 #include <cassert>
 #include <cstddef>
 
+struct FLDInfo {
+    size_t ndims;
+    std::vector<size_t> dims;
+    size_t vecLen;
+    size_t bytes;
+};
+
 /* A 3D volume
  *
  * The `Volume` holds a scalar 3D volume, i.e., a 3D volume where each point
@@ -40,6 +47,7 @@ class Volume
 {
 	public:
 		Volume( std::size_t aWidth, std::size_t aHeight, std::size_t aDepth );
+        Volume(std::size_t aWidth, std::size_t aHeight, std::size_t aDepth, std::size_t vecLen);
 
 		// Not copyable, but movable.
 		// Rationale: don't accidentally make copies of large data.
@@ -74,7 +82,10 @@ class Volume
  */
 Volume load_mhd_volume( char const* aFileName );
 
+Volume load_fld_volume(char const* fileName, FLDInfo info);
+
 Volume load_cube();
+
 
 
 // Implementation:
@@ -84,6 +95,14 @@ Volume::Volume( std::size_t aWidth, std::size_t aHeight, std::size_t aDepth )
 	, mWidth(aWidth)
 	, mHeight(aHeight)
 	, mDepth(aDepth)
+{}
+
+inline
+Volume::Volume(std::size_t aWidth, std::size_t aHeight, std::size_t aDepth, std::size_t vecLen)
+    : mData(aWidth * aHeight * aDepth * vecLen)
+    , mWidth(aWidth)
+    , mHeight(aHeight)
+    , mDepth(aDepth)
 {}
 
 inline

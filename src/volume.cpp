@@ -6,8 +6,10 @@
 #include <limits>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <algorithm>
 #include <stdexcept>
+#include <iostream>
 
 #include "miniz.h"
 
@@ -294,6 +296,61 @@ catch( std::exception const& eError )
 	std::fprintf( stderr, "Error while loading MHD file \"%s\":\n", aFileName ),
 	std::fprintf( stderr, "  - %s\n", eError.what() );
 	return Volume( 0, 0, 0 );
+}
+
+Volume load_fld_volume(char const* fileName, FLDInfo info) {
+    assert(info.ndims, 3, "Must have 3 dimensions");
+    Volume volume(info.dims[0], info.dims[1], info.dims[2], info.vecLen);
+    std::ifstream file(fileName, std::ios::in | std::ios::binary);
+
+    size_t x = 0;
+    size_t y = 0;
+    size_t z = 0;
+    size_t vecIndex = 0;
+    size_t dataSize = 0;
+    unsigned int data = 0;
+
+    float minv = std::numeric_limits<float>::max();
+    float maxv = std::numeric_limits<float>::min();
+
+    while (!file.eof()) {
+        char byte = file.get();
+        if (byte == 12) {
+            byte = file.get();
+            if (byte == 12) break;
+        }
+    }
+
+    while (!file.eof()) {
+        unsigned char byte = file.get();
+        data = (data << 8) + (unsigned int) byte;
+        if (++dataSize == info.bytes) {
+            float value = float(data);
+            volume.data()[(z * info.dims[0] * info.dims[1] + y * info.dims[0] + x) * info.vecLen + vecIndex] = value;
+            if (value > maxv) maxv = value;
+            if (value < minv) minv = value;
+            data = 0;
+            dataSize = 0;
+            vecIndex = (vecIndex + 1) % info.vecLen;
+
+            if (++x == info.dims[0]) {
+                x = 0;
+                if (++y == info.dims[1]) {
+                    y = 0;
+                    if (++z == info.dims[2]) {
+                        assert(!"ERROR!");
+                    }
+                }
+            }
+        }
+    }
+
+    std::cout << minv << ", " << maxv << std::endl;
+    for (size_t i = 0; i < info.dims[0] * info.dims[1] * info.dims[2] * info.vecLen; i++) {
+        volume.data()[i] = (volume.data()[i] - minv) / maxv;
+    }
+
+    return volume;
 }
 
 Volume load_cube() {
