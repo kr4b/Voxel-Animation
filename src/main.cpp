@@ -144,10 +144,10 @@ int main()
     FLUX_ASSERT(gl);
 
     UVolMeta volMeta;
-    //volMeta.volMin = fml::make_splat<vec3f>(-1.0f);
-    //volMeta.volMax = fml::make_splat<vec3f>(+1.0f);
-    volMeta.volMin = vec3f(-0.5f, -0.5f, -1.0f);
-    volMeta.volMax = vec3f(0.5f, 0.5f, 1.0f);
+    volMeta.volMin = fml::make_splat<vec3f>(-1.0f);
+    volMeta.volMax = fml::make_splat<vec3f>(+1.0f);
+    //volMeta.volMin = vec3f(-0.5f, -0.5f, -1.0f);
+    //volMeta.volMax = vec3f(0.5f, 0.5f, 1.0f);
 
     const size_t size = 20;
     const float strength = 10.0f;
@@ -282,7 +282,9 @@ int main()
     FLUX_GL_CHECKPOINT_ALWAYS();
 
     //Volume vol = load_fld_volume("assets/tooth.fld", { 3, { 256, 256, 161 }, 1, 2 });
-    Volume vol = load_fld_volume("assets/carp8.fld", { 3, { 128, 128, 256 }, 1, 1 });
+    //Volume vol = load_fld_volume("assets/carp8.fld", { 3, { 128, 128, 256 }, 1, 1 });
+    //Volume vol = load_fld_volume("assets/orange.fld", { 3, { 256, 256, 163 }, 1, 1 });
+    Volume vol = load_fld_volume("assets/pig8.fld", { 3, { 256, 256, 180 }, 1, 1 });
     //Volume vol = load_fld_volume("assets/tomato.fld", { 3, { 256, 256, 163 }, 1, 1 });
     //Volume vol = load_fld_volume("assets/bonsai.fld", { 3, { 256, 256, 182 }, 1, 1 });
     //Volume vol = load_mhd_volume("assets/backpack_small.mhd");
