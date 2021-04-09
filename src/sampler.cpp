@@ -27,28 +27,28 @@ void Sampler<T>::create_sampler_texture() {
     const int format = gl::GL::RED_INTEGER;
     const int type = gl::GL::UNSIGNED_BYTE;
 
-    sampler_texture = create_texture(internal_format, format, type, sampler.data());
+    sampler_texture = create_texture(internal_format, format, type, gl::GL::NEAREST, sampler.data());
 }
 
 template <typename T>
 void Sampler<T>::create_data_texture(const int internal_format, const int format, const int type, const void *data) {
     gl::GL::UInt texture;
     
-    texture = create_texture(internal_format, format, type, data);
+    texture = create_texture(internal_format, format, type, gl::GL::NEAREST, data);
 
     data_textures.push_back(texture);
 }
 
 template <typename T>
-gl::GL::UInt Sampler<T>::create_texture(const int internal_format, const int format, const int type, const void *data) {
+gl::GL::UInt Sampler<T>::create_texture(const int internal_format, const int format, const int type, const int interp, const void *data) {
     gl::GL::UInt texture;
 
     this->gl_->activeTexture(gl::GL::TEXTURE1);
     this->gl_->createTextures(gl::GL::TEXTURE_3D, 1, &texture);
     this->gl_->bindTexture(gl::GL::TEXTURE_3D, texture);
     this->gl_->texImage3D(gl::GL::TEXTURE_3D, 0, internal_format, size, size, size, 0, format, type, data);
-    this->gl_->texParameteri(gl::GL::TEXTURE_3D, gl::GL::TEXTURE_MIN_FILTER, gl::GL::NEAREST);
-    this->gl_->texParameteri(gl::GL::TEXTURE_3D, gl::GL::TEXTURE_MAG_FILTER, gl::GL::NEAREST);
+    this->gl_->texParameteri(gl::GL::TEXTURE_3D, gl::GL::TEXTURE_MIN_FILTER, interp);
+    this->gl_->texParameteri(gl::GL::TEXTURE_3D, gl::GL::TEXTURE_MAG_FILTER, interp);
     this->gl_->bindTexture(gl::GL::TEXTURE_3D, 0);
 
     return texture;

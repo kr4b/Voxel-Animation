@@ -338,7 +338,7 @@ Volume load_fld_volume(char const* fileName, FLDInfo info) {
                 if (++y == info.dims[1]) {
                     y = 0;
                     if (++z == info.dims[2]) {
-                        assert(!"ERROR!");
+						break;
                     }
                 }
             }
