@@ -37,6 +37,7 @@ namespace GLFW = flux::dlapi::os::GLFW;
 
 // Templates also need cpp files?
 #include "sampler.cpp"
+#include "scene.hpp"
 
 namespace
 {
@@ -99,34 +100,26 @@ extern "C"
 #	endif // ~ PLATFORM_WIN32
 }
 
-float map(float current, float min1, float max1, float min2, float max2) {
-    return min2 + current / (max1 - min1) * (max2 - min2);
-}
-
 int main()
 {
     // Startup
-    if (!global_startup())
-    {
+    if (!global_startup()) {
         FLUX_LOG(FATAL, "Startup failed. Bye.");
         return 1;
     }
 
-    FLUX_UTIL_ON_SCOPE_EXIT
-    {
+    FLUX_UTIL_ON_SCOPE_EXIT {
         global_shutdown();
     };
 
     // Create Window and rendering context.
     auto ctx = gfx_startup();
-    if (!ctx.valid())
-    {
+    if (!ctx.valid()) {
         FLUX_LOG(FATAL, "No rendering context. Bye.");
         return 1;
     }
 
-    FLUX_UTIL_ON_SCOPE_EXIT
-    {
+    FLUX_UTIL_ON_SCOPE_EXIT {
         gfx_shutdown(std::move(ctx));
     };
 
@@ -149,100 +142,10 @@ int main()
 
     const size_t size = 20;
     const float strength = 10.0f;
-    std::vector<unsigned char> samplers;
-    std::vector<vec3f> data;
-    std::vector<vec3f> colors;
+    auto sampler = prepare_deformation_scale(gl, size, strength);
 
-    for (size_t k = 0; k < size; k++) {
-        for (size_t i = 0; i < size; i++) {
-            for (size_t j = 0; j < size; j++) {
-                unsigned char sample = 1;
-                vec3f d = fml::make_zero<vec3f>();
-                vec3f c = fml::make_zero<vec3f>();
-
-                if (k > 0 && k < size - 1 && i > 0 && i < size - 1 && j == 0) {
-                    d = vec3f(
-                        -strength,
-                        map(i, 1, size - 1, -strength, strength),
-                        map(k, 1, size - 1, -strength, strength));
-
-                    c = vec3f(map(k, 1, size - 1, 1.0f, 0), map(i, 1, size - 1, 0, 1.0f), 0);
-                }
-                else if (k > 0 && k < size - 1 && i > 0 && i < size - 1 && j == size - 1) {
-                    d = vec3f(
-                        strength,
-                        map(i, 1, size - 1, -strength, strength),
-                        map(k, 1, size - 1, -strength, strength));
-
-                    c = vec3f(map(i, 1, size - 1, 1.0f, 0), map(k, 1, size - 1, 1.0f, 0), 0);
-                }
-                else if (k > 0 && k < size - 1 && j > 0 && j < size - 1 && i == 0) {
-                    d = vec3f(
-                        map(j, 1, size - 1, -strength, strength),
-                        -strength,
-                        map(k, 1, size - 1, -strength, strength));
-
-                    c = vec3f(0, map(j, 1, size - 1, 0, 1.0f), map(k, 1, size - 1, 1.0f, 0));
-                }
-                else if (k > 0 && k < size - 1 && j > 0 && j < size - 1 && i == size - 1) {
-                    d = vec3f(
-                        map(j, 1, size - 1, -strength, strength),
-                        strength,
-                        map(k, 1, size - 1, -strength, strength));
-
-                    c = vec3f(0, map(k, 1, size - 1, 1.0f, 0), map(j, 1, size - 1, 0, 1.0f));
-                }
-                else if (i > 0 && i < size - 1 && j > 0 && j < size - 1 && k == 0) {
-                    d = vec3f(
-                        map(j, 1, size - 1, -strength, strength),
-                        map(i, 1, size - 1, -strength, strength),
-                        -strength);
-
-                    c = vec3f(map(j, 1, size - 1, 0, 1.0f), 0, map(i, 1, size - 1, 1.0f, 0));
-                }
-                else if (i > 0 && i < size - 1 && j > 0 && j < size - 1 && k == size - 1) {
-                    d = vec3f(
-                        map(j, 1, size - 1, -strength, strength), 
-                        map(i, 1, size - 1, -strength, strength),
-                        strength);
-
-                    c = vec3f(map(i, 1, size - 1, 1.0f, 0), 0, map(j, 1, size - 1, 0, 1.0f));
-                }
-                else {
-                    sample = 0;
-                }
-
-                samplers.push_back(sample);
-                data.push_back(d);
-                colors.push_back(c);
-            }
-        }
-    }
-
-    const vec3f aabbMin = fml::make_splat<vec3f>(-1.0f);
-    const vec3f aabbMax = fml::make_splat<vec3f>(1.0f);
-
-    Sampler<vec3f> sampler(
-        AABB(aabbMin * 2.0f, aabbMax * 2.0f),
-        AABB(aabbMin, aabbMax),
-        size,
-        samplers,
-        data,
-        colors,
-        [gl](Ray ray, vec3f t, vec3f c) {
-            const vec3f P1 = ray.origin;
-            const vec3f P2 = P1 + ray.dir;
-
-            const vec3f P0 = fml::make_zero<vec3f>();
-            const vec3f P3 = t;
-
-            Spline spline(gl);
-            spline.parameters_from_tangents(P1, P2, P0, P3);
-            spline.set_color(c);
-            return spline;
-        },
-        gl
-    );
+    SplineSource splines;
+    splines.set_values(gl, state.splineCount, state.splineDist);
 
     //FLUX_ENABLE_EXCEPTION_INFO();
     FLUX_GL_CHECKPOINT_ALWAYS();
@@ -274,15 +177,11 @@ int main()
     gl->createBuffers(1, &uCamera);
     gl->namedBufferStorage(uCamera, sizeof(UCamera), nullptr, GL::DYNAMIC_STORAGE_BIT);
 
-    SplineSource splines;
-    splines.set_values(gl, state.splineCount, state.splineDist);
-
     FLUX_GL_CHECKPOINT_ALWAYS();
 
-    // Volume vol = load_mhd_volume( "assets/Volumes/bonsai.fld" );
+    // Volume vol = load_mhd_volume( "assets/backpack_small.mhd" );
     Volume vol = load_cube();
-    if (0 == vol.total_element_count())
-    {
+    if (0 == vol.total_element_count()) {
         FLUX_LOG(FATAL, "Unable to load volume. Bye.");
         return 1;
     }
@@ -296,16 +195,9 @@ int main()
     gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::NEAREST);
 
     gl->textureStorage3D(vol3d, 1, GL::R32F, vol.width(), vol.height(), vol.depth());
-    gl->textureSubImage3D(vol3d, 0,
-        0, 0, 0, // offset in the volume
-        vol.width(), vol.height(), vol.depth(),
-        GL::RED, GL::FLOAT, vol.data()
-    );
+    gl->textureSubImage3D(vol3d, 0, 0, 0, 0, vol.width(), vol.height(), vol.depth(), GL::RED, GL::FLOAT, vol.data());
 
     std::cout << vol.width() << ", " << vol.height() << ", " << vol.depth() << std::endl;
-    
-    sampler.create_sampler_texture();
-    sampler.create_data_texture(GL::RGB32F, GL::RGB, GL::FLOAT, data.data());
     
     FLUX_GL_CHECKPOINT_ALWAYS();
 

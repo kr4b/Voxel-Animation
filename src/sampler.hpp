@@ -46,6 +46,6 @@ public:
     void create_data_texture(const int, const int, const int, const void *);
 
 private:
-    gl:: GL::UInt create_texture(const int, const int, const int, const void *);
+    gl:: GL::UInt create_texture(const int, const int, const int, const int, const void *);
 
 };
