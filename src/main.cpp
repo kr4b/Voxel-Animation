@@ -310,23 +310,8 @@ int main()
 
     std::cout << vol.width() << ", " << vol.height() << ", " << vol.depth() << std::endl;
     
-    GL::UInt dataChecker;
-    gl->activeTexture(GL::TEXTURE1);
-    gl->createTextures(GL::TEXTURE_3D, 1, &dataChecker);
-    gl->bindTexture(GL::TEXTURE_3D, dataChecker);
-    gl->texImage3D(GL::TEXTURE_3D, 0, GL::R8UI, sampler.size, sampler.size, sampler.size, 0, GL::RED_INTEGER, GL::UNSIGNED_BYTE, sampler.sampler.data());
-    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MIN_FILTER, GL::NEAREST);
-    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::NEAREST);
-    gl->bindTexture(GL::TEXTURE_3D, 0);
-    
-    GL::UInt dataData;
-    gl->activeTexture(GL::TEXTURE2);
-    gl->createTextures(GL::TEXTURE_3D, 1, &dataData);
-    gl->bindTexture(GL::TEXTURE_3D, dataData);
-    gl->texImage3D(GL::TEXTURE_3D, 0, GL::RGB32F, sampler.size, sampler.size, sampler.size, 0, GL::RGB, GL::FLOAT, sampler.data.data());
-    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MIN_FILTER, GL::NEAREST);
-    gl->texParameteri(GL::TEXTURE_3D, GL::TEXTURE_MAG_FILTER, GL::NEAREST);
-    gl->bindTexture(GL::TEXTURE_3D, 0);
+    sampler.create_sampler_texture();
+    sampler.create_data_texture(GL::RGB32F, GL::RGB, GL::FLOAT, data.data());
     
     FLUX_GL_CHECKPOINT_ALWAYS();
 
@@ -392,16 +377,7 @@ int main()
             gl->uniform3f(gl->getUniformLocation(program, "tangent1"), tangent1.x, tangent1.y, tangent1.z);
             gl->uniform3f(gl->getUniformLocation(program, "tangent2"), tangent2.x, tangent2.y, tangent2.z);
 
-            gl->activeTexture(GL::TEXTURE1);
-            gl->bindTexture(GL::TEXTURE_3D, dataChecker);
-            gl->uniform1i(gl->getUniformLocation(program, "sampler.dataCheck"), 1);
-
-            gl->activeTexture(GL::TEXTURE2);
-            gl->bindTexture(GL::TEXTURE_3D, dataData);
-            gl->uniform1i(gl->getUniformLocation(program, "sampler.data[0]"), 2);
-            gl->uniform1i(gl->getUniformLocation(program, "sampler.size"), sampler.size);
-            gl->uniform3fv(gl->getUniformLocation(program, "sampler.aabb.min"), 1, sampler.samplerAABB.min.data());
-            gl->uniform3fv(gl->getUniformLocation(program, "sampler.aabb.max"), 1, sampler.samplerAABB.max.data());
+            sampler.prepare(program, 1);
         }
 
         gl->bindBufferBase(GL::UNIFORM_BUFFER, 0, uVolMeta);
