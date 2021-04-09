@@ -70,6 +70,7 @@ void main() {
 		const vec3 ventry = (worldEntry - uVolMeta.volMin) / scale;
 		const vec3 vexit = (worldExit - uVolMeta.volMin) / scale;
 
+		// float accum = 0.0;
 		// Walk the ray from entry to exit to determine the intersection point
 		for( int i = 0; i < VOLUME_STEPS; ++i ) {
 			const float ii = float(i) / float(VOLUME_STEPS);
@@ -77,7 +78,8 @@ void main() {
 			const vec3 samplePos = mix( ventry, vexit, ii );
 			const float voxel = texture( texVol, samplePos ).x;
 			
-			if (voxel > 0.1f) {
+			// accum += voxel;
+			if (voxel > 0.5f) {
 				col = samplePos;
 				vec4 transformedPos = proj * view * vec4(worldPos, 1.0);
 				float far = gl_DepthRange.far;
@@ -86,6 +88,8 @@ void main() {
 				break;
 			}
 		}
+
+		// col = vec3(accum / VOLUME_STEPS);
 	}
 
     oColor = col;

@@ -59,4 +59,5 @@ var copy = function (v) { return vec2(v.x, v.y); };
 var step = function (v, w) { return vec2(+(w.x >= v.x), +(w.y >= v.y)); };
 var mix = function (v, w, n) { return add(scale(v, 1 - n), scale(w, n)); };
 var norm = function (v) { return scale(v, 1.0 / length(v, vec2(0.0, 0.0))); };
-export { vec2, scale, add, subtract, multiply, divide, min, max, length, copy, step, mix, norm };
+var dot = function (v, w) { return v.x * w.x + v.y * w.y; };
+export { vec2, scale, add, subtract, multiply, divide, min, max, length, copy, step, mix, norm, dot };
