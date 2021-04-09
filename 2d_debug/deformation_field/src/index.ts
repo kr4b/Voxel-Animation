@@ -1,11 +1,23 @@
 import { AABB } from "./aabb.js";
 import DepressedCubic from "./depressed_cubic.js";
+import { PlaneSampler } from "./plane_sampler.js";
 import { Ray } from "./ray.js";
 import { Sampler } from "./sampler.js";
 import Spline from "./spline.js";
 import { add, divide, max, min, norm, scale, subtract, vec2 } from "./vec2.js";
 
 const { atan2, cos, PI, sin, sqrt } = Math;
+
+const ps = new PlaneSampler(vec2(-0.3, -0.3), vec2(0.3, 0.3), new AABB(vec2(-0.15, -0.15), vec2(0.15, 0.15)), [
+    [
+    ],
+    [
+    ],
+    [
+    ],
+    [
+    ],
+])
 
 let original_1d: CanvasRenderingContext2D;
 let transformed_1d: CanvasRenderingContext2D;
@@ -165,7 +177,7 @@ function render() {
 
     ctx.clearRect(-1, -1, 2, 2);
     draw_aabb_colors();
-    sampler.draw(ctx);
+    // sampler.draw(ctx);
     const rays: boolean = (document.querySelector("#rays") as HTMLInputElement).checked;
     const splines: boolean = (document.querySelector("#splines") as HTMLInputElement).checked;
 
@@ -219,4 +231,5 @@ function render() {
     ctx.strokeRect(-canvas.width / 2, sampler.realAABB.min.x, canvas.width, sampler.realAABB.size().x);
     ctx.strokeRect(sampler.realAABB.min.y, -canvas.height / 2, sampler.realAABB.size().y, canvas.height);
     ctx.strokeStyle = "black";
+    ps.draw(ctx);
 }

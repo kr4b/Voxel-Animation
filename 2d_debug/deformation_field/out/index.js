@@ -1,9 +1,16 @@
 import { AABB } from "./aabb.js";
+import { PlaneSampler } from "./plane_sampler.js";
 import { Ray } from "./ray.js";
 import { Sampler } from "./sampler.js";
 import Spline from "./spline.js";
 import { add, divide, max, min, norm, scale, subtract, vec2 } from "./vec2.js";
 var atan2 = Math.atan2, cos = Math.cos, PI = Math.PI, sin = Math.sin, sqrt = Math.sqrt;
+var ps = new PlaneSampler(vec2(-0.3, -0.3), vec2(0.3, 0.3), new AABB(vec2(-0.15, -0.15), vec2(0.15, 0.15)), [
+    [],
+    [],
+    [],
+    [],
+]);
 var original_1d;
 var transformed_1d;
 var canvas;
@@ -125,7 +132,7 @@ function render() {
     transformed_1d.clearRect(0, -1, original_1d.canvas.width, 2);
     ctx.clearRect(-1, -1, 2, 2);
     draw_aabb_colors();
-    sampler.draw(ctx);
+    // sampler.draw(ctx);
     var rays = document.querySelector("#rays").checked;
     var splines = document.querySelector("#splines").checked;
     var increment = 0.05;
@@ -169,4 +176,5 @@ function render() {
     ctx.strokeRect(-canvas.width / 2, sampler.realAABB.min.x, canvas.width, sampler.realAABB.size().x);
     ctx.strokeRect(sampler.realAABB.min.y, -canvas.height / 2, sampler.realAABB.size().y, canvas.height);
     ctx.strokeStyle = "black";
+    ps.draw(ctx);
 }
