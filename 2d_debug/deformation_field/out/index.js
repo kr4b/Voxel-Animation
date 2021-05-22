@@ -2,7 +2,7 @@ import { AABB } from "./aabb.js";
 import { PlaneSampler } from "./plane_sampler.js";
 import { Ray } from "./ray.js";
 import Spline from "./spline.js";
-import { add, divide, max, min, scale, subtract, vec2 } from "./vec2.js";
+import { add, divide, max, min, norm, scale, subtract, vec2 } from "./vec2.js";
 var atan2 = Math.atan2, cos = Math.cos, PI = Math.PI, sin = Math.sin, sqrt = Math.sqrt;
 var original_1d;
 var transformed_1d;
@@ -21,6 +21,7 @@ var aabbColors = [
 var aabbMin = vec2(-0.15, -0.15);
 var aabbMax = vec2(0.15, 0.15);
 var realAABB = new AABB(aabbMin, aabbMax);
+var samplerAABB = new AABB(scale(aabbMin, 2.0), scale(aabbMax, 2.0));
 function map(value, min1, max1, min2, max2) {
     return min2 + (value - min1) / (max1 - min1) * (max2 - min2);
 }
@@ -39,8 +40,8 @@ onload = function () {
     transformed_1d.canvas.height = 40;
     transformed_1d.scale(1, transformed_1d.canvas.height / 2);
     transformed_1d.translate(0, 1);
-    var size = 1;
-    sampler = new PlaneSampler(vec2(-0.3, -0.3), vec2(0.3, 0.3), new AABB(vec2(-0.3, -0.3), vec2(0.3, 0.3)), [
+    var size = 1.0;
+    sampler = new PlaneSampler(vec2(-0.3, -0.3), vec2(0.3, 0.3), new AABB(vec2(-0.15, -0.15), vec2(0.15, 0.15)), [
         [
             vec2(size, -size),
             vec2(size, size),
@@ -59,7 +60,7 @@ onload = function () {
         ],
     ], function (ray, plane, data, color) {
         var P1 = ray.origin;
-        var P2 = add(P1, ray.dir);
+        var P2 = add(ray.origin, scale(ray.dir, plane));
         var P0 = vec2(0.0, 0.0);
         var P3 = vec2(data.x, data.y);
         var spline = Spline.with_tangents(P1, P2, P0, P3);
@@ -126,8 +127,8 @@ function render() {
             ctx.strokeStyle = "black";
         }
         var spline = sampler.intersect(ray);
-        var result = spline === null || spline === void 0 ? void 0 : spline.intersect_spline_aabb(realAABB);
-        var ts = ray.intersect_ray_aabb(new AABB(aabbMin, aabbMax));
+        var result = spline === null || spline === void 0 ? void 0 : spline.intersect_spline_aabb(samplerAABB);
+        var ts = ray.intersect_ray_aabb(realAABB);
         if (ts.x <= ts.y && ts.y >= 0.0) {
             // Draw the view with the rays
             var worldEntry = add(ray.origin, scale(ray.dir, ts.x));
@@ -139,16 +140,28 @@ function render() {
         if (splines && spline != null) {
             spline.draw(ctx);
         }
-        if (spline != null && result) {
-            ctx.fillStyle = "red";
-            spline.draw_point_at(ctx, spline.ts.x);
-            spline.draw_point_at(ctx, spline.ts.y);
-            ctx.fillStyle = "black";
-            var worldEntry = spline.position_on_spline(spline.ts.x);
-            var vscale = subtract(aabbMax, aabbMin);
-            var ventry = min(vec2(1, 1), max(vec2(0, 0), divide(subtract(worldEntry, aabbMin), vscale)));
-            transformed_1d.fillStyle = get_interpolated_color(ventry);
-            transformed_1d.fillRect((i + halfFieldOfView) * pixel_width / increment, -1, pixel_width, 2);
+        if (spline != null) {
+            // ctx.fillStyle = "red";
+            // spline.draw_point_at(ctx, spline.ts.x);
+            // spline.draw_point_at(ctx, spline.ts.y);
+            // ctx.fillStyle = "black";
+            var worldEntry = spline.position_on_spline(1.0);
+            var epsilon = 1e-2;
+            var dt1 = spline.position_on_spline(1.0 - epsilon);
+            var dt2 = spline.position_on_spline(1.0 - epsilon * 2.0);
+            var dtde = scale(subtract(dt2, dt1), 1.0 / (epsilon * 2.0));
+            var sub_ray = new Ray(worldEntry, norm(dtde));
+            var sub_ts = sub_ray.intersect_ray_aabb(realAABB);
+            if (sub_ts.x <= sub_ts.y && sub_ts.y >= 0) {
+                var sub_worldEntry = add(sub_ray.origin, scale(sub_ray.dir, sub_ts.x));
+                ctx.strokeStyle = "black";
+                sub_ray.draw_point_at(ctx, sub_ts.x);
+                sub_ray.draw(ctx);
+                var vscale = subtract(aabbMax, aabbMin);
+                var ventry = min(vec2(1, 1), max(vec2(0, 0), divide(subtract(sub_worldEntry, aabbMin), vscale)));
+                transformed_1d.fillStyle = get_interpolated_color(ventry);
+                transformed_1d.fillRect((i + halfFieldOfView) * pixel_width / increment, -1, pixel_width, 2);
+            }
         }
     }
     ctx.strokeStyle = "gray";

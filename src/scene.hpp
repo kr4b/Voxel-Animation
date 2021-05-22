@@ -96,12 +96,12 @@ Sampler<vec3f> prepare_deformation_scale(const gl::GLapi *gl, const size_t size,
         samplers,
         data,
         colors,
-        [gl](Ray ray, vec3f t, vec3f c) {
+        [gl](Ray ray, float t, vec3f data, vec3f c) {
             const vec3f P1 = ray.origin;
-            const vec3f P2 = P1 + ray.dir;
+            const vec3f P2 = P1 + ray.dir * t;
 
             const vec3f P0 = fml::make_zero<vec3f>();
-            const vec3f P3 = t;
+            const vec3f P3 = data;
 
             Spline spline(gl);
             spline.parameters_from_tangents(P1, P2, P0, P3);

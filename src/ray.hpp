@@ -52,7 +52,7 @@ public:
                 const float ii = float(i) / float(VOLUME_STEPS);
 
                 const vec3f samplePos = ventry * (1.0f - ii) + vexit * ii;
-                std::optional<Spline> spline = sampler.get(*this, samplePos);
+                std::optional<Spline> spline = sampler.get(*this, ts.x, samplePos);
 
                 if (spline) {
                     return spline;

@@ -13,15 +13,15 @@ class Plane {
         this.normal = vec2(-this.size.y, this.size.x);
     }
 
-    intersect(ray: Ray): number {
+    intersect(ray: Ray): [number, number] {
         const discriminant = dot(this.normal, ray.dir);
         if (Math.abs(discriminant) < 1e-6) {
-            return -1;
+            return [-1, -1];
         }
 
         const t = dot(subtract(this.center, ray.origin), this.normal) / discriminant;
         if (t < 0.0) {
-            return -1;
+            return [-1, -1];
         }
 
         const worldPos = add(ray.origin, scale(ray.dir, t));
@@ -34,10 +34,10 @@ class Plane {
         }
 
         if (uv < 0.0 || uv > 1.0) {
-            return -1;
+            return [-1, -1];
         }
 
-        return uv;
+        return [uv, t];
     }
 }
 

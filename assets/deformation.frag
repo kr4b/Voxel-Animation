@@ -326,6 +326,9 @@ vec2 intersect_spline_aabb(in Spline aSpline, in vec3 aAABBMin, in vec3 aAABBMax
 }
 
 void main() {
+    AABB real_aabb;
+    real_aabb.min = uVolMeta.volMin;
+    real_aabb.max = uVolMeta.volMax;
 
     vec3 origin;
     vec3 direction;
@@ -341,28 +344,42 @@ void main() {
         spline = spline_with_tangents(ray.origin, ray.origin + ray.direction * length(ray.origin) * 2.0, vec3(0.0), vec3(0.0));
     }
 
-    vec2 ts = intersect_spline_aabb(spline, uVolMeta.volMin, uVolMeta.volMax);
+    vec2 ts = intersect_spline_aabb(spline, uVolMeta.volMin * 2.0, uVolMeta.volMax * 2.0);
 
     // Step through volume
     // Only do this if we hit the volume
     // float depth = 1.0;
 
-    if( ts.x <= ts.y && ts.y >= 0.0f ) {
+    if( result == true /*ts.x <= ts.y && ts.y >= 0.0f*/ ) {
         if (ts.x < 0.0) {
             ts.x = 0.0;
         }
 
-        const vec3 scale = uVolMeta.volMax - uVolMeta.volMin;
-        for( int i = 0; i < steps; ++i ) {
-            const float ii = float(i) / float(steps);
-            const vec3 splinePos = position_on_spline(mix(ts.x, ts.y, ii), spline);
-            const vec3 samplePos = (splinePos - uVolMeta.volMin) / scale;
-            const float voxel = texture(texVol, samplePos).x;
-            
-            if (voxel > 0.1f) {
-                col = samplePos;
-                // depth = length(splinePos - uCamera.cameraWorldPos) / length(uCamera.cameraWorldPos) * 0.5;
-                break;
+        const vec3 world_entry = position_on_spline(1.0, spline);
+        const float epsilon = 1e-2;
+        const vec3 dt1 = position_on_spline(1.0 - epsilon, spline);
+        const vec3 dt2 = position_on_spline(1.0 - epsilon * 2.0, spline);
+        const vec3 dtde = (dt2 - dt1) / (epsilon * 2.0);
+
+        Ray sub_ray;
+        sub_ray.origin = world_entry;
+        sub_ray.direction = normalize(dtde);
+
+        const vec2 sub_ts = intersect_ray_aabb(sub_ray, real_aabb);
+        if (sub_ts.x <= sub_ts.y && sub_ts.y >= 0.0) {
+            const vec3 scale = uVolMeta.volMax - uVolMeta.volMin;
+
+            for( int i = 0; i < steps; ++i ) {
+                const float ii = float(i) / float(steps);
+                const vec3 sub_world_entry = sub_ray.origin + sub_ray.direction * mix(sub_ts.y, sub_ts.x, ii);
+                const vec3 samplePos = (sub_world_entry - uVolMeta.volMin) / scale;
+                const float voxel = texture(texVol, samplePos).x;
+                
+                if (voxel > 0.1f) {
+                    col = samplePos;
+                    // depth = length(splinePos - uCamera.cameraWorldPos) / length(uCamera.cameraWorldPos) * 0.5;
+                    break;
+                }
             }
         }
     }

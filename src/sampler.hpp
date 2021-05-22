@@ -27,16 +27,16 @@ public:
     const AABB realAABB;
     const gl::GLapi* gl_;
 
-    Sampler(const AABB, const AABB, const float, const std::vector<unsigned char>, const std::vector<T>, const std::vector<vec3f>, const std::function <Spline(Ray, T, vec3f)>, const gl::GLapi*);
+    Sampler(const AABB, const AABB, const float, const std::vector<unsigned char>, const std::vector<T>, const std::vector<vec3f>, const std::function <Spline(Ray, float, T, vec3f)>, const gl::GLapi*);
 
-    std::optional<Spline> get(const Ray, const vec3f) const;
+    std::optional<Spline> get(const Ray, const float, const vec3f) const;
 
     void prepare(gl::GL::UInt, int);
 
     const std::vector<unsigned char> sampler;
     const std::vector<T> data;
     const std::vector<vec3f> colors;
-    const std::function<Spline(Ray, T, vec3f)> make_spline;
+    const std::function<Spline(Ray, float, T, vec3f)> make_spline;
     const size_t size;
 
     gl::GL::UInt sampler_texture;

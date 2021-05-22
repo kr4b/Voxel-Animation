@@ -2,7 +2,7 @@ import { AABB } from "./aabb.js";
 import { PlaneSampler } from "./plane_sampler.js";
 import { Ray } from "./ray.js";
 import Spline from "./spline.js";
-import { add, divide, max, min, scale, subtract, vec2 } from "./vec2.js";
+import { add, divide, max, min, norm, scale, subtract, vec2 } from "./vec2.js";
 
 const { atan2, cos, PI, sin, sqrt } = Math;
 
@@ -26,6 +26,7 @@ const aabbColors = [
 const aabbMin = vec2(-0.15, -0.15);
 const aabbMax = vec2(0.15, 0.15);
 const realAABB = new AABB(aabbMin, aabbMax);
+const samplerAABB = new AABB(scale(aabbMin, 2.0), scale(aabbMax, 2.0))
 
 function map(value: number, min1: number, max1: number, min2: number, max2: number) {
     return min2 + (value - min1) / (max1 - min1) * (max2 - min2);
@@ -49,10 +50,10 @@ onload = () => {
     transformed_1d.scale(1, transformed_1d.canvas.height / 2);
     transformed_1d.translate(0, 1);
 
-    const size = 1;
+    const size = 1.0;
     sampler = new PlaneSampler(
         vec2(-0.3, -0.3), vec2(0.3, 0.3),
-        new AABB(vec2(-0.3, -0.3), vec2(0.3, 0.3)),
+        new AABB(vec2(-0.15, -0.15), vec2(0.15, 0.15)),
         [   // Order of textures is in plane_sampler.ts
             [
                 vec2(size, -size),
@@ -73,7 +74,7 @@ onload = () => {
         ],
         (ray: Ray, plane: number, data: vec2, color: [number, number, number]) => {
             const P1 = ray.origin;
-            const P2 = add(P1, ray.dir);
+            const P2 = add(ray.origin, scale(ray.dir, plane));
 
             const P0 = vec2(0.0, 0.0);
             const P3 = vec2(data.x, data.y);
@@ -159,9 +160,9 @@ function render() {
         }
 
         const spline: Spline | null = sampler.intersect(ray);
-        const result: boolean | undefined = spline?.intersect_spline_aabb(realAABB);
+        const result: boolean | undefined = spline?.intersect_spline_aabb(samplerAABB);
 
-        const ts: vec2 = ray.intersect_ray_aabb(new AABB(aabbMin, aabbMax));
+        const ts: vec2 = ray.intersect_ray_aabb(realAABB);
         if (ts.x <= ts.y && ts.y >= 0.0) {
             // Draw the view with the rays
             const worldEntry: vec2 = add(ray.origin, scale(ray.dir, ts.x));
@@ -176,18 +177,34 @@ function render() {
             spline.draw(ctx);
         }
 
-        if (spline != null && result) {
-            ctx.fillStyle = "red";
-            spline.draw_point_at(ctx, spline.ts.x);
-            spline.draw_point_at(ctx, spline.ts.y);
-            ctx.fillStyle = "black";
+        if (spline != null) {
+            // ctx.fillStyle = "red";
+            // spline.draw_point_at(ctx, spline.ts.x);
+            // spline.draw_point_at(ctx, spline.ts.y);
+            // ctx.fillStyle = "black";
 
-            const worldEntry: vec2 = spline.position_on_spline(spline.ts.x);
-            const vscale: vec2 = subtract(aabbMax, aabbMin);
-            const ventry: vec2 = min(vec2(1, 1), max(vec2(0, 0), divide(subtract(worldEntry, aabbMin), vscale)));
+            const worldEntry: vec2 = spline.position_on_spline(1.0);
 
-            transformed_1d.fillStyle = get_interpolated_color(ventry);
-            transformed_1d.fillRect((i + halfFieldOfView) * pixel_width / increment, -1, pixel_width, 2);
+            const epsilon = 1e-2;
+            const dt1 = spline.position_on_spline(1.0 - epsilon);
+            const dt2 = spline.position_on_spline(1.0 - epsilon * 2.0);
+            const dtde = scale(subtract(dt2, dt1), 1.0 / (epsilon * 2.0));
+
+            const sub_ray = new Ray(worldEntry, norm(dtde));
+            const sub_ts: vec2 = sub_ray.intersect_ray_aabb(realAABB);
+            if (sub_ts.x <= sub_ts.y && sub_ts.y >= 0) {
+                const sub_worldEntry = add(sub_ray.origin, scale(sub_ray.dir, sub_ts.x));
+
+                ctx.strokeStyle = "black"
+                sub_ray.draw_point_at(ctx, sub_ts.x);
+                sub_ray.draw(ctx);
+
+                const vscale: vec2 = subtract(aabbMax, aabbMin);
+                const ventry: vec2 = min(vec2(1, 1), max(vec2(0, 0), divide(subtract(sub_worldEntry, aabbMin), vscale)));
+
+                transformed_1d.fillStyle = get_interpolated_color(ventry);
+                transformed_1d.fillRect((i + halfFieldOfView) * pixel_width / increment, -1, pixel_width, 2);
+            }
         }
     }
 

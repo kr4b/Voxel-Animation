@@ -142,8 +142,8 @@ int main()
     //volMeta.volMin = vec3f(-0.5f, -0.5f, -1.0f);
     //volMeta.volMax = vec3f(0.5f, 0.5f, 1.0f);
 
-    const size_t size = 20;
-    const float strength = 10.0f;
+    const size_t size = 80;
+    const float strength = 0.1f;
     auto sampler = prepare_deformation_scale(gl, size, strength);
 
     SplineSource splines;
@@ -188,7 +188,7 @@ int main()
     //Volume vol = load_fld_volume("assets/tomato.fld", { 3, { 256, 256, 163 }, 1, 1 });
     //Volume vol = load_fld_volume("assets/bonsai.fld", { 3, { 256, 256, 182 }, 1, 1 });
     //Volume vol = load_mhd_volume("assets/backpack_small.mhd");
-    // Volume vol = load_cube();
+    //Volume vol = load_cube();
     if (0 == vol.total_element_count())
     {
         FLUX_LOG(FATAL, "Unable to load volume. Bye.");

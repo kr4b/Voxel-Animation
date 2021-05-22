@@ -8,7 +8,7 @@ Sampler<T>::Sampler(
     const std::vector<unsigned char> sampler,
     const std::vector<T> data,
     const std::vector<vec3f> colors,
-    const std::function<Spline(Ray, T, vec3f)> make_spline,
+    const std::function<Spline(Ray, float, T, vec3f)> make_spline,
     const gl::GLapi* gl_) :
     samplerAABB(samplerAABB), realAABB(realAABB), size(size), sampler(sampler), data(data), colors(colors), make_spline(make_spline), gl_(gl_) {
 
@@ -55,7 +55,7 @@ gl::GL::UInt Sampler<T>::create_texture(const int internal_format, const int for
 }
 
 template <typename T>
-std::optional<Spline> Sampler<T>::get(const Ray ray, const vec3f samplePos) const {
+std::optional<Spline> Sampler<T>::get(const Ray ray, const float t, const vec3f samplePos) const {
     const float x = round((this->size - 1) * samplePos.x);
     const float y = round((this->size - 1) * samplePos.y);
     const float z = round((this->size - 1) * samplePos.z);
@@ -65,7 +65,7 @@ std::optional<Spline> Sampler<T>::get(const Ray ray, const vec3f samplePos) cons
         return std::nullopt;
     }
 
-    return std::make_optional(this->make_spline(ray, this->data[index], this->colors[index]));
+    return std::make_optional(this->make_spline(ray, t, this->data[index], this->colors[index]));
 }
 
 template<typename T>

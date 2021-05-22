@@ -24,16 +24,16 @@ var PlaneSampler = /** @class */ (function () {
         for (var face = 0; face < this.planes.length; face++) {
             switch (face) {
                 case SQUARE_MAP_POSITIVE_X:
-                    this.planes[face] = new Plane(vec2(original.max.x, min.y + size.y), vec2(0, size.y));
+                    this.planes[face] = new Plane(vec2(original.max.x + size.x * 0.5, min.y + size.y), vec2(0, size.y));
                     break;
                 case SQUARE_MAP_NEGATIVE_X:
-                    this.planes[face] = new Plane(vec2(original.min.x, min.y + size.y), vec2(0, size.y));
+                    this.planes[face] = new Plane(vec2(original.min.x - size.x * 0.5, min.y + size.y), vec2(0, size.y));
                     break;
                 case SQUARE_MAP_POSITIVE_Y:
-                    this.planes[face] = new Plane(vec2(min.x + size.x, original.max.y), vec2(size.x, 0));
+                    this.planes[face] = new Plane(vec2(min.x + size.x, original.max.y + size.y * 0.5), vec2(size.x, 0));
                     break;
                 case SQUARE_MAP_NEGATIVE_Y:
-                    this.planes[face] = new Plane(vec2(min.x + size.x, original.min.y), vec2(size.x, 0));
+                    this.planes[face] = new Plane(vec2(min.x + size.x, original.min.y - size.y * 0.5), vec2(size.x, 0));
                     break;
                 default:
                     console.warn("???");
@@ -43,34 +43,28 @@ var PlaneSampler = /** @class */ (function () {
     PlaneSampler.prototype.intersect = function (ray) {
         var _this = this;
         var final = [-1, vec2(0, 0)];
+        var gt = -1;
         this.planes
             .map(function (plane, i) { return [plane, i]; })
-            .sort(function (a, b) { return length(a[0].center, ray.origin) - length(b[0].center, ray.origin); })
+            .sort(function (a, b) { return length(a[0].center, ray.origin)
+            - length(b[0].center, ray.origin); })
             .forEach(function (_a) {
             var plane = _a[0], i = _a[1];
-            var result = plane.intersect(ray);
-            if (result != -1 && final[0] < 0) {
+            var _b = plane.intersect(ray), result = _b[0], t = _b[1];
+            if (result >= 0 && final[0] < 0) {
                 var tex_len = _this.textures[i].length;
                 var tex_space_result = result * (tex_len - 1);
                 var major = Math.floor(tex_space_result);
                 var minor = tex_space_result - major;
                 final = [i, mix(_this.textures[i][major], _this.textures[i][major + 1], minor)];
+                gt = t;
             }
         });
         if (final[0] >= 0) {
-            return this.builder(ray, final[0], final[1], PLANE_COLORS[final[0]]);
+            return this.builder(ray, gt, final[1], PLANE_COLORS[final[0]]);
         }
         return null;
     };
-    // get(ray: Ray, samplePos: vec2): Spline | null {
-    //     const x: number = Math.round((this.size - 1) * samplePos.x);
-    //     const y: number = Math.round((this.size - 1) * samplePos.y);
-    //     const index: number = y * this.size + x;
-    //     if (index < 0 || index >= this.data.length || !this.sampler[index]) {
-    //         return null;
-    //     }
-    //     return this.make_spline(ray, this.data[index], this.colors[index]);
-    // }
     PlaneSampler.prototype.draw = function (ctx) {
         var width = 2.0;
         ctx.lineWidth *= width;

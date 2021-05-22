@@ -9,11 +9,11 @@ var Plane = /** @class */ (function () {
     Plane.prototype.intersect = function (ray) {
         var discriminant = dot(this.normal, ray.dir);
         if (Math.abs(discriminant) < 1e-6) {
-            return -1;
+            return [-1, -1];
         }
         var t = dot(subtract(this.center, ray.origin), this.normal) / discriminant;
         if (t < 0.0) {
-            return -1;
+            return [-1, -1];
         }
         var worldPos = add(ray.origin, scale(ray.dir, t));
         var samplePos = scale(add(divide(subtract(worldPos, this.center), this.size), vec2(1.0, 1.0)), 0.5);
@@ -25,9 +25,9 @@ var Plane = /** @class */ (function () {
             uv = samplePos.x;
         }
         if (uv < 0.0 || uv > 1.0) {
-            return -1;
+            return [-1, -1];
         }
-        return uv;
+        return [uv, t];
     };
     return Plane;
 }());
