@@ -1,6 +1,7 @@
 import DepressedCubic from "./depressed_cubic.js";
+import { Plane } from "./plane.js";
 import Spline from "./spline.js";
-import { divide, scale, vec2 } from "./vec2.js";
+import { vec2 } from "./vec2.js";
 
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
@@ -33,10 +34,26 @@ onload = () => {
     ctx.translate(1, 1);
     ctx.lineWidth = 0.0075;
 
-    const spline = Spline.with_tangents(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-0.2, 0.1), vec2(0.1, 0.2));
-    spline.draw(ctx);
+    // const spline = Spline.with_tangents(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-2.0, 0.5), vec2(1.0, 0.0));
+    const spline = Spline.with_control_points(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-15.0, -3.0), vec2(12.0, 0.0));
 
-    render_texture(ctx, spline);
+    let t = 0;
+    setInterval(() => {
+        ctx.clearRect(-1, -1, 2, 2);
+        render_texture(ctx, spline);
+        spline.draw(ctx);
+
+        const plane = new Plane(vec2(Math.cos(t * 0.3) * 0.7, Math.sin(t) * 0.7), vec2(Math.sin(t * 0.6), Math.cos(t * 0.5)));
+        ctx.strokeStyle = "rgba(30, 30, 30, 0.4)"
+        plane.draw(ctx);
+
+        spline.intersect_spline_plane(plane);
+
+        ctx.strokeStyle = "aquamarine";
+        spline.draw_point_at(ctx, spline.ts.x)
+
+        t += 0.035;
+    }, 50);
 }
 
 function render_texture(ctx: CanvasRenderingContext2D, spline: Spline) {
@@ -54,12 +71,12 @@ function render_texture(ctx: CanvasRenderingContext2D, spline: Spline) {
         const t1Diff = Math.abs(t1 - t);
         const t2Diff = Math.abs(t2 - t);
         const t3Diff = Math.abs(t3 - t);
-        let realT;
-        if (t1Diff < t2Diff && t1Diff < t3Diff) {
+        let realT = t;
+        if (t1Diff < t2Diff && t1Diff < t3Diff && t1 >= 0.0 && t1 <= 1.0) {
             realT = t1;
-        } else if (t2Diff < t3Diff) {
+        } else if (t2Diff < t3Diff && t2 >= 0.0 && t2 <= 1.0) {
             realT = t2;
-        } else {
+        } else if (t3 >= 0.0 && t3 <= 1.0) {
             realT = t3;
         }
 
@@ -79,4 +96,5 @@ function render_texture(ctx: CanvasRenderingContext2D, spline: Spline) {
             );
         }
     }
+
 }

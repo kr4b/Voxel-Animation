@@ -1,16 +1,37 @@
 import { Ray } from "./ray.js";
-import { add, divide, dot, scale, subtract, vec2 } from "./vec2.js";
+import { add, divide, dot, norm, scale, subtract, vec2 } from "./vec2.js";
 
 class Plane {
     center: vec2;
-    size: vec2;
+    half_size: vec2;
     normal: vec2;
 
-    constructor(center: vec2, size: vec2) {
-        console.assert(size.x == 0.0 || size.y == 0.0);
+    min: vec2;
+    max: vec2;
+
+    /**
+     * 
+     * @param center The center point of the plane
+     * @param half_size Half the size of the plane
+     */
+    constructor(center: vec2, half_size: vec2) {
         this.center = center;
-        this.size = size;
-        this.normal = vec2(-this.size.y, this.size.x);
+        this.half_size = half_size;
+        this.normal = norm(vec2(-this.half_size.y, this.half_size.x));
+
+        this.min = subtract(this.center, this.half_size);
+        this.max = add(this.center, this.half_size);
+    }
+
+    draw(ctx: CanvasRenderingContext2D): void {
+        ctx.save();
+        ctx.lineWidth = 0.025;
+        ctx.lineCap = "square";
+        ctx.beginPath();
+        ctx.moveTo(this.center.x - this.half_size.x, this.center.y - this.half_size.y);
+        ctx.lineTo(this.center.x + this.half_size.x, this.center.y + this.half_size.y);
+        ctx.stroke();
+        ctx.restore();
     }
 
     intersect(ray: Ray): [number, number] {
@@ -25,9 +46,9 @@ class Plane {
         }
 
         const worldPos = add(ray.origin, scale(ray.dir, t));
-        const samplePos = scale(add(divide(subtract(worldPos, this.center), this.size), vec2(1.0, 1.0)), 0.5);
+        const samplePos = scale(add(divide(subtract(worldPos, this.center), scale(this.half_size, 2)), vec2(1.0, 1.0)), 0.5);
         let uv;
-        if (this.size.x == 0.0) {
+        if (this.half_size.x == 0.0) {
             uv = samplePos.y;
         } else {
             uv = samplePos.x;
