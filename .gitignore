@@ -7,3 +7,4 @@ lib/
 assets/**/*.fld
 
 src/simplevol.vcxproj
+2d_debug/**/out/
