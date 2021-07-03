@@ -58,7 +58,7 @@ onload = () => {
 
 function render_texture(ctx: CanvasRenderingContext2D, spline: Spline) {
     // Draw a slice for each canvas y pixel
-    for (let y = aabbMin.y; y < aabbMax.y; y += pixelSizeY) {
+    for (let y = aabbMin.y;; y += pixelSizeY) {
         // Linear approximation of t
         const t = (y - aabbMin.y) / (aabbMax.y - aabbMin.y);
         // Cubic calculation of t
@@ -79,6 +79,8 @@ function render_texture(ctx: CanvasRenderingContext2D, spline: Spline) {
         } else if (t3 >= 0.0 && t3 <= 1.0) {
             realT = t3;
         }
+
+        if (realT >= 1.0) break;
 
         // Determine x offset
         const splinePos = spline.position_on_spline(realT);
