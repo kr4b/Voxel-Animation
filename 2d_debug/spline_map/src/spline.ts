@@ -18,7 +18,6 @@ class Spline {
 
     ts = vec2(0, 0);
 
-
     constructor(a: vec2, b: vec2, c: vec2, d: vec2) {
         this.a = a;
         this.b = b;
@@ -141,23 +140,42 @@ class Spline {
 
     /**
      * Find out if the spline intersects with the Plane.
+     * 
      * @param plane the plane to intersect
      * @returns true if it intersected, false otherwise
      */
     intersect_spline_plane(plane: Plane): boolean {
-        const hypot = Math.hypot(plane.half_size.x, plane.half_size.y)
+        const hypot = Math.hypot(plane.half_size.x, plane.half_size.y);
         const cos = plane.half_size.x / hypot;
         const sin = plane.half_size.y / hypot;
 
-        const matrix = mat3(
-            cos, sin, plane.center.x,
-            -sin, cos, plane.center.y,
+        const inv_translation = mat3(
+            1, 0, -plane.center.x,
+            0, 1, -plane.center.y,
+            0, 0, 1
+        );
+        const inv_rotation = mat3(
+            cos, sin, 0,
+            -sin, cos, 0,
             0, 0, 1
         );
 
-        const transformed_min = transform(plane.min, matrix);
-        const transformed_max = transform(plane.max, matrix);
-        const transformed_spline = new Spline(transform(this.a, matrix), transform(this.b, matrix), transform(this.c, matrix), transform(this.d, matrix));
+        // Both the inv_translation and inv_rotation matrices can be combined into this one
+        //
+        // const matrix = mat3(
+        //     cos, sin, -plane.center.x * cos - plane.center.y * sin,
+        //     -sin, cos, -plane.center.y * cos + plane.center.x * sin,
+        //     0, 0, 1
+        // );
+
+        const transformed_min = transform(transform(plane.min, inv_translation), inv_rotation);
+        const transformed_max = transform(transform(plane.max, inv_translation), inv_rotation);
+        const transformed_spline = new Spline(
+            transform(this.a, inv_rotation),
+            transform(this.b, inv_rotation),
+            transform(this.c, inv_rotation),
+            transform(transform(this.d, inv_translation), inv_rotation)
+        );
 
         const result = transformed_spline.intersect_spline_aabb(new AABB(transformed_min, transformed_max));
         this.ts = transformed_spline.ts;

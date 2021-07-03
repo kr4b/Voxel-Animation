@@ -18,13 +18,21 @@ onload = () => {
 
 
     const spline = Spline.with_control_points(vec2(-0.2, 0.8), vec2(0.0, -0.8), vec2(-15.0, -3.0), vec2(12.0, 0.0));
-    spline.draw(ctx);
 
-    const plane = new Plane(vec2(0, 0), vec2(0.5, 0.3));
-    plane.draw(ctx);
+    let t = 0;
+    setInterval(() => {
+        ctx.clearRect(-1, -1, 2, 2);
+        spline.draw(ctx);
 
-    spline.intersect_spline_plane(plane);
+        const plane = new Plane(vec2(Math.cos(t * 0.3) * 0.7, Math.sin(t) * 0.7), vec2(Math.sin(t * 0.6), Math.cos(t * 0.5)));
+        ctx.strokeStyle = "rgba(30, 30, 30, 0.4)"
+        plane.draw(ctx);
 
-    ctx.strokeStyle = "aquamarine";
-    spline.draw_point_at(ctx, spline.ts.x)
+        spline.intersect_spline_plane(plane);
+
+        ctx.strokeStyle = "aquamarine";
+        spline.draw_point_at(ctx, spline.ts.x)
+
+        t += 0.035;
+    }, 50);
 }
