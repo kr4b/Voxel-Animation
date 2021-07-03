@@ -12,6 +12,15 @@ class AABB {
   size(): vec2 {
     return subtract(this.max, this.min);
   }
+
+  draw(ctx: CanvasRenderingContext2D) {
+    ctx.strokeRect(
+        this.min.x,
+        this.min.y,
+        this.max.x - this.min.x,
+        this.max.y - this.min.y
+    );
+  }
 }
 
 export { AABB };

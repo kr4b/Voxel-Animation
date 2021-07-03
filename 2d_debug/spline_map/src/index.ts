@@ -1,7 +1,8 @@
+import { AABB } from "./aabb.js";
 import DepressedCubic from "./depressed_cubic.js";
 import { Plane } from "./plane.js";
 import Spline from "./spline.js";
-import { vec2 } from "./vec2.js";
+import { scale, vec2 } from "./vec2.js";
 
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
@@ -16,8 +17,8 @@ const pixels = [
 ];
 
 const size = Math.sqrt(pixels.length);
-const aabbMin = vec2(-0.15, -0.15);
-const aabbMax = vec2(0.15, 0.15);
+const aabbMin = vec2(-0.35, -0.35);
+const aabbMax = vec2(0.35, 0.35);
 const canvasWidth = 400;
 const canvasHeight = 400;
 const pixelSizeX = 2.0 / canvasWidth;
@@ -34,12 +35,32 @@ onload = () => {
     ctx.translate(1, 1);
     ctx.lineWidth = 0.0075;
 
+    const base: Plane = new Plane(vec2(aabbMin.x + 0.5 * (aabbMax.x - aabbMin.x), aabbMin.y), scale(vec2(aabbMax.x - aabbMin.x, 0), 0.5));
+    ctx.strokeStyle = "slategray";
+    base.draw(ctx);
+
     // const spline = Spline.with_tangents(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-2.0, 0.5), vec2(1.0, 0.0));
     const spline = Spline.with_control_points(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-15.0, -3.0), vec2(12.0, 0.0));
+
+    // Create the encompassing AABB
+    const extremes = Array.from(spline.get_extremes().filter(t => t >= 0 && t <= 1)).map(t => spline.position_on_spline(t));
+    const encompassing_aabb = new AABB(
+        vec2(
+            Math.min(...extremes.map(v => v.x)),
+            Math.min(...extremes.map(v => v.y))
+        ),
+        vec2(
+            base.half_size.x * 2 + Math.max(...extremes.map(v => v.x)),
+            base.half_size.y * 2 + Math.max(...extremes.map(v => v.y))
+        ));
 
     let t = 0;
     setInterval(() => {
         ctx.clearRect(-1, -1, 2, 2);
+
+        ctx.strokeStyle = "salmon";
+        encompassing_aabb.draw(ctx);
+
         render_texture(ctx, spline);
         spline.draw(ctx);
 
