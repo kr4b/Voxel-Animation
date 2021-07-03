@@ -34,15 +34,36 @@ class Spline {
         return new Spline(a, b, c, d);
     }
 
+    // http://www.cs.cmu.edu/~462/www/projects/assn2/assn2/catmullRom.pdf
     static with_control_points(point1: vec2, point2: vec2, control1: vec2, control2: vec2): Spline {
         const tau = 0.2;
 
         const a = add(scale(control1, -1 * tau), scale(point1, 2 - tau), scale(point2, tau - 2), scale(control2,  tau));
-        const b = add(scale(control1,  2 * tau), scale(point1, tau - 3), scale(point2, 3 - tau), scale(control2, -tau));
+        const b = add(scale(control1,  2 * tau), scale(point1, tau - 3), scale(point2, 3 - 2 * tau), scale(control2, -tau));
         const c = add(scale(control1, -tau), scale(point2, tau));
         const d = copy(point1);
 
         return new Spline(a, b, c, d);
+    }
+
+    get_extremes(): Float32Array {
+        // Solve for t: at^2 + bt + c = 0
+        const a: vec2 = scale(this.a, 3);
+        const b: vec2 = scale(this.b, 2);
+
+        const values: Float32Array = Float32Array.of(-1, -1, -1, -1, 0, 1); // Include the edges
+        const D: vec2 = subtract(multiply(b, b), scale(multiply(a, this.c), 4));
+        
+        if (D.x >= 0) {
+            values[0] = (-b.x + Math.sqrt(D.x)) / (2 * a.x)
+            values[1] = (-b.x - Math.sqrt(D.x)) / (2 * a.x)
+        }
+        if (D.y >= 0) {
+            values[2] = (-b.y + Math.sqrt(D.y)) / (2 * a.y)
+            values[3] = (-b.y - Math.sqrt(D.y)) / (2 * a.y)
+        }
+
+        return values;
     }
 
     draw_point_at(ctx: CanvasRenderingContext2D, t: number): void {
