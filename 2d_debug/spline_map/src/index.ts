@@ -1,5 +1,7 @@
+import { AABB } from "./aabb.js";
 import DepressedCubic from "./depressed_cubic.js";
 import { Plane } from "./plane.js";
+import { Ray } from "./ray.js";
 import Spline from "./spline.js";
 import { vec2 } from "./vec2.js";
 
@@ -98,5 +100,4 @@ function render_texture(ctx: CanvasRenderingContext2D, spline: Spline) {
             );
         }
     }
-
 }

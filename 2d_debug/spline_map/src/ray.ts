@@ -1,4 +1,5 @@
 import { AABB } from "./aabb.js";
+import SplineMap from "./spline_map.js";
 import { add, divide, max, min, mix, scale, subtract, vec2 } from "./vec2.js";
 
 const VOLUME_STEPS: number = 1024;
@@ -45,6 +46,20 @@ class Ray {
         const near: number = Math.max(mins.x, mins.y);
         const far: number = Math.min(maxs.x, maxs.y);
         return vec2(near, far);
+    }
+
+    /// Walks the ray through the given spline map
+    walk_spline_map(spline_map: SplineMap, step: number): vec2 | null {
+        const { x: t1, y: t2 } = spline_map.intersect_ray(this);
+
+        for (let t = t1; t <= t2; t += step) {
+            const pos = add(this.origin, scale(this.dir, t));
+            const textureCoords = spline_map.texture_coords(pos);
+            if (textureCoords === null) continue;
+            return textureCoords;
+        }
+
+        return null;
     }
 }
 
