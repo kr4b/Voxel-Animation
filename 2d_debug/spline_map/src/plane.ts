@@ -4,6 +4,7 @@ import { add, divide, dot, norm, scale, subtract, vec2 } from "./vec2.js";
 class Plane {
     center: vec2;
     half_size: vec2;
+    size: vec2;
     normal: vec2;
 
     min: vec2;
@@ -17,6 +18,7 @@ class Plane {
     constructor(center: vec2, half_size: vec2) {
         this.center = center;
         this.half_size = half_size;
+        this.size = scale(half_size, 2.0);
         this.normal = norm(vec2(-this.half_size.y, this.half_size.x));
 
         this.min = subtract(this.center, this.half_size);
