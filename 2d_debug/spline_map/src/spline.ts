@@ -1,6 +1,7 @@
 import { AABB } from "./aabb.js";
 import DepressedCubic from "./depressed_cubic.js";
-import { add, copy, divide, multiply, scale, step, subtract, vec2 } from "./vec2.js";
+import { Plane } from "./plane.js";
+import { add, copy, divide, mat3, multiply, scale, step, subtract, transform, vec2 } from "./vec2.js";
 
 const { min, max, PI } = Math;
 const EPSILON = vec2(1e-2, 1e-2);
@@ -104,7 +105,7 @@ class Spline {
     /**
      * Find out if the spline intersects with the AABB.
      * 
-     * @param aabb the AABB of this
+     * @param aabb the AABB to intersect
      * @returns true if it intersected, false otherwise
      */
     intersect_spline_aabb(aabb: AABB): boolean {
@@ -139,6 +140,32 @@ class Spline {
     }
 
     /**
+     * Find out if the spline intersects with the Plane.
+     * @param plane the plane to intersect
+     * @returns true if it intersected, false otherwise
+     */
+    intersect_spline_plane(plane: Plane): boolean {
+        const hypot = Math.hypot(plane.half_size.x, plane.half_size.y)
+        const cos = plane.half_size.x / hypot;
+        const sin = plane.half_size.y / hypot;
+
+        const matrix = mat3(
+            cos, sin, plane.center.x,
+            -sin, cos, plane.center.y,
+            0, 0, 1
+        );
+
+        const transformed_min = transform(plane.min, matrix);
+        const transformed_max = transform(plane.max, matrix);
+        const transformed_spline = new Spline(transform(this.a, matrix), transform(this.b, matrix), transform(this.c, matrix), transform(this.d, matrix));
+
+        const result = transformed_spline.intersect_spline_aabb(new AABB(transformed_min, transformed_max));
+        this.ts = transformed_spline.ts;
+
+        return result;
+    }
+
+    /**
      * Calculates the closest to and furthest from 0 intersection points with the aabb.
      * 
      * @param t1 the first two `t` values, usually computed by intersecting with the
@@ -166,7 +193,7 @@ class Spline {
         ts.x = min(ts.x, min(inear.x, inear.y));
         ts.y = max(ts.y, max(ifar.x,  ifar.y));
 
-        return ts.x < ts.y && ts.y >= 0;
+        return ts.x <= ts.y && ts.y >= 0;
     }
 
     /**
