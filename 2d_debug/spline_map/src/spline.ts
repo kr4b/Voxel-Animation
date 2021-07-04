@@ -14,8 +14,6 @@ class Spline {
     c: vec2;
     d: vec2;
 
-    color: [number, number, number] = [0, 0, 0];
-
     ts = vec2(0, 0);
 
     constructor(a: vec2, b: vec2, c: vec2, d: vec2) {
@@ -84,8 +82,6 @@ class Spline {
     draw(ctx: CanvasRenderingContext2D, step: number = 0.01): void {
         let t = 0, tt, ttt;
 
-        ctx.globalAlpha = 0.5;
-        ctx.strokeStyle = "rgb(" + this.color[0] + "," + this.color[1] + "," + this.color[2] + ")";
         ctx.beginPath();
         ctx.moveTo(this.d.x, this.d.y);
         for (t = step; t < 1; t += step) {
@@ -110,16 +106,10 @@ class Spline {
         }
         ctx.stroke();
         ctx.setLineDash([]);
-        ctx.strokeStyle = "black";
-        ctx.globalAlpha = 1;
     }
 
     position_on_spline(t: number): vec2 {
 	    return add(scale(this.a, t * t * t), scale(this.b, t * t), scale(this.c, t), copy(this.d));
-    }
-
-    set_color(color: [number, number, number]) {
-        this.color = color;
     }
 
     /**

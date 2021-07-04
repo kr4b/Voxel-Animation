@@ -3,6 +3,7 @@ import DepressedCubic from "./depressed_cubic.js";
 import { Plane } from "./plane.js";
 import { Ray } from "./ray.js";
 import Spline from "./spline.js";
+import SplineMap from "./spline_map.js";
 import { scale, vec2 } from "./vec2.js";
 
 let canvas: HTMLCanvasElement;
@@ -34,45 +35,36 @@ onload = () => {
 
     ctx.scale(canvas.width / 2, canvas.height / 2);
     ctx.translate(1, 1);
-    ctx.lineWidth = 0.0075;
+    ctx.lineWidth = pixelSizeX * 2.0;
 
     const base: Plane = new Plane(vec2(aabbMin.x + 0.5 * (aabbMax.x - aabbMin.x), aabbMin.y), scale(vec2(aabbMax.x - aabbMin.x, 0), 0.5));
-    ctx.strokeStyle = "slategray";
-    base.draw(ctx);
 
     // const spline = Spline.with_tangents(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-2.0, 0.5), vec2(1.0, 0.0));
     const spline = Spline.with_control_points(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-15.0, -3.0), vec2(12.0, 0.0));
 
-    // Create the encompassing AABB
-    const extremes = Array.from(spline.get_extremes().filter(t => t >= 0 && t <= 1)).map(t => spline.position_on_spline(t));
-    const encompassing_aabb = new AABB(
-        vec2(
-            Math.min(...extremes.map(v => v.x)),
-            Math.min(...extremes.map(v => v.y))
-        ),
-        vec2(
-            base.half_size.x * 2 + Math.max(...extremes.map(v => v.x)),
-            base.half_size.y * 2 + Math.max(...extremes.map(v => v.y))
-        ));
+    const spline_map = new SplineMap(base, spline);
 
     let t = 0;
     setInterval(() => {
         ctx.clearRect(-1, -1, 2, 2);
 
-        ctx.strokeStyle = "salmon";
-        encompassing_aabb.draw(ctx);
-
         render_texture(ctx, spline);
-        spline.draw(ctx);
+        // spline_map.draw(ctx);
 
-        const plane = new Plane(vec2(Math.cos(t * 0.3) * 0.7, Math.sin(t) * 0.7), vec2(Math.sin(t * 0.6), Math.cos(t * 0.5)));
-        ctx.strokeStyle = "rgba(30, 30, 30, 0.4)"
-        plane.draw(ctx);
-
-        spline.intersect_spline_plane(plane);
-
-        ctx.strokeStyle = "aquamarine";
-        spline.draw_point_at(ctx, spline.ts.x)
+        const ray = new Ray(vec2(Math.sin(t) * (aabbMax.x - aabbMin.x), 0.6), vec2(0.0, -1.2));
+        ray.draw(ctx);
+        const result = ray.walk_spline_map(spline_map, pixelSizeY);
+        if (result !== null) {
+            const [texCoords, t] = result;
+            const pixelX = Math.floor((Math.round(texCoords.x * 1000.0) / 1000.0 - EPSILON) * size);
+            const pixelY = Math.floor((Math.round(texCoords.y * 1000.0) / 1000.0 - EPSILON) * size);
+            if (pixelX >= 0 && pixelX < size && pixelY >= 0 && pixelY < size) {
+                const color = pixels[pixelY * size + pixelX];
+                ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                ctx.fillRect(-1.0, -1.0, 0.2, 0.2);
+                ray.draw_point_at(ctx, t);
+            }
+        }
 
         t += 0.035;
     }, 50);

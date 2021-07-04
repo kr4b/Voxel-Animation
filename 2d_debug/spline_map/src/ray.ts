@@ -49,14 +49,14 @@ class Ray {
     }
 
     /// Walks the ray through the given spline map
-    walk_spline_map(spline_map: SplineMap, step: number): vec2 | null {
+    walk_spline_map(spline_map: SplineMap, step: number): [vec2, number] | null {
         const { x: t1, y: t2 } = spline_map.intersect_ray(this);
 
         for (let t = t1; t <= t2; t += step) {
             const pos = add(this.origin, scale(this.dir, t));
             const textureCoords = spline_map.texture_coords(pos);
             if (textureCoords === null) continue;
-            return textureCoords;
+            return [textureCoords, t];
         }
 
         return null;
