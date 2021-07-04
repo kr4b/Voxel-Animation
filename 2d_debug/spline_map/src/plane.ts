@@ -1,5 +1,5 @@
 import { Ray } from "./ray.js";
-import { add, divide, dot, norm, scale, subtract, vec2 } from "./vec2.js";
+import { add, divide, dot, mat3, norm, scale, subtract, transform, vec2 } from "./vec2.js";
 
 class Plane {
     center: vec2;
@@ -9,6 +9,9 @@ class Plane {
 
     min: vec2;
     max: vec2;
+    
+    matrix: mat3;
+    inv_matrix: mat3;
 
     /**
      * 
@@ -23,6 +26,29 @@ class Plane {
 
         this.min = subtract(this.center, this.half_size);
         this.max = add(this.center, this.half_size);
+
+        const hypot = Math.hypot(this.half_size.x, this.half_size.y);
+        const cos = this.half_size.x / hypot;
+        const sin = this.half_size.y / hypot;
+
+        this.matrix = mat3(
+            cos, -sin, this.center.x,
+            sin, cos, this.center.y,
+            0, 0, 1
+        );
+
+        this.inv_matrix = mat3(
+            cos, sin, this.center.x * cos + this.center.y * sin,
+            -sin, cos, this.center.y * cos - this.center.x * sin,
+            0, 0, 1
+        );
+    }
+
+    static transform(plane: Plane, matrix: mat3): Plane {
+        return new Plane(
+            transform(plane.center, matrix),
+            plane.half_size
+        );
     }
 
     draw(ctx: CanvasRenderingContext2D): void {

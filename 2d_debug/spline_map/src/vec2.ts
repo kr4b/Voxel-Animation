@@ -28,4 +28,4 @@ const norm      = (v: vec2)             => scale(v, 1.0 / length(v));
 const dot       = (v: vec2, w: vec2)    => v.x * w.x + v.y * w.y;
 const transform = (v: vec2, m: mat3)    => scale(vec2(v.x * m.m00 + v.y * m.m01 + m.m02, v.x * m.m10 + v.y * m.m11 + m.m12), 1.0 / (m.m20 + m.m21 + m.m22));
 
-export { vec2, mat3, scale, add, subtract, multiply, divide, min, max, length, copy, step, mix, norm, dot, transform };
+export { vec2, mat3, scale, add, subtract, multiply, divide, min, max, dist, length, copy, step, mix, norm, dot, transform };
