@@ -1,5 +1,6 @@
 #include "spline.hpp"
 #include "depressed_cubic.hpp"
+#include <functional>
 
 const int detail = 100;
 const vec3f EPSILON = fml::make_vector<vec3f>(1.0e-2f, 1.0e-2f, 1.0e-2f);
@@ -9,6 +10,7 @@ const vec3f MAX_VALUE = fml::make_vector<vec3f>(2.0f, 2.0f, 2.0f);
 const vec3f MIN_VALUE = -MAX_VALUE;
 
 Spline::Spline(const gl::GLapi* gl) {
+	this->gl = gl;
 	this->intersection = false;
 	this->worldEntry = fml::make_zero<vec3f>();
 	this->worldExit = fml::make_zero<vec3f>();
@@ -21,6 +23,24 @@ Spline::Spline(const gl::GLapi* gl) {
 	this->d = fml::make_zero<vec3f>();
     this->start = fml::make_zero<vec3f>();
     this->color = fml::make_one<vec3f>();
+
+	this->init_vao(gl);
+}
+
+Spline::Spline(const gl::GLapi* gl, const vec3f a, const vec3f b, const vec3f c, const vec3f d) {
+	this->gl = gl;
+	this->intersection = false;
+	this->worldEntry = fml::make_zero<vec3f>();
+	this->worldExit = fml::make_zero<vec3f>();
+
+	this->lastCursorPos = fml::make_zero<vec2f>();
+
+	this->a = a;
+	this->b = b;
+	this->c = c;
+	this->d = d;
+	this->start = fml::make_zero<vec3f>();
+	this->color = fml::make_one<vec3f>();
 
 	this->init_vao(gl);
 }
@@ -88,7 +108,7 @@ void Spline::parameters_from_points(const vec3f P1, const vec3f P2, const vec3f 
 	const float tau = 0.2f;
 
 	this->a = -tau * P0 + (2.0f - tau) * P1 + (tau - 2.0f) * P2 + tau * P3;
-	this->b = 2.0f * tau * P0 + (tau - 3.0f) * P1 + (3.0f - tau) * P2 - tau * P3;
+	this->b = 2.0f * tau * P0 + (tau - 3.0f) * P1 + (3.0f - 2.0f * tau) * P2 - tau * P3;
 	this->c = -tau * P0 + tau * P2;
 	this->d = P1;
 
@@ -181,11 +201,49 @@ void Spline::set_color(const vec3f color) {
     this->color = color;
 }
 
+std::vector<float> Spline::get_extremes() {
+	const vec3f a = this->a * vec3f(3.0f);
+	const vec3f b = this->b * vec3f(2.0f);
+
+	std::vector<float> values = { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 1.0f };
+
+	const vec3f D = b * b - vec3f(4.0f) * a * this->c;
+
+	if (D.x >= 0.0f) {
+		values[0] = (-b.x + sqrt(D.x)) / (2.0f * a.x);
+		values[1] = (-b.x - sqrt(D.x)) / (2.0f * a.x);
+	}
+	if (D.y >= 0.0f) {
+		values[2] = (-b.y + sqrt(D.y)) / (2.0f * a.y);
+		values[3] = (-b.y - sqrt(D.y)) / (2.0f * a.y);
+	}
+	if (D.z >= 0.0f) {
+		values[4] = (-b.z + sqrt(D.z)) / (2.0f * a.z);
+		values[5] = (-b.z - sqrt(D.z)) / (2.0f * a.z);
+	}
+
+	return values;
+}
+
+std::optional<float> Spline::intersect_spline_plane(const Plane &plane) {
+	const vec4f transformed_min = plane.inv_matrix * vec4f(plane.min.x, plane.min.y, plane.min.z, 1.0f);
+	const vec4f transformed_max = plane.inv_matrix * vec4f(plane.max.x, plane.max.y, plane.max.z, 1.0f);
+	Spline transformed_spline = this->transform(plane.inv_matrix);
+
+	std::optional<vec2f> result = transformed_spline.intersect_spline_aabb(
+		vec3f(transformed_min.x, transformed_min.y, transformed_min.z),
+		vec3f(transformed_max.x, transformed_max.y, transformed_max.z)
+	);
+
+	if (result.has_value()) return std::optional<float>(result.value().x);
+	return std::nullopt;
+}
+
 inline vec3f Spline::position_on_spline(float t) {
 	return t * t * t * this->a + t * t * this->b + t * this->c + this->d;
 }
 
-void Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
+std::optional<vec2f> Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
 	const vec3f conversion = -this->b / (3.0f * this->a);
 
 	DepressedCubic cubic_min_x(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x);
@@ -237,6 +295,9 @@ void Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
 	this->intersection = result;
 	this->worldEntry = this->position_on_spline(ts.x);
 	this->worldExit = this->position_on_spline(ts.y);
+
+	if (!result) return std::nullopt;
+	return std::optional<vec2f>(ts);
 }
 
 bool Spline::calculate_near_far(const vec3f t1, const vec3f t2, const vec3f aAABBMin, const vec3f aAABBMax, vec2f* ts) {
@@ -255,7 +316,7 @@ bool Spline::calculate_near_far(const vec3f t1, const vec3f t2, const vec3f aAAB
 	const vec3f ifar = fml::make_vector<vec3f>(std::max(ft1.x, ft2.x), std::max(ft1.y, ft2.y), std::max(ft1.z, ft2.z));
 	ts->y = std::max(ts->y, std::max(ifar.x, std::max(ifar.y, ifar.z)));
 
-	return ts->x < ts->y && ts->y >= 0.0f;
+	return ts->x <= ts->y && ts->y >= 0.0f;
 }
 
 vec3f Spline::intersected_aabb(const vec3f t, vec3f aAABBMin, vec3f aAABBMax) {
