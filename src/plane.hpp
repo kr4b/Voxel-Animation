@@ -1,7 +1,6 @@
 #pragma once
 
 #include <optional>
-
 #include <flux/fml/stdtypes.hpp>
 #include <flux/fml/transform.hpp>
 namespace fml = flux::fml;
