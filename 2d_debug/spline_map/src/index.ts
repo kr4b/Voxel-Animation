@@ -13,10 +13,25 @@ let camera_rotation = Math.atan2(0, 0.8);
 const halfFieldOfView = Math.PI / 3;
 
 const pixels = [
-    [255, 0, 0],
+    [0, 0, 0],
+    [200, 200, 0],
     [0, 255, 0],
     [0, 0, 255],
-    [200, 200, 0]
+
+    [0, 0, 255],
+    [255, 0, 0],
+    [200, 200, 0],
+    [0, 0, 0],
+
+    [0, 0, 0],
+    [0, 0, 255],
+    [255, 0, 0],
+    [200, 200, 0],
+
+    [200, 200, 0],
+    [0, 0, 0],
+    [0, 0, 255],
+    [255, 0, 0],
 ];
 
 const size = Math.sqrt(pixels.length);
@@ -57,7 +72,6 @@ onload = () => {
 
     // const spline = Spline.with_control_points(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-15.0, -3.0), vec2(12.0, 0.0));
     const spline = Spline.with_control_points(vec2(0, 0), vec2(0, aabbMax.y - aabbMin.y), vec2(-15.0, -3.0), vec2(12.0, 0.0));
-
     const spline_map = new SplineMap(base, spline);
 
     let t = 0;
@@ -78,20 +92,15 @@ onload = () => {
 
             ray.draw(ctx);
 
-            const result = ray.walk_spline_map(spline_map, pixelSizeY);
+            const result = ray.walk_spline_map(spline_map, pixelSizeY, pixels, size);
             if (result !== null) {
                 const [texCoords, t] = result;
-                const pixelX = Math.floor((Math.round(texCoords.x * 1000.0) / 1001.0) * size);
-                const pixelY = Math.floor((Math.round(texCoords.y * 1000.0) / 1001.0) * size);
+                const color = pixels[texCoords.y * size + texCoords.x];
+                ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                ray.draw_point_at(ctx, t);
 
-                if (pixelX >= 0 && pixelX < size && pixelY >= 0 && pixelY < size) {
-                    const color = pixels[pixelY * size + pixelX];
-                    ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-                    ray.draw_point_at(ctx, t);
-
-                    transformed_1d.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-                    transformed_1d.fillRect((i + halfFieldOfView) * pixel_width / increment, -1, pixel_width, 2);
-                }
+                transformed_1d.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                transformed_1d.fillRect((i + halfFieldOfView) * pixel_width / increment, -1, pixel_width, 2);
             }
         }
 
@@ -101,7 +110,7 @@ onload = () => {
 
 function render_texture(ctx: CanvasRenderingContext2D, spline_map: SplineMap) {
     const spline = spline_map.spline;
-    const _pixelSizeX = spline_map.width / (pixelSizeX * canvasWidth);
+    const _pixelSizeX = spline_map.width / size;
     const direction = norm(spline_map.base.half_size);
 
     ctx.save();
@@ -117,6 +126,7 @@ function render_texture(ctx: CanvasRenderingContext2D, spline_map: SplineMap) {
         // Draw the slice for each pixel
         for (let pixelX = 0; pixelX < size; pixelX++) {
             const color = pixels[pixelY * size + pixelX];
+            if (color[0] === 0 && color[1] === 0 && color[2] === 0) continue;
             ctx.strokeStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
             ctx.beginPath();
             ctx.moveTo(
