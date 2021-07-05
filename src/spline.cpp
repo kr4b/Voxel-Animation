@@ -1,3 +1,4 @@
+#include "spline_map.hpp"
 #include "spline.hpp"
 #include "depressed_cubic.hpp"
 #include <functional>

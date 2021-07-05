@@ -13,10 +13,9 @@ namespace fml = flux::fml;
 using namespace fml::stdtypes;
 using namespace fml::literals;
 
-#include "aabb.hpp"
-#include "spline.hpp"
-#include "spline_map.hpp"
-#include "volume.hpp"
+class AABB;
+class SplineMap;
+class Volume;
 
 class Ray {
 public:
@@ -24,8 +23,8 @@ public:
 
     Ray(const vec3f, const vec3f, const gl::GLapi*);
 
-    vec2f intersect_ray_aabb(const AABB) const;
-    std::optional<std::pair<vec3i, float>> walk_spline_map(const SplineMap&, const Volume&, const float);
+    vec2f intersect_ray_aabb(const AABB&) const;
+    std::optional<std::pair<vec3i, float>> walk_spline_map(SplineMap&, const Volume&, const float);
 
     void update_buffers(const gl::GLapi*);
     void render(const gl::GLapi*);

@@ -1,4 +1,5 @@
 #include "plane.hpp"
+#include "ray.hpp"
 
 // z = 0: p = (x, -y, 0) | p = (-x, y, 0)
 // x = 0: p = (0, y, -z) | p = (0, -y, z)

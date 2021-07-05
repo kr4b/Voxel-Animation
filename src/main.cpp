@@ -30,13 +30,11 @@ namespace GLFW = flux::dlapi::os::GLFW;
 #include <algorithm>
 
 #include "defaults.hpp"
-#include "spline_source.hpp"
 #include "startup.hpp"
-#include "sampler.hpp"
 #include "volume.hpp"
+#include "spline_map.hpp"
+#include "plane.hpp"
 
-// Templates also need cpp files?
-#include "sampler.cpp"
 #include "scene.hpp"
 
 namespace
@@ -144,10 +142,6 @@ int main()
 
     const size_t size = 80;
     const float strength = 0.1f;
-    auto sampler = prepare_deformation_scale(gl, size, strength);
-
-    SplineSource splines;
-    splines.set_values(gl, state.splineCount, state.splineDist);
 
     //FLUX_ENABLE_EXCEPTION_INFO();
     FLUX_GL_CHECKPOINT_ALWAYS();
@@ -271,8 +265,6 @@ int main()
             gl->uniform1f(gl->getUniformLocation(program, "time"), diff.count());
             gl->uniform3f(gl->getUniformLocation(program, "tangent1"), tangent1.x, tangent1.y, tangent1.z);
             gl->uniform3f(gl->getUniformLocation(program, "tangent2"), tangent2.x, tangent2.y, tangent2.z);
-
-            sampler.prepare(program, 1);
         }
 
         gl->bindBufferBase(GL::UNIFORM_BUFFER, 0, uVolMeta);
@@ -284,30 +276,9 @@ int main()
         gl->drawArrays(GL::TRIANGLES, 0, 3);
 
         if (state.debugMode) {
-            if (state.refreshSpline) {
-                splines.update_from_screen_coords(
-                    fml::make_vector<vec2f>(state.lastX, height - state.lastY) * camera.reciprocalWindowSize,
-                    camera.inverseProjCamera,
-                    camera.cameraWorldPos
-                );
-            }
-
-            if (state.refreshSplineSource) {
-                splines.set_values(gl, state.splineCount, state.splineDist);
-            }
-
-            if (state.refreshSpline || state.refreshSplineSource) {
-                splines.update_from_screen_coords(gl, sampler);
-                splines.intersect_spline_aabb(volMeta.volMin, volMeta.volMax);
-                splines.update_buffers(gl);
-                state.refreshSpline = false;
-                state.refreshSplineSource = false;
-            }
-
             gl->useProgram(debugSplineProgram);
             gl->uniformMatrix4fv(gl->getUniformLocation(debugSplineProgram, "view"), 1, gl::GL::GLFALSE, view.data());
             gl->uniformMatrix4fv(gl->getUniformLocation(debugSplineProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
-            splines.render(state.displayRays, gl);
         }
 
         // Clean up state

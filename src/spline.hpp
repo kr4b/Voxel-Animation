@@ -40,7 +40,7 @@ public:
 	std::vector<float> get_extremes();
 	std::optional<float> intersect_spline_plane(const Plane&);
 
-	Spline transform(const mat44f &matrix) {
+	Spline transform(const mat44f &matrix) const {
 		vec4f ta = matrix * vec4f(this->a.x, this->a.y, this->a.z, 0.0f);
 		vec4f tb = matrix * vec4f(this->b.x, this->b.y, this->b.z, 0.0f);
 		vec4f tc = matrix * vec4f(this->c.x, this->c.y, this->c.z, 0.0f);

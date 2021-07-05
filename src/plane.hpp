@@ -1,18 +1,18 @@
 #pragma once
 
 #include <optional>
+
 #include <flux/fml/stdtypes.hpp>
 #include <flux/fml/transform.hpp>
 namespace fml = flux::fml;
 using namespace fml::stdtypes;
 using namespace fml::literals;
 
-#include "ray.hpp"
+class Ray;
 
 class Plane {
 public:
     const vec3f center;
-    const vec3f size;
     const vec3f half_size;
     vec3f span1, span2;
 
