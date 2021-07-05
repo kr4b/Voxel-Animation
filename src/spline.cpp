@@ -181,7 +181,7 @@ void Spline::set_color(const vec3f color) {
     this->color = color;
 }
 
-inline vec3f Spline::position_on_spline(float t) {
+inline vec3f Spline::position_on_spline(float t) const {
 	return t * t * t * this->a + t * t * this->b + t * this->c + this->d;
 }
 

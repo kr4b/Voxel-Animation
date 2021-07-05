@@ -12,6 +12,8 @@ Plane::Plane(vec3f center, vec3f size) : center(center), size(size) {
     const vec3f v = p2 - p1;
     const vec3f w = p3 - p1;
     this->normal = fml::normalize(vec3f(v.y * w.z - v.z * w.y, v.z * w.x - v.x * w.z, v.x * w.y - v.y * w.x));
+    this->span1 = v;
+    this->span2 = w;
 }
 
 std::optional<vec2f> Plane::intersect(const Ray& ray) const {

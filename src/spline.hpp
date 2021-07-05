@@ -28,7 +28,7 @@ public:
 	void parameters_from_tangents(const vec3f, const vec3f, const vec3f, const vec3f);
 	void parameters_from_points(const vec3f, const vec3f, const vec3f, const vec3f);
 
-	vec3f position_on_spline(const float t);
+	vec3f position_on_spline(const float t) const;
 
 	void intersect_spline_aabb(const vec3f, const vec3f);
 

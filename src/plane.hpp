@@ -12,6 +12,7 @@ class Plane {
 public:
     const vec3f center;
     const vec3f size;
+    vec3f span1, span2;
 
     Plane(vec3f center, vec3f size);
 

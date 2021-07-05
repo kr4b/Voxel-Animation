@@ -1,5 +1,4 @@
 #include "ray.hpp"
-#include "sampler.hpp"
 
 Ray::Ray(const vec3f origin, const vec3f dir, const gl::GLapi* gl) : origin(origin), dir(dir) {
     this->init_vao(gl);
@@ -75,3 +74,22 @@ void Ray::render(const gl::GLapi* gl) {
     gl->bindVertexArray(0);
 }
 
+std::optional<std::pair<vec3i, float>> Ray::walk_spline_map(const SplineMap& splineMap, const Volume& volume, const float step) {
+    const vec2f ts = this->intersect_ray_aabb(splineMap.aabb);
+
+    for (float t = ts.x; t <= ts.y; t += step) {
+        const vec3f pos = this->origin + this->dir * t;
+        if (const auto texCoords = splineMap.texture_coords(pos)) {
+            const int pixelX = int((round(texCoords->x * 1000.0) / 1001.0) * volume.width);
+            const int pixelY = int((round(texCoords->y * 1000.0) / 1001.0) * volume.height);
+            const int pixelZ = int((round(texCoords->z * 1000.0) / 1001.0) * volume.depth);
+
+            if (pixelX >= 0 && pixelX < volume.width && pixelY >= 0 && pixelY < volume.height && pixelZ >= 0 && pixelZ < volume.depth) {
+                const float color = volume(pixelX, pixelY, pixelZ);
+
+                if (color > 0.1f) return std::make_pair(vec3i(pixelX, pixelY, pixelZ), t);
+            }
+        }
+    }
+    return std::nullopt;
+}
