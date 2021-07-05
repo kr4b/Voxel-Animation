@@ -84,7 +84,7 @@ class SplineMap {
     const edgePos2 = add(edgePos1, this.base.size);
     const diff2 = multiply(subtract(edgePos2, pos), subtract(edgePos2, pos));
     const sizeSquared = multiply(this.base.size, this.base.size);
-    if (diff1 > sizeSquared || diff2 > sizeSquared) {
+    if (dot(diff1, diff1) > dot(sizeSquared, sizeSquared) || dot(diff2, diff2) > dot(sizeSquared, sizeSquared)) {
       return null;
     }
 
