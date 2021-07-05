@@ -1,5 +1,10 @@
 #pragma once
 
+#include <flux/gl/glapi.hpp>
+#include <flux/gl/checkpoint.hpp>
+#include <flux/gl/setup/program.hpp>
+namespace gl = flux::gl;
+
 #include <optional>
 #include <flux/fml/stdtypes.hpp>
 #include <flux/fml/transform.hpp>
@@ -26,6 +31,10 @@ public:
 
     Plane(vec3f center, vec3f half_size);
 
+    void init_vao(const gl::GLapi*);
+    void render(const gl::GLapi*);
+    void clean(const gl::GLapi*);
+
     Plane transform(const mat44f &matrix) {
         vec4f transformed = matrix * vec4f(this->center.x, this->center.y, this->center.z, 1.0);
         return Plane(
@@ -35,5 +44,8 @@ public:
     }
 
     std::optional<vec2f> intersect(const Ray&) const;
+private:
+    gl::GL::UInt vao;
+    gl::GL::UInt buffers[2];
 };
 

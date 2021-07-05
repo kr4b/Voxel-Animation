@@ -25,7 +25,7 @@ Spline::Spline(const gl::GLapi* gl) {
     this->start = fml::make_zero<vec3f>();
     this->color = fml::make_one<vec3f>();
 
-	this->init_vao(gl);
+	this->init_vao();
 }
 
 Spline::Spline(const gl::GLapi* gl, const vec3f a, const vec3f b, const vec3f c, const vec3f d) {
@@ -43,49 +43,49 @@ Spline::Spline(const gl::GLapi* gl, const vec3f a, const vec3f b, const vec3f c,
 	this->start = fml::make_zero<vec3f>();
 	this->color = fml::make_one<vec3f>();
 
-	this->init_vao(gl);
+	this->init_vao();
 }
 
-void Spline::clean(const gl::GLapi* gl) {
-    gl->deleteVertexArrays(1, &this->lineVao);
-    gl->deleteVertexArrays(1, &this->pointsVao);
-    gl->deleteBuffers(4, this->buffers);
+void Spline::clean() {
+    this->gl->deleteVertexArrays(1, &this->lineVao);
+    this->gl->deleteVertexArrays(1, &this->pointsVao);
+    this->gl->deleteBuffers(4, this->buffers);
 }
 
-void Spline::init_vao(const gl::GLapi* gl) {
-	gl->genVertexArrays(1, &this->lineVao);
-	gl->bindVertexArray(this->lineVao);
+void Spline::init_vao() {
+	this->gl->genVertexArrays(1, &this->lineVao);
+	this->gl->bindVertexArray(this->lineVao);
 
-	gl->genBuffers(4, this->buffers);
+    this->gl->genBuffers(4, this->buffers);
 
     // Spline vertices
-	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[0]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * detail * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
-	gl->vertexAttribPointer(0, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
-	gl->enableVertexAttribArray(0);
+	this->gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[0]);
+	this->gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * detail * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	this->gl->vertexAttribPointer(0, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
+	this->gl->enableVertexAttribArray(0);
 
     // Spline colors
-	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[1]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * detail * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
-	gl->vertexAttribPointer(1, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
-	gl->enableVertexAttribArray(1);
+	this->gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[1]);
+	this->gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * detail * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	this->gl->vertexAttribPointer(1, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
+	this->gl->enableVertexAttribArray(1);
 
-	gl->genVertexArrays(1, &this->pointsVao);
-	gl->bindVertexArray(this->pointsVao);
+	this->gl->genVertexArrays(1, &this->pointsVao);
+	this->gl->bindVertexArray(this->pointsVao);
 
     // Point vertices
-	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
-	gl->vertexAttribPointer(0, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
-	gl->enableVertexAttribArray(0);
+	this->gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
+	this->gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	this->gl->vertexAttribPointer(0, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
+	this->gl->enableVertexAttribArray(0);
 
     // Point colors
-	gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
-	gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
-	gl->vertexAttribPointer(1, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
-	gl->enableVertexAttribArray(1);
+	this->gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
+	this->gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 3 * sizeof(gl::GL::Float), nullptr, gl::GL::DYNAMIC_DRAW);
+	this->gl->vertexAttribPointer(1, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
+	this->gl->enableVertexAttribArray(1);
 
-	gl->bindVertexArray(0);
+    this->gl->bindVertexArray(0);
 }
 
 void Spline::parameters_from_tangents(const vec3f P1, const vec3f P2, const vec3f tangent1, const vec3f tangent2) {
@@ -130,7 +130,7 @@ void Spline::update_from_screen_coords(const vec2f coords, const mat44f inverseP
     parameters_from_tangents(P1, P2, tangent1, tangent2);
 }
 
-void Spline::update_buffers(const gl::GLapi *gl) {
+void Spline::update_buffers() {
 	{
 		const float stepSize = 1.0f / (float)detail;
 
@@ -149,14 +149,14 @@ void Spline::update_buffers(const gl::GLapi *gl) {
 			colors[i * 3 + 2] = this->color.z;
 		}
 
-		gl->bindVertexArray(this->lineVao);
+		this->gl->bindVertexArray(this->lineVao);
 
-		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[0]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * detail * sizeof(gl::GL::Float), vertices);
-		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[1]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * detail * sizeof(gl::GL::Float), colors);
+		this->gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[0]);
+		this->gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * detail * sizeof(gl::GL::Float), vertices);
+		this->gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[1]);
+		this->gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * detail * sizeof(gl::GL::Float), colors);
 
-		gl->bindVertexArray(0);
+        this->gl->bindVertexArray(0);
 	}
 
 	{
@@ -171,31 +171,31 @@ void Spline::update_buffers(const gl::GLapi *gl) {
         colors[3] = 1.0f; colors[4] = 0.0f; colors[5] = 0.0f;
         colors[6] = 1.0f; colors[7] = 0.0f; colors[8] = 0.0f;
 
-		gl->bindVertexArray(this->pointsVao);
+        this->gl->bindVertexArray(this->pointsVao);
 
-		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), vertices);
-		gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
-		gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), colors);
+		this->gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[2]);
+		this->gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), vertices);
+		this->gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[3]);
+		this->gl->bufferSubData(gl::GL::ARRAY_BUFFER, 0, 3 * 3 * sizeof(gl::GL::Float), colors);
 
-		gl->bindVertexArray(0);
+        this->gl->bindVertexArray(0);
 	}
 }
 
-void Spline::render(const gl::GLapi* gl) const {
-	gl->bindVertexArray(this->lineVao);
+void Spline::render() const {
+	this->gl->bindVertexArray(this->lineVao);
 
-    gl->lineWidth(3.0f);
-	gl->drawArrays(gl::GL::LINE_STRIP, 0, detail);
-    gl->lineWidth(1.0f);
+    this->gl->lineWidth(3.0f);
+	this->gl->drawArrays(gl::GL::LINE_STRIP, 0, detail);
+    this->gl->lineWidth(1.0f);
 
-    gl->bindVertexArray(this->pointsVao);
-    gl->pointSize(10.0f);
+    this->gl->bindVertexArray(this->pointsVao);
+    this->gl->pointSize(10.0f);
 
-    gl->drawArrays(gl::GL::POINTS, 0, 3);
-    gl->pointSize(1.0f);
+    this->gl->drawArrays(gl::GL::POINTS, 0, 3);
+    this->gl->pointSize(1.0f);
 
-	gl->bindVertexArray(0);
+	this->gl->bindVertexArray(0);
 }
 
 void Spline::set_color(const vec3f color) {

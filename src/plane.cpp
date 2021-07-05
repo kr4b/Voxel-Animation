@@ -31,6 +31,59 @@ Plane::Plane(vec3f center, vec3f half_size) : center(center), half_size(half_siz
     this->inv_matrix = fml::invert(this->matrix);
 }
 
+void Plane::init_vao(const gl::GLapi* gl) {
+    gl->genVertexArrays(1, &this->vao);
+    gl->bindVertexArray(this->vao);
+
+    gl->genBuffers(2, this->buffers);
+
+    gl::GL::Float vertices[4 * 3];
+    gl::GL::Float colors[4 * 3];
+
+    const vec3f v1 = center - half_size;
+    const vec3f v2 = center + half_size;
+    const vec3f v3 = v1 + span1;
+    const vec3f v4 = v1 + span2;
+    vertices[0] = v1.x; vertices[1] = v1.y; vertices[2] = v1.z;
+    vertices[3] = v2.x; vertices[4] = v2.y; vertices[5] = v2.z;
+    vertices[6] = v3.x; vertices[7] = v3.y; vertices[8] = v3.z;
+    vertices[9] = v4.x; vertices[10] = v4.y; vertices[11] = v4.z;
+
+    colors[0] = 0.0f; colors[1] = 0.2f; colors[2] = 0.0f;
+    colors[3] = 0.0f; colors[4] = 0.2f; colors[5] = 0.0f;
+    colors[6] = 0.0f; colors[7] = 0.2f; colors[8] = 0.0f;
+    colors[9] = 0.0f; colors[10] = 0.2f; colors[11] = 0.0f;
+
+    // Vertices
+    gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[0]);
+    gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 4 * sizeof(gl::GL::Float), vertices, gl::GL::DYNAMIC_DRAW);
+    gl->vertexAttribPointer(0, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
+    gl->enableVertexAttribArray(0);
+
+    // Colors
+    gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[1]);
+    gl->bufferData(gl::GL::ARRAY_BUFFER, 3 * 4 * sizeof(gl::GL::Float), colors, gl::GL::DYNAMIC_DRAW);
+    gl->vertexAttribPointer(1, 3, gl::GL::FLOAT, gl::GL::GLFALSE, 0, 0);
+    gl->enableVertexAttribArray(1);
+
+    gl->bindVertexArray(0);
+}
+
+void Plane::clean(const gl::GLapi* gl) {
+    gl->deleteVertexArrays(1, &this->vao);
+    gl->deleteBuffers(2, this->buffers);
+}
+
+void Plane::render(const gl::GLapi* gl) {
+    gl->bindVertexArray(this->vao);
+
+    gl->lineWidth(3.0f);
+    gl->drawArrays(gl::GL::LINE_STRIP, 0, 2);
+    gl->lineWidth(1.0f);
+
+    gl->bindVertexArray(0);
+}
+
 std::optional<vec2f> Plane::intersect(const Ray& ray) const {
     const float discriminant = dot(this->normal, ray.dir);
     if (abs(discriminant) < 1.0e-6) {

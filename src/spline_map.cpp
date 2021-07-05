@@ -21,14 +21,34 @@ const AABB createEncompassingAABB(Plane base, Spline spline) {
 
 SplineMap::SplineMap(Plane base, Spline spline) :
     base(base),
-    spline(spline.transform(
+    spline(spline.transform(base.matrix).transform(
         fml::make_matrix<mat44f>(
             1.0f, 0.0f, 0.0f, -base.half_size.x,
             0.0f, 1.0f, 0.0f, -base.half_size.y,
             0.0f, 0.0f, 1.0f, -base.half_size.z,
             0.0f, 0.0f, 0.0f, 1.0f))),
     aabb(createEncompassingAABB(base, spline)),
-    sizeSquared(dot(base.size, base.size)) {}
+    sizeSquared(dot(base.size, base.size)) {
+
+    edgeSplines.push_back(this->spline.transform(fml::make_matrix<mat44f>(
+        1.0f, 0.0f, 0.0f, base.span1.x,
+        0.0f, 1.0f, 0.0f, base.span1.y,
+        0.0f, 0.0f, 1.0f, base.span1.z,
+        0.0f, 0.0f, 0.0f, 1.0f)));
+    edgeSplines[0].update_buffers();
+    edgeSplines.push_back(this->spline.transform(fml::make_matrix<mat44f>(
+        1.0f, 0.0f, 0.0f, base.span2.x,
+        0.0f, 1.0f, 0.0f, base.span2.y,
+        0.0f, 0.0f, 1.0f, base.span2.z,
+        0.0f, 0.0f, 0.0f, 1.0f)));
+    edgeSplines[1].update_buffers();
+    edgeSplines.push_back(this->spline.transform(fml::make_matrix<mat44f>(
+        1.0f, 0.0f, 0.0f, base.size.x,
+        0.0f, 1.0f, 0.0f, base.size.y,
+        0.0f, 0.0f, 1.0f, base.size.z,
+        0.0f, 0.0f, 0.0f, 1.0f)));
+    edgeSplines[2].update_buffers();
+}
 
 std::optional<vec3f> SplineMap::texture_coords(const vec3f pos) {
     const Plane plane(pos, this->base.size);
@@ -55,6 +75,9 @@ std::optional<vec3f> SplineMap::texture_coords(const vec3f pos) {
     return std::nullopt;
 }
 
-void SplineMap::render(const gl::GLapi*) {
-
+void SplineMap::render() {
+    this->spline.render();
+    for (const Spline& edgeSpline : this->edgeSplines) {
+        edgeSpline.render();
+    }
 }

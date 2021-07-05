@@ -23,9 +23,9 @@ public:
 	Spline(const gl::GLapi*);
 	Spline(const gl::GLapi*, const vec3f, const vec3f, const vec3f, const vec3f);
 
-	void render(const gl::GLapi*) const;
-	void update_buffers(const gl::GLapi*);
-    void clean(const gl::GLapi*);
+	void render() const;
+	void update_buffers();
+    void clean();
 
 	void update_from_screen_coords(const vec2f, const mat44f, const vec3f, const vec3f, const vec3f);
 	void parameters_from_tangents(const vec3f, const vec3f, const vec3f, const vec3f);
@@ -66,7 +66,7 @@ private:
 	gl::GL::UInt buffers[4];
 	const gl::GLapi* gl;
 
-    void init_vao(const gl::GLapi*);
+    void init_vao();
 
 	vec3f intersected_aabb(const vec3f t, vec3f aAABBMin, vec3f aAABBMax);
 	bool calculate_near_far(const vec3f, const vec3f, const vec3f, const vec3f, vec2f*);

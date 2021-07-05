@@ -22,9 +22,10 @@ public:
 
     std::optional<vec3f> texture_coords(const vec3f);
 
-    void render(const gl::GLapi*);
+    void render();
 
 private:
     const float sizeSquared;
+    std::vector<Spline> edgeSplines;
 };
 
