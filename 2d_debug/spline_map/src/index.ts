@@ -1,10 +1,8 @@
-import { AABB } from "./aabb.js";
-import DepressedCubic from "./depressed_cubic.js";
 import { Plane } from "./plane.js";
 import { Ray } from "./ray.js";
 import Spline from "./spline.js";
 import SplineMap from "./spline_map.js";
-import { mat3, norm, scale, vec2 } from "./vec2.js";
+import { norm, scale, vec2 } from "./vec2.js";
 
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
@@ -13,8 +11,6 @@ let transformed_1d: CanvasRenderingContext2D;
 let camera_position = vec2(-0.8, 0);
 let camera_rotation = Math.atan2(0, 0.8);
 const halfFieldOfView = Math.PI / 3;
-
-const EPSILON = 1e-6;
 
 const pixels = [
     [255, 0, 0],
@@ -85,14 +81,12 @@ onload = () => {
             const result = ray.walk_spline_map(spline_map, pixelSizeY);
             if (result !== null) {
                 const [texCoords, t] = result;
-                const pixelX = Math.floor((Math.round(texCoords.x * 1000.0) / 1000.0 - EPSILON) * size);
-                const pixelY = Math.floor((Math.round(texCoords.y * 1000.0) / 1000.0 - EPSILON) * size);
+                const pixelX = Math.floor((Math.round(texCoords.x * 1000.0) / 1001.0) * size);
+                const pixelY = Math.floor((Math.round(texCoords.y * 1000.0) / 1001.0) * size);
 
                 if (pixelX >= 0 && pixelX < size && pixelY >= 0 && pixelY < size) {
                     const color = pixels[pixelY * size + pixelX];
                     ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-                    ctx.fillRect(-1.0, -1.0, 0.2, 0.2);
-
                     ray.draw_point_at(ctx, t);
 
                     transformed_1d.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
@@ -107,9 +101,7 @@ onload = () => {
 
 function render_texture(ctx: CanvasRenderingContext2D, spline_map: SplineMap) {
     const spline = spline_map.spline;
-
     const _pixelSizeX = spline_map.width / (pixelSizeX * canvasWidth);
-
     const direction = norm(spline_map.base.half_size);
 
     ctx.save();

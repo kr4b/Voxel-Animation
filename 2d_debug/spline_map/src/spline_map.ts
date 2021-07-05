@@ -80,11 +80,11 @@ class SplineMap {
     const t = this.spline.ts.x;
     // Determine whether the point is in the plane
     const edgePos1 = this.spline.position_on_spline(t);
-    const diff1 = multiply(subtract(edgePos1, pos), subtract(edgePos1, pos));
+    const diff1 = subtract(edgePos1, pos);
     const edgePos2 = add(edgePos1, this.base.size);
-    const diff2 = multiply(subtract(edgePos2, pos), subtract(edgePos2, pos));
-    const sizeSquared = multiply(this.base.size, this.base.size);
-    if (dot(diff1, diff1) > dot(sizeSquared, sizeSquared) || dot(diff2, diff2) > dot(sizeSquared, sizeSquared)) {
+    const diff2 = subtract(edgePos2, pos);
+    const sizeSquared = dot(this.base.size, this.base.size) ;
+    if (dot(diff1, diff1) > sizeSquared || dot(diff2, diff2) > sizeSquared) {
       return null;
     }
 
