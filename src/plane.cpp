@@ -6,21 +6,48 @@
 // y = 0: p = (x, 0, -z) | p = (-x, 0, z)
 // p = (x, -y, abs(y) * z + abs(x) * -z)
 Plane::Plane(vec3f center, vec3f half_size) : center(center), half_size(half_size) {
-    assert(size.x == 0.0f || size.y == 0.0f || size.z == 0.0f);
-    const vec3f p1 = center - size;
-    const vec3f p2 = center + vec3f(size.x, -size.y, abs(size.y) * size.z + abs(size.x) * -size.z);
-    const vec3f p3 = center + size;
+    // assert((half_size.x == 0.0f || half_size.y == 0.0f || half_size.z == 0.0f));
+    const vec3f p1 = center - half_size;
+    const vec3f p2 = center + vec3f(half_size.x, -half_size.y, abs(half_size.y) * half_size.z + abs(half_size.x) * -half_size.z);
+    const vec3f p3 = center + half_size;
     const vec3f v = p2 - p1;
     const vec3f w = p3 - p1;
     this->normal = fml::normalize(vec3f(v.y * w.z - v.z * w.y, v.z * w.x - v.x * w.z, v.x * w.y - v.y * w.x));
     this->span1 = v;
     this->span2 = w;
 
-    this->size = this->half_size * fml::vec3f(2.0);
+    this->size = half_size * vec3f(2.0f, 2.0f, 2.0f);
 
     this->min = this->center - this->half_size;
     this->max = this->center + this->half_size;
 
+    // https://stackoverflow.com/questions/13199126/find-opengl-rotation-matrix-for-a-plane-given-the-normal-vector-after-the-rotat
+    vec3f rotationAxis = fml::cross(vec3f(0.0f, 1.0f, 0.0f), this->normal);
+    float rotationAngle = acos(fml::dot(vec3f(0.0f, 1.0f, 0.0f), this->normal));
+
+    float cosAngle = cos(rotationAngle);
+    float sinAngle = sin(rotationAngle);
+
+    // https://en.wikipedia.org/wiki/Rotation_matrix#Conversion_from_rotation_matrix_and_to_axis%E2%80%93angle
+    this->matrix = fml::make_matrix<mat44f>(
+        cosAngle + rotationAxis.x * rotationAxis.x * (1.0f - cosAngle),
+        rotationAxis.x * rotationAxis.y * (1.0f - cosAngle) - rotationAxis.z * sinAngle,
+        rotationAxis.x * rotationAxis.z * (1.0f - cosAngle) + rotationAxis.y * sinAngle,
+        this->center.x,
+
+        rotationAxis.y * rotationAxis.x * (1.0f - cosAngle) + rotationAxis.z * sinAngle,
+        cosAngle + rotationAxis.y * rotationAxis.y * (1.0f - cosAngle),
+        rotationAxis.y * rotationAxis.z * (1.0f - cosAngle) - rotationAxis.x * sinAngle,
+        this->center.y,
+
+        rotationAxis.z * rotationAxis.x * (1.0f - cosAngle) - rotationAxis.y * sinAngle,
+        rotationAxis.z * rotationAxis.y * (1.0f - cosAngle) + rotationAxis.x * sinAngle,
+        cosAngle + rotationAxis.z * rotationAxis.z * (1.0f - cosAngle),
+        this->center.z,
+
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+    /*
     float hypotXy = hypotf(this->normal.x, this->normal.y);
     this->matrix = fml::make_matrix<mat44f>(
         this->normal.y / hypotXy, -this->normal.x / hypotXy, 0.0f, this->center.x,
@@ -28,10 +55,11 @@ Plane::Plane(vec3f center, vec3f half_size) : center(center), half_size(half_siz
         this->normal.x, this->normal.y, this->normal.z, this->center.z,
         0.0f, 0.0f, 0.0f, 1.0f
     );
+    */
     this->inv_matrix = fml::invert(this->matrix);
 }
 
-void Plane::init_vao(const gl::GLapi* gl) {
+void Plane::init_vao(const gl::GLapi* gl, const vec3f color) {
     gl->genVertexArrays(1, &this->vao);
     gl->bindVertexArray(this->vao);
 
@@ -49,10 +77,10 @@ void Plane::init_vao(const gl::GLapi* gl) {
     vertices[6] = v3.x; vertices[7] = v3.y; vertices[8] = v3.z;
     vertices[9] = v4.x; vertices[10] = v4.y; vertices[11] = v4.z;
 
-    colors[0] = 0.0f; colors[1] = 0.2f; colors[2] = 0.0f;
-    colors[3] = 0.0f; colors[4] = 0.2f; colors[5] = 0.0f;
-    colors[6] = 0.0f; colors[7] = 0.2f; colors[8] = 0.0f;
-    colors[9] = 0.0f; colors[10] = 0.2f; colors[11] = 0.0f;
+    colors[0] = color.x; colors[1] = color.y; colors[2] = color.z;
+    colors[3] = color.x; colors[4] = color.y; colors[5] = color.z;
+    colors[6] = color.x; colors[7] = color.y; colors[8] = color.z;
+    colors[9] = color.x; colors[10] = color.y; colors[11] = color.z;
 
     // Vertices
     gl->bindBuffer(gl::GL::ARRAY_BUFFER, this->buffers[0]);
@@ -78,7 +106,7 @@ void Plane::render(const gl::GLapi* gl) {
     gl->bindVertexArray(this->vao);
 
     gl->lineWidth(3.0f);
-    gl->drawArrays(gl::GL::LINE_STRIP, 0, 2);
+    gl->drawArrays(gl::GL::LINE_LOOP, 0, 4);
     gl->lineWidth(1.0f);
 
     gl->bindVertexArray(0);

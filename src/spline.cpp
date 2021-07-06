@@ -203,12 +203,12 @@ void Spline::set_color(const vec3f color) {
 }
 
 std::vector<float> Spline::get_extremes() {
-	const vec3f a = this->a * vec3f(3.0f);
-	const vec3f b = this->b * vec3f(2.0f);
+	const vec3f a = this->a * vec3f(3.0f, 3.0f, 3.0f);
+	const vec3f b = this->b * vec3f(2.0f, 2.0f, 2.0f);
 
 	std::vector<float> values = { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 1.0f };
 
-	const vec3f D = b * b - vec3f(4.0f) * a * this->c;
+	const vec3f D = b * b - vec3f(4.0f, 4.0f, 4.0f) * a * this->c;
 
 	if (D.x >= 0.0f) {
 		values[0] = (-b.x + sqrt(D.x)) / (2.0f * a.x);

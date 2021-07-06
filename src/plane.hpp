@@ -31,7 +31,7 @@ public:
 
     Plane(vec3f center, vec3f half_size);
 
-    void init_vao(const gl::GLapi*);
+    void init_vao(const gl::GLapi*, const vec3f);
     void render(const gl::GLapi*);
     void clean(const gl::GLapi*);
 

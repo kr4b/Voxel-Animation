@@ -211,6 +211,17 @@ int main()
     vec3f tangent1 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
     vec3f tangent2 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
 
+
+    Spline spline = Spline(gl);
+    spline.parameters_from_tangents(vec3f(0.0f, 0.0f, 0.0f), vec3f(0.0f, 2.0f, 0.0f), vec3f(2.0f, 0.0f, -3.0f), vec3f(0.0f, 0.0f, 0.0f));
+    Plane base = Plane(vec3f(-1.6, 1.0, 0.2), vec3f(1.9, 2.0, 1.9));
+    Plane xzplane = Plane(vec3f(0.0f, 0.0f, 0.0f), vec3f(1.0f, 0.0f, 1.0f));
+
+    base.init_vao(gl, vec3f(0.0f, 0.2f, 0.3f));
+    xzplane.init_vao(gl, vec3f(0.2f, 0.0f, 0.0f));
+
+    SplineMap smap = SplineMap(base, spline);
+
     const int steps = 2048;
     int frames = 0;
     double time = 0;
@@ -279,6 +290,9 @@ int main()
             gl->useProgram(debugSplineProgram);
             gl->uniformMatrix4fv(gl->getUniformLocation(debugSplineProgram, "view"), 1, gl::GL::GLFALSE, view.data());
             gl->uniformMatrix4fv(gl->getUniformLocation(debugSplineProgram, "proj"), 1, gl::GL::GLFALSE, proj.data());
+
+            smap.render(gl);
+            xzplane.render(gl);
         }
 
         // Clean up state

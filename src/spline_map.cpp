@@ -75,7 +75,8 @@ std::optional<vec3f> SplineMap::texture_coords(const vec3f pos) {
     return std::nullopt;
 }
 
-void SplineMap::render() {
+void SplineMap::render(const gl::GLapi* gl) {
+    this->base.render(gl);
     this->spline.render();
     for (const Spline& edgeSpline : this->edgeSplines) {
         edgeSpline.render();
