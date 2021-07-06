@@ -212,16 +212,13 @@ int main()
     vec3f tangent2 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
 
     Spline spline = Spline(gl);
-    spline.parameters_from_tangents(vec3f(0.0f, 0.0f, 0.0f), vec3f(0.0f, 1.0f, 0.0f), vec3f(0.0f, 0.0f, 0.0f), vec3f(0.0f, 0.0f, 0.0f));
-    Plane base = Plane(vec3f(0.0, 0.5, 0.0), vec3f(1.0, 0.0, 1.0));
+    spline.parameters_from_tangents(vec3f(0.0f, 0.0f, 0.0f), vec3f(1.0f, 2.0f, 0.0f), vec3f(5.0f, 0.0f, -3.0f), vec3f(0.0f, 0.0f, -4.0f));
+    Plane base = Plane(vec3f(0.0f, 1.0f, 0.0f), vec3f(1.0f, 0.0f, 1.0f));
     Plane xzplane = Plane(vec3f(0.0f, 0.0f, 0.0f), vec3f(1.0f, 0.0f, 1.0f));
 
     xzplane.init_vao(gl, vec3f(0.2f, 0.0f, 0.0f));
 
     SplineMap smap(base, spline, gl);
-
-    std::cout << smap.aabb.min.x << ", " << smap.aabb.min.y << ", " << smap.aabb.min.z << ", " << std::endl;
-    std::cout << smap.aabb.max.x << ", " << smap.aabb.max.y << ", " << smap.aabb.max.z << ", " << std::endl;
 
     const int steps = 2048;
     int frames = 0;

@@ -97,8 +97,8 @@ std::optional<vec3f> SplineMap::texture_coords(const vec3f pos) {
         const float t = result.value();
         const vec3f edgePos1 = this->spline.position_on_spline(t);
         const vec3f edgePos2 = edgePos1 + this->base.size;
-        const vec3f diff1 = edgePos1 - pos;
-        const vec3f diff2 = edgePos2 - pos;
+        const vec3f diff1 = pos - edgePos1;
+        const vec3f diff2 = pos - edgePos2;
         if (dot(diff1, diff1) > this->sizeSquared || dot(diff2, diff2) > this->sizeSquared) {
             return std::nullopt;
         }
@@ -106,8 +106,8 @@ std::optional<vec3f> SplineMap::texture_coords(const vec3f pos) {
         // Calculate and return texture coordinates
         // x and z are the distance to the base spline, decomposed into components
         // y is currently assumed to be t
-        const float xComp = dot(edgePos1, this->base.span1) / dot(this->base.span1, this->base.span1);
-        const float zComp = dot(edgePos2, this->base.span2) / dot(this->base.span2, this->base.span2);
+        const float xComp = dot(diff1, this->base.span1) / dot(this->base.span1, this->base.span1);
+        const float zComp = dot(diff1, this->base.span2) / dot(this->base.span2, this->base.span2);
         return vec3f(xComp, t, zComp);
     }
 

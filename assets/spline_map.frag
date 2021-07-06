@@ -499,7 +499,7 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in floa
                 &&  texel.z >= 0 && texel.z < size.z) {
                     const float color = texelFetch(texVol, texel, 0).r;
 
-                    if (color > 0.1) {
+                    if (color > 0.5) {
                         t = i;
                         return true;
                     }
@@ -556,18 +556,16 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords) {
     if (intersect_spline_plane(spline_map.spline, plane, t)) {
         const vec3 edge1 = position_on_spline(spline_map.spline, t);
         const vec3 edge2 = edge1 + spline_map.base.size;
-        const vec3 diff1 = edge1 - pos;
-        const vec3 diff2 = edge2 - pos;
+        const vec3 diff1 = pos - edge1;
+        const vec3 diff2 = pos - edge2;
 
         if (dot(diff1, diff1) > spline_map.size_squared
         ||  dot(diff2, diff2) > spline_map.size_squared) {
             return false;
         }
 
-        // const float xComp = dot(edge1, spline_map.base.span1) / dot(spline_map.base.span1, spline_map.base.span1);
-        // const float zComp = dot(edge2, spline_map.base.span2) / dot(spline_map.base.span2, spline_map.base.span2);
-        const float xComp = length(pos - edge1) / length(spline_map.base.size);
-        const float zComp = length(pos - edge2) / length(spline_map.base.size);
+        const float xComp = dot(diff1, spline_map.base.span1) / dot(spline_map.base.span1, spline_map.base.span1);
+        const float zComp = dot(diff1, spline_map.base.span2) / dot(spline_map.base.span2, spline_map.base.span2);
 
         coords = vec3(xComp, t, zComp);
         return true;
