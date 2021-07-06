@@ -14,7 +14,7 @@ Plane::Plane(vec3f center, vec3f half_size) : center(center), half_size(half_siz
     const vec3f w = p3 - p1;
     this->normal = fml::normalize(vec3f(v.y * w.z - v.z * w.y, v.z * w.x - v.x * w.z, v.x * w.y - v.y * w.x));
     this->span1 = v;
-    this->span2 = w;
+    this->span2 = p3 - p2;
 
     this->size = half_size * vec3f(2.0f, 2.0f, 2.0f);
 
@@ -69,8 +69,8 @@ void Plane::init_vao(const gl::GLapi* gl, const vec3f color) {
     gl::GL::Float colors[4 * 3];
 
     const vec3f v1 = center - half_size;
-    const vec3f v2 = center + half_size;
-    const vec3f v3 = v1 + span1;
+    const vec3f v2 = v1 + span1;
+    const vec3f v3 = center + half_size;
     const vec3f v4 = v1 + span2;
     vertices[0] = v1.x; vertices[1] = v1.y; vertices[2] = v1.z;
     vertices[3] = v2.x; vertices[4] = v2.y; vertices[5] = v2.z;

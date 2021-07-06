@@ -18,7 +18,7 @@ public:
     Plane base;
     Spline spline;
 
-    SplineMap(Plane, Spline);
+    SplineMap(Plane, Spline, const gl::GLapi* gl);
 
     std::optional<vec3f> texture_coords(const vec3f);
 
@@ -27,5 +27,6 @@ public:
 private:
     float sizeSquared;
     std::vector<Spline> edgeSplines;
+    Plane topBase;
 };
 

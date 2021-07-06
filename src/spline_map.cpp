@@ -19,7 +19,12 @@ const AABB createEncompassingAABB(Plane base, Spline spline) {
     );
 }
 
-SplineMap::SplineMap(Plane base, Spline spline) :
+const Plane createTopBase(Plane base, Spline spline) {
+    const vec3f height = spline.position_on_spline(1.0f) - spline.position_on_spline(0.0f);
+    return Plane(base.center + height, base.half_size);
+}
+
+SplineMap::SplineMap(Plane base, Spline spline, const gl::GLapi* gl) :
     base(base),
     spline(spline.transform(base.matrix).transform(
         fml::make_matrix<mat44f>(
@@ -27,9 +32,13 @@ SplineMap::SplineMap(Plane base, Spline spline) :
             0.0f, 1.0f, 0.0f, -base.half_size.y,
             0.0f, 0.0f, 1.0f, -base.half_size.z,
             0.0f, 0.0f, 0.0f, 1.0f))),
-    aabb(createEncompassingAABB(base, spline)),
-    sizeSquared(dot(base.size, base.size)) {
+    aabb(createEncompassingAABB(base, this->spline)),
+    sizeSquared(dot(base.size, base.size)),
+    topBase(createTopBase(base, this->spline)) {
 
+    this->spline.update_buffers();
+    this->topBase.init_vao(gl, vec3f(0.0f, 0.2f, 0.3f));
+    this->base.init_vao(gl, vec3f(0.0f, 0.2f, 0.3f));
     edgeSplines.push_back(this->spline.transform(fml::make_matrix<mat44f>(
         1.0f, 0.0f, 0.0f, base.span1.x,
         0.0f, 1.0f, 0.0f, base.span1.y,
@@ -77,6 +86,7 @@ std::optional<vec3f> SplineMap::texture_coords(const vec3f pos) {
 
 void SplineMap::render(const gl::GLapi* gl) {
     this->base.render(gl);
+    this->topBase.render(gl);
     this->spline.render();
     for (const Spline& edgeSpline : this->edgeSplines) {
         edgeSpline.render();

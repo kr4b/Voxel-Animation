@@ -217,10 +217,9 @@ int main()
     Plane base = Plane(vec3f(-1.6, 1.0, 0.2), vec3f(1.9, 2.0, 1.9));
     Plane xzplane = Plane(vec3f(0.0f, 0.0f, 0.0f), vec3f(1.0f, 0.0f, 1.0f));
 
-    base.init_vao(gl, vec3f(0.0f, 0.2f, 0.3f));
     xzplane.init_vao(gl, vec3f(0.2f, 0.0f, 0.0f));
 
-    SplineMap smap = SplineMap(base, spline);
+    SplineMap smap(base, spline, gl);
 
     const int steps = 2048;
     int frames = 0;
