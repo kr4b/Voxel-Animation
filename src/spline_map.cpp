@@ -3,8 +3,8 @@
 
 const AABB createEncompassingAABB(Plane base, Spline spline) {
     std::vector<float> extremes = spline.get_extremes();
-    vec3f min = fml::make_vector<vec3f>(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
-    vec3f max = fml::make_vector<vec3f>(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+    vec3f min = fml::make_vector<vec3f>(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+    vec3f max = fml::make_vector<vec3f>(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
     for (const float t : extremes) {
         if (t >= 0.0f && t <= 1.0f) {
             const vec3f pos = spline.position_on_spline(t);
@@ -32,7 +32,12 @@ SplineMap::SplineMap(Plane base, Spline spline, const gl::GLapi* gl) :
             0.0f, 1.0f, 0.0f, -base.half_size.y,
             0.0f, 0.0f, 1.0f, -base.half_size.z,
             0.0f, 0.0f, 0.0f, 1.0f))),
-    aabb(createEncompassingAABB(base, this->spline)),
+    aabb(createEncompassingAABB(base, spline.transform(base.matrix).transform(
+        fml::make_matrix<mat44f>(
+            1.0f, 0.0f, 0.0f, -base.half_size.x,
+            0.0f, 1.0f, 0.0f, -base.half_size.y,
+            0.0f, 0.0f, 1.0f, -base.half_size.z,
+            0.0f, 0.0f, 0.0f, 1.0f)))),
     sizeSquared(dot(base.size, base.size)),
     topBase(createTopBase(base, this->spline)) {
 

@@ -486,20 +486,23 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in floa
     vec2 ts;
     const bool result = intersect_ray_aabb(ray, spline_map.aabb, ts);
 
-    for (t = ts.x; t <= ts.y; t += step_size) {
-        const vec3 pos = ray.origin + ray.direction * t;
-        vec3 coords;
+    if (result) {
+        for (float i = ts.x; i <= ts.y; i += step_size) {
+            const vec3 pos = ray.origin + ray.direction * i;
+            vec3 coords;
 
-        if (texture_coords(spline_map, pos, coords)) {
-            texel = ivec3((round(coords * 1000.0) / 1001.0) * size);
+            if (texture_coords(spline_map, pos, coords)) {
+                texel = ivec3(coords * size);
 
-            if (texel.x >= 0 && texel.x < size.x
-            &&  texel.y >= 0 && texel.y < size.y
-            &&  texel.z >= 0 && texel.z < size.z) {
-                const float color = texelFetch(texVol, texel, 0).x;
+                if (texel.x >= 0 && texel.x < size.x
+                &&  texel.y >= 0 && texel.y < size.y
+                &&  texel.z >= 0 && texel.z < size.z) {
+                    const float color = texelFetch(texVol, texel, 0).r;
 
-                if (color > 0.1f) {
-                    return true;
+                    if (color > 0.1) {
+                        t = i;
+                        return true;
+                    }
                 }
             }
         }
@@ -561,9 +564,11 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords) {
             return false;
         }
 
-        const float xComp = dot(edge1, spline_map.base.span1) / dot(spline_map.base.span1, spline_map.base.span1);
-        const float zComp = dot(edge2, spline_map.base.span2) / dot(spline_map.base.span2, spline_map.base.span2);
-        
+        // const float xComp = dot(edge1, spline_map.base.span1) / dot(spline_map.base.span1, spline_map.base.span1);
+        // const float zComp = dot(edge2, spline_map.base.span2) / dot(spline_map.base.span2, spline_map.base.span2);
+        const float xComp = length(pos - edge1) / length(spline_map.base.size);
+        const float zComp = length(pos - edge2) / length(spline_map.base.size);
+
         coords = vec3(xComp, t, zComp);
         return true;
     }
@@ -590,7 +595,8 @@ void main() {
 
     ivec3 texel;
     float t;
-    if (walk_spline_map(ray, spline_map, textureSize(texVol, 0), 0.05, texel, t)) {
-        oColor = texelFetch(texVol, texel, 0).xxx;
+    if (walk_spline_map(ray, spline_map, textureSize(texVol, 0), 0.025, texel, t)) {
+        // oColor = texelFetch(texVol, texel, 0).rrr;
+        oColor = vec3(texel) / vec3(textureSize(texVol, 0));
     }
 }
