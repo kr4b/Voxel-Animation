@@ -59,6 +59,31 @@ SplineMap::SplineMap(Plane base, Spline spline, const gl::GLapi* gl) :
     edgeSplines[2].update_buffers();
 }
 
+void SplineMap::load_uniforms(const gl::GL::UInt program, const gl::GLapi* gl) {
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.aabb.min"), this->aabb.min.x, this->aabb.min.y, this->aabb.min.z);
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.aabb.max"), this->aabb.max.x, this->aabb.max.y, this->aabb.max.z);
+
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.base.center"), this->base.center.x, this->base.center.y, this->base.center.z);
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.base.half_size"), this->base.half_size.x, this->base.half_size.y, this->base.half_size.z);
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.base.size"), this->base.size.x, this->base.size.y, this->base.size.z);
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.base.normal"), this->base.normal.x, this->base.normal.y, this->base.normal.z);
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.base.span1"), this->base.span1.x, this->base.span1.y, this->base.span1.z);
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.base.span2"), this->base.span2.x, this->base.span2.y, this->base.span2.z);
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.base.min"), this->base.min.x, this->base.min.y, this->base.min.z);
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.base.max"), this->base.max.x, this->base.max.y, this->base.max.z);
+    gl->uniformMatrix4fv(gl->getUniformLocation(program, "spline_map.base.matrix"), 1, false, this->base.matrix.data());
+    gl->uniformMatrix4fv(gl->getUniformLocation(program, "spline_map.base.inv_matrix"), 1, false, this->base.inv_matrix.data());
+
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.spline.a"), this->spline.a.x, this->spline.a.y, this->spline.a.z);
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.spline.b"), this->spline.b.x, this->spline.b.y, this->spline.b.z);
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.spline.c"), this->spline.c.x, this->spline.c.y, this->spline.c.z);
+    gl->uniform3f(gl->getUniformLocation(program, "spline_map.spline.d"), this->spline.d.x, this->spline.d.y, this->spline.d.z);
+
+    gl->uniform1f(gl->getUniformLocation(program, "spline_map.size_squared"), this->sizeSquared);
+    gl->uniform1f(gl->getUniformLocation(program, "spline_map.width"), this->sizeSquared);
+    gl->uniform1f(gl->getUniformLocation(program, "spline_map.height"), this->sizeSquared);
+}
+
 std::optional<vec3f> SplineMap::texture_coords(const vec3f pos) {
     const Plane plane(pos, this->base.size);
 

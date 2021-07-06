@@ -211,7 +211,6 @@ int main()
     vec3f tangent1 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
     vec3f tangent2 = fml::make_vector<vec3f>(0.0f, 0.0f, 0.0f);
 
-
     Spline spline = Spline(gl);
     spline.parameters_from_tangents(vec3f(0.0f, 0.0f, 0.0f), vec3f(0.0f, 2.0f, 0.0f), vec3f(2.0f, 0.0f, -3.0f), vec3f(0.0f, 0.0f, 0.0f));
     Plane base = Plane(vec3f(-1.6, 1.0, 0.2), vec3f(1.9, 2.0, 1.9));
@@ -275,6 +274,7 @@ int main()
             gl->uniform1f(gl->getUniformLocation(program, "time"), diff.count());
             gl->uniform3f(gl->getUniformLocation(program, "tangent1"), tangent1.x, tangent1.y, tangent1.z);
             gl->uniform3f(gl->getUniformLocation(program, "tangent2"), tangent2.x, tangent2.y, tangent2.z);
+            smap.load_uniforms(program, gl);
         }
 
         gl->bindBufferBase(GL::UNIFORM_BUFFER, 0, uVolMeta);

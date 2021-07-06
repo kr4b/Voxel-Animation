@@ -20,6 +20,8 @@ using namespace fml::literals;
 
 class Spline {
 public:
+	vec3f a, b, c, d;
+
 	Spline(const gl::GLapi*);
 	Spline(const gl::GLapi*, const vec3f, const vec3f, const vec3f, const vec3f);
 
@@ -59,7 +61,6 @@ private:
 	bool intersection;
 	vec3f worldEntry, worldExit;
 	vec2f lastCursorPos;
-	vec3f a, b, c, d;
     vec3f start;
     vec3f color;
 	gl::GL::UInt lineVao, pointsVao;

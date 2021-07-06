@@ -20,6 +20,8 @@ public:
 
     SplineMap(Plane, Spline, const gl::GLapi* gl);
 
+    void load_uniforms(const gl::GL::UInt, const gl::GLapi*);
+
     std::optional<vec3f> texture_coords(const vec3f);
 
     void render(const gl::GLapi*);
