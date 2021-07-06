@@ -97,7 +97,7 @@ Spline spline_with_control_points(in vec3 point1, in vec3 point2, in vec3 contro
 
     Spline spline;
     spline.a = control1 * -1.0 * tau + point1 * (2.0 - tau) + point2 * (tau - 2.0) + control2 *  tau;
-    spline.b = control1 *  2.0 * tau + point1 * (tau - 3.0) + point2 * (3.0 - tau) + control2 * -tau;
+    spline.b = control1 *  2.0 * tau + point1 * (tau - 3.0) + point2 * (3.0 - 2.0 * tau) + control2 * -tau;
     spline.c = control1 * -tau + point2 * tau;
     spline.d = point1;
 
