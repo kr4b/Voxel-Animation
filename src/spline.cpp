@@ -183,10 +183,10 @@ void Spline::update_buffers() {
 }
 
 void Spline::render() const {
-	this->gl->bindVertexArray(this->lineVao);
+		this->gl->bindVertexArray(this->lineVao);
 
     this->gl->lineWidth(3.0f);
-	this->gl->drawArrays(gl::GL::LINE_STRIP, 0, detail);
+		this->gl->drawArrays(gl::GL::LINE_STRIP, 0, detail);
     this->gl->lineWidth(1.0f);
 
     this->gl->bindVertexArray(this->pointsVao);
@@ -195,7 +195,7 @@ void Spline::render() const {
     this->gl->drawArrays(gl::GL::POINTS, 0, 3);
     this->gl->pointSize(1.0f);
 
-	this->gl->bindVertexArray(0);
+		this->gl->bindVertexArray(0);
 }
 
 void Spline::set_color(const vec3f color) {
