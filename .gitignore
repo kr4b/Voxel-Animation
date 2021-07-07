@@ -6,5 +6,7 @@ bin/
 lib/
 assets/**/*.fld
 
-src/simplevol.vcxproj
+**/*.vcxproj*
+**/*.make*
+
 2d_debug/**/out/
