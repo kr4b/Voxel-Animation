@@ -74,7 +74,7 @@ project "hpb-voxel"
 
 	files( sources )
 
-    includedirs { "external/glew/include/", "external/glfw/include/" }
+    includedirs { "external/glew-cmake/include/", "external/glfw/include/", "external/glm/", "external/imgui" }
 
     links { "GLEW", "GLFW", "GLM", "ImGui" }
 
