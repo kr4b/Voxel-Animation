@@ -2,11 +2,8 @@
 
 #include <functional>
 
-#include <flux/fml/stdtypes.hpp>
-#include <flux/fml/transform.hpp>
-namespace fml = flux::fml;
-using namespace fml::stdtypes;
-using namespace fml::literals;
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 
 #include "aabb.hpp"
 #include "spline.hpp"
@@ -22,7 +19,7 @@ public:
 
     void load_uniforms(const gl::GL::UInt, const gl::GLapi*);
 
-    std::optional<vec3f> texture_coords(const vec3f);
+    std::optional<glm::vec3> texture_coords(const glm::vec3);
 
     void render(const gl::GLapi*);
 

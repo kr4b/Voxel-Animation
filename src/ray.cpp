@@ -3,7 +3,9 @@
 #include "spline_map.hpp"
 #include "volume.hpp"
 
-Ray::Ray(const vec3f origin, const vec3f dir, const gl::GLapi* gl) : origin(origin), dir(dir) {
+#include <glm/common.hpp>
+
+Ray::Ray(const glm::vec3 origin, const glm::vec3 dir, const gl::GLapi* gl) : origin(origin), dir(dir) {
     this->init_vao(gl);
 }
 
@@ -37,8 +39,8 @@ void Ray::update_buffers(const gl::GLapi* gl) {
     gl::GL::Float vertices[2 * 3];
     gl::GL::Float colors[2 * 3];
 
-    const vec3f from = this->origin;
-    const vec3f to = from + this->dir;
+    const glm::vec3 from = this->origin;
+    const glm::vec3 to = from + this->dir;
     vertices[0] = from.x; vertices[1] = from.y; vertices[2] = from.z;
     vertices[3] = to.x; vertices[4] = to.y; vertices[5] = to.z;
 
@@ -55,16 +57,16 @@ void Ray::update_buffers(const gl::GLapi* gl) {
     gl->bindVertexArray(0);
 }
 
-vec2f Ray::intersect_ray_aabb(const AABB& aabb) const {
-    const vec3f t1 = (aabb.min - this->origin) / this->dir;
-    const vec3f t2 = (aabb.max - this->origin) / this->dir;
+glm::vec2 Ray::intersect_ray_aabb(const AABB& aabb) const {
+    const glm::vec3 t1 = (aabb.min - this->origin) / this->dir;
+    const glm::vec3 t2 = (aabb.max - this->origin) / this->dir;
 
-    const vec3f mins = fml::min(t1, t2);
-    const vec3f maxs = fml::max(t1, t2);
+    const glm::vec3 mins = glm::min(t1, t2);
+    const glm::vec3 maxs = glm::max(t1, t2);
 
     const float near = std::max(std::max(mins.x, mins.y), mins.z);
     const float far = std::min(std::min(maxs.x, maxs.y), maxs.z);
-    return vec2f(near, far);
+    return glm::vec2(near, far);
 }
 
 void Ray::render(const gl::GLapi* gl) {
@@ -78,10 +80,10 @@ void Ray::render(const gl::GLapi* gl) {
 }
 
 std::optional<std::pair<vec3i, float>> Ray::walk_spline_map(SplineMap& splineMap, const Volume& volume, const float step) {
-    const vec2f ts = this->intersect_ray_aabb(splineMap.aabb);
+    const glm::vec2 ts = this->intersect_ray_aabb(splineMap.aabb);
 
     for (float t = ts.x; t <= ts.y; t += step) {
-        const vec3f pos = this->origin + this->dir * t;
+        const glm::vec3 pos = this->origin + this->dir * t;
         if (const auto texCoords = splineMap.texture_coords(pos)) {
             const int pixelX = int((round(texCoords->x * 1000.0) / 1001.0) * volume.width());
             const int pixelY = int((round(texCoords->y * 1000.0) / 1001.0) * volume.height());

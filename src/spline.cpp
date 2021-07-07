@@ -1,47 +1,50 @@
 #include "spline_map.hpp"
 #include "spline.hpp"
 #include "depressed_cubic.hpp"
+
 #include <functional>
 
+#include <glm/common.hpp>
+
 const int detail = 100;
-const vec3f EPSILON = fml::make_vector<vec3f>(1.0e-2f, 1.0e-2f, 1.0e-2f);
-const vec3f ZERO_VECTOR = fml::make_zero<vec3f>();
-const vec3f ONE_VECTOR = fml::make_one<vec3f>();
-const vec3f MAX_VALUE = fml::make_vector<vec3f>(2.0f, 2.0f, 2.0f);
-const vec3f MIN_VALUE = -MAX_VALUE;
+const glm::vec3 EPSILON = glm::vec3(1.0e-2f, 1.0e-2f, 1.0e-2f);
+const glm::vec3 ZERO_VECTOR = glm::vec3(0.0f);
+const glm::vec3 ONE_VECTOR = glm::vec3(1.0f);
+const glm::vec3 MAX_VALUE = glm::vec3(2.0f, 2.0f, 2.0f);
+const glm::vec3 MIN_VALUE = -MAX_VALUE;
 
 Spline::Spline(const gl::GLapi* gl) {
 	this->gl = gl;
 	this->intersection = false;
-	this->worldEntry = fml::make_zero<vec3f>();
-	this->worldExit = fml::make_zero<vec3f>();
+	this->worldEntry = glm::vec3(0.0f);
+	this->worldExit = glm::vec3(0.0f);
 
-	this->lastCursorPos = fml::make_zero<vec2f>();
+	this->lastCursorPos = glm::vec2(0.0f);
 
-	this->a = fml::make_zero<vec3f>();
-	this->b = fml::make_zero<vec3f>();
-	this->c = fml::make_zero<vec3f>();
-	this->d = fml::make_zero<vec3f>();
-    this->start = fml::make_zero<vec3f>();
-    this->color = fml::make_one<vec3f>();
+	this->a = glm::vec3(0.0f);
+	this->b = glm::vec3(0.0f);
+	this->c = glm::vec3(0.0f);
+	this->d = glm::vec3(0.0f);
+    this->start = glm::vec3(0.0f);
+    this->color = glm::vec3(1.0f);
 
 	this->init_vao();
 }
 
-Spline::Spline(const gl::GLapi* gl, const vec3f a, const vec3f b, const vec3f c, const vec3f d) {
+Spline::Spline(const gl::GLapi* gl, const glm::vec3 a, const glm::vec3 b, const glm::vec3 c, const glm::vec3 d) {
 	this->gl = gl;
 	this->intersection = false;
-	this->worldEntry = fml::make_zero<vec3f>();
-	this->worldExit = fml::make_zero<vec3f>();
+	this->worldEntry = glm::vec3(0.0f);
+	this->worldExit = glm::vec3(0.0f);
 
-	this->lastCursorPos = fml::make_zero<vec2f>();
+	this->lastCursorPos = glm::vec2(0.0f);
 
 	this->a = a;
 	this->b = b;
 	this->c = c;
 	this->d = d;
-	this->start = fml::make_zero<vec3f>();
-	this->color = fml::make_one<vec3f>();
+	this->start = glm::vec3(0.0f);
+	this->color = glm::vec3(1.0f);
 
 	this->init_vao();
 }
@@ -88,13 +91,13 @@ void Spline::init_vao() {
     this->gl->bindVertexArray(0);
 }
 
-void Spline::parameters_from_tangents(const vec3f P1, const vec3f P2, const vec3f tangent1, const vec3f tangent2) {
+void Spline::parameters_from_tangents(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 tangent1, const glm::vec3 tangent2) {
 	// float tmp = P2.y;
 	// P2.y = P2.z;
 	// P2.z = tmp - 0.5f;
 
-	const vec3f P0 = tangent1;
-	const vec3f P3 = tangent2;
+	const glm::vec3 P0 = tangent1;
+	const glm::vec3 P3 = tangent2;
 
 	this->a = 2.0f * P1 - 2.0f * P2 + 1.0f * P0 + 1.0f * P3;
 	this->b = -3.0f * P1 + 3.0f * P2 - 2.0f * P0 - 1.0f * P3;
@@ -105,7 +108,7 @@ void Spline::parameters_from_tangents(const vec3f P1, const vec3f P2, const vec3
 }
 
 
-void Spline::parameters_from_points(const vec3f P1, const vec3f P2, const vec3f P0, const vec3f P3) {
+void Spline::parameters_from_points(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 P0, const glm::vec3 P3) {
 	const float tau = 0.2f;
 
 	this->a = -tau * P0 + (2.0f - tau) * P1 + (tau - 2.0f) * P2 + tau * P3;
@@ -116,16 +119,16 @@ void Spline::parameters_from_points(const vec3f P1, const vec3f P2, const vec3f 
     this->start = this->position_on_spline(0.0f);
 }
 
-void Spline::update_from_screen_coords(const vec2f coords, const mat44f inverseProjCamera, const vec3f cameraWorldPos, const vec3f tangent1, const vec3f tangent2) {
-	const vec2f transformed = coords * 2.0f - fml::make_vector<vec2f>(1.0f, 1.0f);
-	const vec4f hray = fml::make_vector<vec4f>(transformed.x, transformed.y, 1.0f, 1.0f);
-	const vec4f wray = inverseProjCamera * hray;
+void Spline::update_from_screen_coords(const glm::vec2 coords, const glm::mat4x4 inverseProjCamera, const glm::vec3 cameraWorldPos, const glm::vec3 tangent1, const glm::vec3 tangent2) {
+	const glm::vec2 transformed = coords * 2.0f - glm::vec2(1.0f, 1.0f);
+	const glm::vec4 hray = glm::vec4(transformed.x, transformed.y, 1.0f, 1.0f);
+	const glm::vec4 wray = inverseProjCamera * hray;
 
-	const vec3f origin = cameraWorldPos;
-	const vec3f direction = fml::normalize(fml::make_vector<vec3f>(wray.x, wray.y, wray.z) / wray.w - origin);
+	const glm::vec3 origin = cameraWorldPos;
+	const glm::vec3 direction = glm::normalize(glm::vec3(wray.x, wray.y, wray.z) / wray.w - origin);
 
-	const vec3f P1 = origin;
-	const vec3f P2 = origin + direction * fml::length(origin) * 2.0f;
+	const glm::vec3 P1 = origin;
+	const glm::vec3 P2 = origin + direction * glm::length(origin) * 2.0f;
 
     parameters_from_tangents(P1, P2, tangent1, tangent2);
 }
@@ -139,7 +142,7 @@ void Spline::update_buffers() {
 
 		float t = 0;
 		for (int i = 0; i < detail; i++, t += stepSize) {
-			const vec3f point = this->position_on_spline(t);
+			const glm::vec3 point = this->position_on_spline(t);
 			vertices[i * 3 + 0] = point.x;
 			vertices[i * 3 + 1] = point.y;
 			vertices[i * 3 + 2] = point.z;
@@ -198,17 +201,17 @@ void Spline::render() const {
 		this->gl->bindVertexArray(0);
 }
 
-void Spline::set_color(const vec3f color) {
+void Spline::set_color(const glm::vec3 color) {
     this->color = color;
 }
 
 std::vector<float> Spline::get_extremes() {
-	const vec3f a = this->a * vec3f(3.0f, 3.0f, 3.0f);
-	const vec3f b = this->b * vec3f(2.0f, 2.0f, 2.0f);
+	const glm::vec3 a = this->a * glm::vec3(3.0f, 3.0f, 3.0f);
+	const glm::vec3 b = this->b * glm::vec3(2.0f, 2.0f, 2.0f);
 
 	std::vector<float> values = { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 1.0f };
 
-	const vec3f D = b * b - vec3f(4.0f, 4.0f, 4.0f) * a * this->c;
+	const glm::vec3 D = b * b - glm::vec3(4.0f, 4.0f, 4.0f) * a * this->c;
 
 	if (D.x >= 0.0f) {
 		values[0] = (-b.x + sqrt(D.x)) / (2.0f * a.x);
@@ -227,25 +230,25 @@ std::vector<float> Spline::get_extremes() {
 }
 
 std::optional<float> Spline::intersect_spline_plane(const Plane &plane) {
-	const vec4f transformed_min = plane.inv_matrix * vec4f(plane.min.x, plane.min.y, plane.min.z, 1.0f);
-	const vec4f transformed_max = plane.inv_matrix * vec4f(plane.max.x, plane.max.y, plane.max.z, 1.0f);
+	const glm::vec4 transformed_min = plane.inv_matrix * glm::vec4(plane.min.x, plane.min.y, plane.min.z, 1.0f);
+	const glm::vec4 transformed_max = plane.inv_matrix * glm::vec4(plane.max.x, plane.max.y, plane.max.z, 1.0f);
 	Spline transformed_spline = this->transform(plane.inv_matrix);
 
-	std::optional<vec2f> result = transformed_spline.intersect_spline_aabb(
-		vec3f(transformed_min.x, transformed_min.y, transformed_min.z),
-		vec3f(transformed_max.x, transformed_max.y, transformed_max.z)
+	std::optional<glm::vec2> result = transformed_spline.intersect_spline_aabb(
+		glm::vec3(transformed_min.x, transformed_min.y, transformed_min.z),
+		glm::vec3(transformed_max.x, transformed_max.y, transformed_max.z)
 	);
 
 	if (result.has_value()) return std::optional<float>(result.value().x);
 	return std::nullopt;
 }
 
-inline vec3f Spline::position_on_spline(float t) const {
+inline glm::vec3 Spline::position_on_spline(float t) const {
 	return t * t * t * this->a + t * t * this->b + t * this->c + this->d;
 }
 
-std::optional<vec2f> Spline::intersect_spline_aabb(const vec3f aAABBMin, const vec3f aAABBMax) {
-	const vec3f conversion = -this->b / (3.0f * this->a);
+std::optional<glm::vec2> Spline::intersect_spline_aabb(const glm::vec3 aAABBMin, const glm::vec3 aAABBMax) {
+	const glm::vec3 conversion = -this->b / (3.0f * this->a);
 
 	DepressedCubic cubic_min_x(this->a.x, this->b.x, this->c.x, this->d.x - aAABBMin.x);
 	DepressedCubic cubic_min_y(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMin.y);
@@ -254,24 +257,24 @@ std::optional<vec2f> Spline::intersect_spline_aabb(const vec3f aAABBMin, const v
 	DepressedCubic cubic_max_y(this->a.y, this->b.y, this->c.y, this->d.y - aAABBMax.y);
 	DepressedCubic cubic_max_z(this->a.z, this->b.z, this->c.z, this->d.z - aAABBMax.z);
 	
-	const vec3f t1 = conversion + vec3f(
+	const glm::vec3 t1 = conversion + glm::vec3(
 		cubic_min_x.second_root(),
 		cubic_min_y.second_root(),
 		cubic_min_z.second_root());
-	const vec3f t2 = conversion + vec3f(
+	const glm::vec3 t2 = conversion + glm::vec3(
 		cubic_max_x.second_root(),
 		cubic_max_y.second_root(),
 		cubic_max_z.second_root());
 
-	vec2f ts = fml::make_vector<vec2f>(2.0f, -2.0f);
+	glm::vec2 ts = glm::vec2(2.0f, -2.0f);
 	bool result = calculate_near_far(t1, t2, aAABBMin, aAABBMax, &ts);
 
 	if (!result) {
-		const vec3f first_t1 = conversion + vec3f(
+		const glm::vec3 first_t1 = conversion + glm::vec3(
 			cubic_min_x.first_root(),
 			cubic_min_y.first_root(),
 			cubic_min_z.first_root());
-		const vec3f first_t2 = conversion + vec3f(
+		const glm::vec3 first_t2 = conversion + glm::vec3(
 			cubic_max_x.first_root(),
 			cubic_max_y.first_root(),
 			cubic_max_z.first_root());
@@ -279,11 +282,11 @@ std::optional<vec2f> Spline::intersect_spline_aabb(const vec3f aAABBMin, const v
 		result = calculate_near_far(first_t1, first_t2, aAABBMin, aAABBMax, &ts);
 
 		if (!result) {
-			const vec3f third_t1 = conversion + vec3f(
+			const glm::vec3 third_t1 = conversion + glm::vec3(
 				cubic_min_x.third_root(),
 				cubic_min_y.third_root(),
 				cubic_min_z.third_root());
-			const vec3f third_t2 = conversion + vec3f(
+			const glm::vec3 third_t2 = conversion + glm::vec3(
 				cubic_max_x.third_root(),
 				cubic_max_y.third_root(),
 				cubic_max_z.third_root());
@@ -298,45 +301,45 @@ std::optional<vec2f> Spline::intersect_spline_aabb(const vec3f aAABBMin, const v
 	this->worldExit = this->position_on_spline(ts.y);
 
 	if (!result) return std::nullopt;
-	return std::optional<vec2f>(ts);
+	return std::optional<glm::vec2>(ts);
 }
 
-bool Spline::calculate_near_far(const vec3f t1, const vec3f t2, const vec3f aAABBMin, const vec3f aAABBMax, vec2f* ts) {
-	const vec3f it1 = this->intersected_aabb(t1, aAABBMin, aAABBMax);
-	const vec3f it2 = this->intersected_aabb(t2, aAABBMin, aAABBMax);
+bool Spline::calculate_near_far(const glm::vec3 t1, const glm::vec3 t2, const glm::vec3 aAABBMin, const glm::vec3 aAABBMax, glm::vec2* ts) {
+	const glm::vec3 it1 = this->intersected_aabb(t1, aAABBMin, aAABBMax);
+	const glm::vec3 it2 = this->intersected_aabb(t2, aAABBMin, aAABBMax);
 
-	const vec3f nt1 = t1 * it1 + (ONE_VECTOR - it1) * MAX_VALUE;
-	const vec3f nt2 = t2 * it2 + (ONE_VECTOR - it2) * MAX_VALUE;
+	const glm::vec3 nt1 = t1 * it1 + (ONE_VECTOR - it1) * MAX_VALUE;
+	const glm::vec3 nt2 = t2 * it2 + (ONE_VECTOR - it2) * MAX_VALUE;
 
-	const vec3f ft1 = t1 * it1 + (ONE_VECTOR - it1) * MIN_VALUE;
-	const vec3f ft2 = t2 * it2 + (ONE_VECTOR - it2) * MIN_VALUE;
+	const glm::vec3 ft1 = t1 * it1 + (ONE_VECTOR - it1) * MIN_VALUE;
+	const glm::vec3 ft2 = t2 * it2 + (ONE_VECTOR - it2) * MIN_VALUE;
 
-	const vec3f inear = fml::make_vector<vec3f>(std::min(nt1.x, nt2.x), std::min(nt1.y, nt2.y), std::min(nt1.z, nt2.z));
+	const glm::vec3 inear = glm::vec3(std::min(nt1.x, nt2.x), std::min(nt1.y, nt2.y), std::min(nt1.z, nt2.z));
 	ts->x = std::min(ts->x, std::min(inear.x, std::min(inear.y, inear.z)));
 
-	const vec3f ifar = fml::make_vector<vec3f>(std::max(ft1.x, ft2.x), std::max(ft1.y, ft2.y), std::max(ft1.z, ft2.z));
+	const glm::vec3 ifar = glm::vec3(std::max(ft1.x, ft2.x), std::max(ft1.y, ft2.y), std::max(ft1.z, ft2.z));
 	ts->y = std::max(ts->y, std::max(ifar.x, std::max(ifar.y, ifar.z)));
 
 	return ts->x <= ts->y && ts->y >= 0.0f;
 }
 
-vec3f Spline::intersected_aabb(const vec3f t, vec3f aAABBMin, vec3f aAABBMax) {
-	const vec3f P0 = this->position_on_spline(t.x);
-	const vec3f P1 = this->position_on_spline(t.y);
-	const vec3f P2 = this->position_on_spline(t.z);
+glm::vec3 Spline::intersected_aabb(const glm::vec3 t, glm::vec3 aAABBMin, glm::vec3 aAABBMax) {
+	const glm::vec3 P0 = this->position_on_spline(t.x);
+	const glm::vec3 P1 = this->position_on_spline(t.y);
+	const glm::vec3 P2 = this->position_on_spline(t.z);
 
-	const vec3f resultT = step(ZERO_VECTOR, t) * step(t, ONE_VECTOR);
+	const glm::vec3 resultT = step(ZERO_VECTOR, t) * step(t, ONE_VECTOR);
 	const float result0 = point_in_aabb(P0, aAABBMin, aAABBMax);
 	const float result1 = point_in_aabb(P1, aAABBMin, aAABBMax);
 	const float result2 = point_in_aabb(P2, aAABBMin, aAABBMax);
 
-	return fml::make_vector<vec3f>(
+	return glm::vec3(
 		resultT.x * result0,
 		resultT.y * result1,
 		resultT.z * result2);
 }
 
-float point_in_aabb(const vec3f aPoint, const vec3f aAABBMin, const vec3f aAABBMax) {
-	const vec3f result = step(aAABBMin - EPSILON, aPoint) * step(aPoint, aAABBMax + EPSILON);
+float point_in_aabb(const glm::vec3 aPoint, const glm::vec3 aAABBMin, const glm::vec3 aAABBMax) {
+	const glm::vec3 result = step(aAABBMin - EPSILON, aPoint) * step(aPoint, aAABBMax + EPSILON);
 	return result.x * result.y * result.z;
 }

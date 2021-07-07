@@ -2,16 +2,8 @@
 
 #include <optional>
 
-#include <flux/gl/glapi.hpp>
-#include <flux/gl/checkpoint.hpp>
-#include <flux/gl/setup/program.hpp>
-namespace gl = flux::gl;
-
-#include <flux/fml/stdtypes.hpp>
-#include <flux/fml/transform.hpp>
-namespace fml = flux::fml;
-using namespace fml::stdtypes;
-using namespace fml::literals;
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 class AABB;
 class SplineMap;
@@ -19,11 +11,11 @@ class Volume;
 
 class Ray {
 public:
-    const vec3f origin, dir;
+    const glm::vec3 origin, dir;
 
-    Ray(const vec3f, const vec3f, const gl::GLapi*);
+    Ray(const glm::vec3, const glm::vec3, const gl::GLapi*);
 
-    vec2f intersect_ray_aabb(const AABB&) const;
+    glm::vec2 intersect_ray_aabb(const AABB&) const;
     std::optional<std::pair<vec3i, float>> walk_spline_map(SplineMap&, const Volume&, const float);
 
     void update_buffers(const gl::GLapi*);
