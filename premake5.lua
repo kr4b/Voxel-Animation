@@ -1,4 +1,4 @@
-workspace "SimpleVolume"
+workspace "HPBVoxel"
 	platforms { "x64" }
 	configurations { "debug", "release" }
 
@@ -56,10 +56,10 @@ workspace "SimpleVolume"
 	configuration "*"
 
 -- External projects
-include "external/flux-uv"
+include "external/"
 
 -- Projects
-project "simplevol"
+project "hpb-voxel"
 	local sources = { 
 		"src/**.hpp",
 		"src/**.cpp",
@@ -71,8 +71,9 @@ project "simplevol"
 
 	files( sources )
 
-	includedirs "external/flux-uv/include"
-	links "flux-uv-preview"
-
+	links "glew-cmake"
+  links "glfw"
+  links "glm"
+  links "imgui"
 
 -- EOF
