@@ -34,9 +34,34 @@ Window::Window(const int width, const int height, State* state) {
   glfwSetMouseButtonCallback(this->window, state::button_callback);
   glfwSetScrollCallback(this->window, state::scroll_callback);
   glfwSetCursorPosCallback(this->window, state::motion_callback);
+
+  this->prevTime = std::chrono::high_resolution_clock::now();
 }
 
 Window::~Window() {
   glfwDestroyWindow(this->window);
   glfwTerminate();
+}
+
+bool Window::update(const State& state) {
+  this->frames += 1;
+  auto now = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double, std::milli> timePassed = now - this->prevTime;
+  
+  if (int(timePassed.count()) > 1000) {
+    char newTitle[sizeof(windowDefaults.name) + 16];
+    snprintf("%s%s%d", sizeof(newTitle), windowDefaults.name, state.debugMode ? " - Debug" : "", frames);
+    glfwSetWindowTitle(this->window, newTitle);
+    this->prevTime = now;
+    this->frames = 0;
+  }
+  glfwSwapBuffers(this->window);
+  glfwPollEvents();
+  return !glfwWindowShouldClose(this->window);
+}
+
+std::pair<int, int> Window::get_size() const {
+  int width, height;
+  glfwGetFramebufferSize(this->window, &width, &height);
+  return std::make_pair(width, height);
 }

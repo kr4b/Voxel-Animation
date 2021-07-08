@@ -10,4 +10,7 @@ assets/**/*.fld
 **/*.vcxproj*
 **/*.make*
 
+Makefile
+HPBVoxel.sln
+
 2d_debug/**/out/

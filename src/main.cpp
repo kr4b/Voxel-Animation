@@ -3,9 +3,9 @@
 
 int main() {
   State state;
-  const Window window(windowDefaults.width, windowDefaults.height, &state);
+  Window window(windowDefaults.width, windowDefaults.height, &state);
 
-  while (window.is_open()) {
+  while (window.update(state)) {
   }
   
   return 0;

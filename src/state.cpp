@@ -20,8 +20,6 @@ void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
     // Tab => toggle debug mode
     case GLFW_KEY_TAB: {
       state->debugMode = !state->debugMode;
-      std::string newTitle = std::string(windowDefaults.name) + (state->debugMode ? " - Debug" : "");
-      glfwSetWindowTitle(win, newTitle.c_str());
       break;
     }
     // Backspace => return to camera transformation when spline was created
