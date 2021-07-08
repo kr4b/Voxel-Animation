@@ -58,7 +58,7 @@ workspace "HPBVoxel"
     configuration "*"
 
 -- External projects
-include "external/glew-cmake"
+include "external/glad"
 include "external/glfw"
 include "external/glm"
 include "external/imgui"
@@ -76,8 +76,8 @@ project "hpb-voxel"
 
     files( sources )
 
-    includedirs { "external/glew-cmake/include/", "external/glfw/include/", "external/glm/", "external/imgui" }
+    includedirs { "external/glad/include/", "external/glfw/include/", "external/glm/", "external/imgui" }
 
-    links { "GLEW", "GLFW", "GLM", "ImGui" }
+    links { "GLAD", "GLFW", "GLM", "ImGui" }
 
 -- EOF

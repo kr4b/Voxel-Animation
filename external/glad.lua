@@ -1,17 +1,11 @@
-project "GLEW"
+project "GLAD"
 	kind "StaticLib"
 	language "C"
 	architecture "x86_64"
 
-	targetdir "../bin/%{cfg.buildcfg}"
-	objdir "../_build_/%{cfg.buildcfg}-%{cfg.platform}-%{cfg.toolset}"
-	
-	includedirs { "glew-cmake/include/" }
+	includedirs { "glad/include" }
 
-	files
-    {
-        "glew-cmake/src/glew.c"
-    }
+	files { "glad/**.c" }
     
 	filter "system:linux"
 		pic "On"
@@ -21,7 +15,7 @@ project "GLEW"
 
 		defines
 		{
-			"_GLEW_X11"
+			"_GLM_X11"
 		}
 
 	filter "system:windows"
@@ -30,7 +24,7 @@ project "GLEW"
 
 		defines 
 		{ 
-			"_GLEW_WIN32",
+			"_GLM_WIN32",
 			"_CRT_SECURE_NO_WARNINGS"
 		}
 

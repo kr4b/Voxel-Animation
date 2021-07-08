@@ -3,9 +3,6 @@ project "GLM"
 	language "C++"
 	architecture "x86_64"
 
-	targetdir "../bin/%{cfg.buildcfg}"
-	objdir "../_build_/%{cfg.buildcfg}-%{cfg.platform}-%{cfg.toolset}"
-	
 	includedirs { "glm/" }
 
 	files

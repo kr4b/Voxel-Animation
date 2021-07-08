@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include <GL/glew.h>
+#include <glad/glad.h>
 
 #include "defaults.hpp"
 #include "window.hpp"
@@ -24,9 +24,8 @@ Window::Window(const int width, const int height, State* state) {
   }
 
   glfwMakeContextCurrent(this->window);
-  glewExperimental = true;
-  if (glewInit() != GLEW_OK) {
-    throw std::runtime_error("Failed to initialize GLEW");
+  if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
+    throw std::runtime_error("Failed to initialize OpenGL context");
   }
 
   glfwSetWindowUserPointer(this->window, (void*) state);

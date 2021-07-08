@@ -3,9 +3,6 @@ project "ImGui"
 	language "C++"
 	architecture "x86_64"
 
-	targetdir "../bin/%{cfg.buildcfg}"
-	objdir "../_build_/%{cfg.buildcfg}-%{cfg.platform}-%{cfg.toolset}"
-	
 	includedirs { "imgui/", "imgui/examples/", "glad/include", "glfw/include/" }
 
 	files
