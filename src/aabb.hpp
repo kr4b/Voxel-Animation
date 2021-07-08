@@ -1,16 +1,13 @@
 #pragma once
 
-#include <flux/fml/stdtypes.hpp>
-#include <flux/fml/transform.hpp>
-namespace fml = flux::fml;
-using namespace fml::stdtypes;
-using namespace fml::literals;
+#include <glm/common.hpp>
+#include <glm/vec3.hpp>
 
 class AABB {
 public:
-    const vec3f min, max;
+    const glm::vec3 min, max;
 
-    AABB(const vec3f& min, const vec3f& max) : min(fml::min(min, max)), max(fml::max(min, max)) {}
-    inline vec3f size() const { return max - min; }
+    AABB(const glm::vec3& min, const glm::vec3& max) : min(glm::min(min, max)), max(glm::max(min, max)) {}
+    inline glm::vec3 size() const { return max - min; }
 };
 

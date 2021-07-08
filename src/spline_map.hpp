@@ -2,11 +2,9 @@
 
 #include <functional>
 
-#include <flux/fml/stdtypes.hpp>
-#include <flux/fml/transform.hpp>
-namespace fml = flux::fml;
-using namespace fml::stdtypes;
-using namespace fml::literals;
+#include <GL/glew.h>
+#include <glm/vec3.hpp>
+#include <glm/mat4x4.hpp>
 
 #include "aabb.hpp"
 #include "spline.hpp"
@@ -18,13 +16,13 @@ public:
     Plane base;
     Spline spline;
 
-    SplineMap(Plane, Spline, const gl::GLapi* gl);
+    SplineMap(Plane, Spline);
 
-    void load_uniforms(const gl::GL::UInt, const gl::GLapi*);
+    void load_uniforms(const GLuint);
 
-    std::optional<vec3f> texture_coords(const vec3f);
+    std::optional<glm::vec3> texture_coords(const glm::vec3);
 
-    void render(const gl::GLapi*);
+    void render();
 
 private:
     float sizeSquared;

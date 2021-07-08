@@ -1,51 +1,49 @@
 #pragma once
 
-#include <flux/gl/glapi.hpp>
-#include <flux/gl/checkpoint.hpp>
-#include <flux/gl/setup/program.hpp>
-namespace gl = flux::gl;
-
 #include <optional>
-#include <flux/fml/stdtypes.hpp>
-#include <flux/fml/transform.hpp>
-namespace fml = flux::fml;
-using namespace fml::stdtypes;
-using namespace fml::literals;
+
+#include <GL/glew.h>
+
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
+#include <glm/vec4.hpp>
+
+#include <glm/mat4x4.hpp>
 
 class Ray;
 
 class Plane {
 public:
-    const vec3f center;
-    const vec3f half_size;
-    vec3f span1, span2;
+    const glm::vec3 center;
+    const glm::vec3 half_size;
+    glm::vec3 span1, span2;
 
-    vec3f size;
-    vec3f normal;
+    glm::vec3 size;
+    glm::vec3 normal;
 
-    vec3f min;
-    vec3f max;
+    glm::vec3 min;
+    glm::vec3 max;
 
-    mat44f matrix;
-    mat44f inv_matrix;
+    glm::mat4x4 matrix;
+    glm::mat4x4 inv_matrix;
 
-    Plane(vec3f center, vec3f half_size);
+    Plane(glm::vec3 center, glm::vec3 half_size);
 
-    void init_vao(const gl::GLapi*, const vec3f);
-    void render(const gl::GLapi*);
-    void clean(const gl::GLapi*);
+    void init_vao(const glm::vec3);
+    void render();
+    void clean();
 
-    Plane transform(const mat44f &matrix) {
-        vec4f transformed = matrix * vec4f(this->center.x, this->center.y, this->center.z, 1.0);
+    Plane transform(const glm::mat4x4 &matrix) {
+        glm::vec4 transformed = matrix * glm::vec4(this->center.x, this->center.y, this->center.z, 1.0);
         return Plane(
-            vec3f(transformed.x, transformed.y, transformed.z),
+            glm::vec3(transformed.x, transformed.y, transformed.z),
             this->half_size
         );
     }
 
-    std::optional<vec2f> intersect(const Ray&) const;
+    std::optional<glm::vec2> intersect(const Ray&) const;
 private:
-    gl::GL::UInt vao;
-    gl::GL::UInt buffers[2];
+    GLuint vao;
+    GLuint buffers[2];
 };
 

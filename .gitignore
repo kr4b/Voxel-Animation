@@ -1,4 +1,5 @@
 .vs
+.vscode
 .gitattributes
 _build_
 assets/backpack_small.*
