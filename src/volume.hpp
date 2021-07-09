@@ -7,6 +7,8 @@
 #include <cassert>
 #include <cstddef>
 
+#include <glad/glad.h>
+
 struct FLDInfo {
     size_t ndims;
     std::vector<size_t> dims;
@@ -45,56 +47,58 @@ struct FLDInfo {
  */
 class Volume
 {
-	public:
-		Volume( std::size_t aWidth, std::size_t aHeight, std::size_t aDepth );
+    public:
+        Volume( std::size_t aWidth, std::size_t aHeight, std::size_t aDepth );
         Volume(std::size_t aWidth, std::size_t aHeight, std::size_t aDepth, std::size_t vecLen);
 
-		// Not copyable, but movable.
-		// Rationale: don't accidentally make copies of large data.
-		Volume( Volume const& ) = delete;
-		Volume& operator= (Volume const&) = delete;
+        // Not copyable, but movable.
+        // Rationale: don't accidentally make copies of large data.
+        Volume( Volume const& ) = delete;
+        Volume& operator= (Volume const&) = delete;
 
-		Volume( Volume&& ) = default;
-		Volume& operator= (Volume&&) = default;
+        Volume( Volume&& ) = default;
+        Volume& operator= (Volume&&) = default;
 
-	public:
-		float& operator() (std::size_t aI, std::size_t aJ, std::size_t aK);
-		float const& operator() (std::size_t aI, std::size_t aJ, std::size_t aK) const;
+    public:
+        float& operator() (std::size_t aI, std::size_t aJ, std::size_t aK);
+        const float& operator() (std::size_t aI, std::size_t aJ, std::size_t aK) const;
+        void initialize();
 
-	public:
-		std::size_t width() const;
-		std::size_t height() const;
-		std::size_t depth() const;
-		std::size_t total_element_count() const;
+    public:
+        std::size_t width() const;
+        std::size_t height() const;
+        std::size_t depth() const;
+        std::size_t total_element_count() const;
 
-		float* data();
-		float const* data() const;
+        float* data();
+        const float* data() const;
 
-		std::size_t to_linear_index( std::size_t, std::size_t, std::size_t ) const;
+        void bind() const;
 
-	private:
-		std::vector<float> mData;
-		std::size_t mWidth, mHeight, mDepth;
+        std::size_t to_linear_index( std::size_t, std::size_t, std::size_t ) const;
+
+    private:
+        std::vector<float> mData;
+        std::size_t mWidth, mHeight, mDepth;
+        GLuint texture;
 };
 
 /* Use this method to load a Volume from a file. We've included two example
  * volumes in the `data/` subdirectory.
  */
-Volume load_mhd_volume( char const* aFileName );
+Volume load_mhd_volume(char const* aFileName);
 
 Volume load_fld_volume(char const* fileName, FLDInfo info);
 
 Volume load_cube();
 
-
-
 // Implementation:
 inline
 Volume::Volume( std::size_t aWidth, std::size_t aHeight, std::size_t aDepth )
-	: mData( aWidth*aHeight*aDepth )
-	, mWidth(aWidth)
-	, mHeight(aHeight)
-	, mDepth(aDepth)
+    : mData( aWidth*aHeight*aDepth )
+    , mWidth(aWidth)
+    , mHeight(aHeight)
+    , mDepth(aDepth)
 {}
 
 inline
@@ -106,53 +110,47 @@ Volume::Volume(std::size_t aWidth, std::size_t aHeight, std::size_t aDepth, std:
 {}
 
 inline
-float& Volume::operator() (std::size_t aI, std::size_t aJ, std::size_t aK)
-{
-	assert( aI < mWidth && aJ < mHeight && aK < mDepth );
-	return mData[to_linear_index(aI,aJ,aK)];
+float& Volume::operator() (std::size_t aI, std::size_t aJ, std::size_t aK) {
+    assert(aI < mWidth && aJ < mHeight && aK < mDepth);
+    return mData[to_linear_index(aI, aJ, aK)];
 }
 inline
-float const& Volume::operator() (std::size_t aI, std::size_t aJ, std::size_t aK) const
-{
-	assert( aI < mWidth && aJ < mHeight && aK < mDepth );
-	return mData[to_linear_index(aI,aJ,aK)];
+const float& Volume::operator() (std::size_t aI, std::size_t aJ, std::size_t aK) const {
+    assert(aI < mWidth && aJ < mHeight && aK < mDepth);
+    return mData[to_linear_index(aI, aJ, aK)];
 }
-
 
 inline 
-std::size_t Volume::width() const
-{
-	return mWidth;
+std::size_t Volume::width() const {
+    return mWidth;
 }
 inline 
-std::size_t Volume::height() const
-{
-	return mHeight;
+std::size_t Volume::height() const {
+    return mHeight;
 }
 inline
-std::size_t Volume::depth() const
-{
-	return mDepth;
+std::size_t Volume::depth() const {
+    return mDepth;
 }
 inline
-std::size_t Volume::total_element_count() const
-{
-	return mWidth*mHeight*mDepth;
+std::size_t Volume::total_element_count() const {
+    return mWidth * mHeight * mDepth;
 }
 
 inline
-float* Volume::data()
-{
-	return mData.data();
+float* Volume::data() {
+    return mData.data();
 }
 inline
-float const* Volume::data() const
-{
-	return mData.data();
+const float* Volume::data() const {
+    return mData.data();
 }
 
 inline
-std::size_t Volume::to_linear_index( std::size_t aI, std::size_t aJ, std::size_t aK ) const
-{
-	return aK*mWidth*mHeight + aJ*mWidth + aI;
+std::size_t Volume::to_linear_index(std::size_t aI, std::size_t aJ, std::size_t aK) const {
+    return aK * mWidth * mHeight + aJ * mWidth + aI;
+}
+
+inline void Volume::bind() const {
+    glBindTextureUnit(0, this->texture);
 }
