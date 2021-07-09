@@ -49,8 +49,8 @@ bool Window::update(const State& state) {
   std::chrono::duration<double, std::milli> timePassed = now - this->prevTime;
   
   if (int(timePassed.count()) > 1000) {
-    char newTitle[sizeof(windowDefaults.name) + 16];
-    snprintf("%s%s%d", sizeof(newTitle), windowDefaults.name, state.debugMode ? " - Debug" : "", frames);
+    char newTitle[sizeof(windowDefaults.name) + 32];
+    snprintf(newTitle, sizeof(newTitle), "%s%s - %d FPS", windowDefaults.name, state.debugMode ? " - Debug" : "", frames);
     glfwSetWindowTitle(this->window, newTitle);
     this->prevTime = now;
     this->frames = 0;
