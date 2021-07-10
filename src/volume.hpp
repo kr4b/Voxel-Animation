@@ -48,8 +48,8 @@ struct FLDInfo {
 class Volume
 {
     public:
-        Volume( std::size_t aWidth, std::size_t aHeight, std::size_t aDepth );
-        Volume(std::size_t aWidth, std::size_t aHeight, std::size_t aDepth, std::size_t vecLen);
+        Volume(GLsizei aWidth, GLsizei aHeight, GLsizei aDepth);
+        Volume(GLsizei aWidth, GLsizei aHeight, GLsizei aDepth, GLsizei vecLen);
 
         // Not copyable, but movable.
         // Rationale: don't accidentally make copies of large data.
@@ -65,10 +65,10 @@ class Volume
         void initialize();
 
     public:
-        std::size_t width() const;
-        std::size_t height() const;
-        std::size_t depth() const;
-        std::size_t total_element_count() const;
+        GLsizei width() const;
+        GLsizei height() const;
+        GLsizei depth() const;
+        GLsizei total_element_count() const;
 
         float* data();
         const float* data() const;
@@ -79,7 +79,7 @@ class Volume
 
     private:
         std::vector<float> mData;
-        std::size_t mWidth, mHeight, mDepth;
+        GLsizei mWidth, mHeight, mDepth;
         GLuint texture;
 };
 
@@ -94,15 +94,15 @@ Volume load_cube();
 
 // Implementation:
 inline
-Volume::Volume( std::size_t aWidth, std::size_t aHeight, std::size_t aDepth )
-    : mData( aWidth*aHeight*aDepth )
+Volume::Volume( GLsizei aWidth, GLsizei aHeight, GLsizei aDepth )
+    : mData(aWidth * aHeight * aDepth)
     , mWidth(aWidth)
     , mHeight(aHeight)
     , mDepth(aDepth)
 {}
 
 inline
-Volume::Volume(std::size_t aWidth, std::size_t aHeight, std::size_t aDepth, std::size_t vecLen)
+Volume::Volume(GLsizei aWidth, GLsizei aHeight, GLsizei aDepth, GLsizei vecLen)
     : mData(aWidth * aHeight * aDepth * vecLen)
     , mWidth(aWidth)
     , mHeight(aHeight)
@@ -121,19 +121,19 @@ const float& Volume::operator() (std::size_t aI, std::size_t aJ, std::size_t aK)
 }
 
 inline 
-std::size_t Volume::width() const {
+GLsizei Volume::width() const {
     return mWidth;
 }
 inline 
-std::size_t Volume::height() const {
+GLsizei Volume::height() const {
     return mHeight;
 }
 inline
-std::size_t Volume::depth() const {
+GLsizei Volume::depth() const {
     return mDepth;
 }
 inline
-std::size_t Volume::total_element_count() const {
+GLsizei Volume::total_element_count() const {
     return mWidth * mHeight * mDepth;
 }
 

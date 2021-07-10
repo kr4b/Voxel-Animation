@@ -494,7 +494,6 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in floa
     const bool result = intersect_ray_aabb(ray, spline_map.aabb, ts);
 
     if (result) {
-        discard;
         for (float i = ts.x; i <= ts.y; i += step_size) {
             const vec3 pos = ray.origin + ray.direction * i;
             vec3 coords;

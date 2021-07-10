@@ -56,19 +56,24 @@ struct SplineMapUniform
 
 class SplineMapScene {
 public:
-    SplineMapScene(Window &window, State &state) :
+    SplineMapScene(
+        Window &window,
+        State  &state,
+        Volume &volume,
+        Plane  base,
+        Spline spline) :
         state(state),
         window(window),
         setup(Setup(glm::vec3(-1.0), glm::vec3(1.0))),
         shader(Shader("assets/simple_vol.vert", "assets/spline_map.frag")),
-        volume(load_cube()),
-        base(Plane(glm::vec3(0.0f), glm::vec3(1.0f))),
-        spline(Spline())
+        volume(volume),
+        base(base),
+        spline(spline)
     {
         init();
     };
 
-private:
+protected:
     void init() {
         SplineMap spline_map = SplineMap(get_base(), get_spline());
 
@@ -127,7 +132,7 @@ protected:
     Window &window;
     Setup  setup;
     Shader shader;
-    Volume volume;
+    Volume &volume;
     Plane  base;
     Spline spline;
 };
