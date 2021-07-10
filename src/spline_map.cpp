@@ -9,7 +9,7 @@
 const AABB createEncompassingAABB(Plane base, Spline spline) {
     std::vector<float> extremes = spline.get_extremes();
     glm::vec3 min = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-    glm::vec3 max = glm::vec3(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
+    glm::vec3 max = glm::vec3(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
     for (const float t : extremes) {
         if (t >= 0.0f && t <= 1.0f) {
             const glm::vec3 pos = spline.position_on_spline(t);
@@ -32,10 +32,10 @@ const Plane createTopBase(const Plane& base, const Spline& spline) {
 const Spline transformSpline(const Plane& base, const Spline& spline) {
     return spline.transform(base.matrix).transform(
         glm::mat4x4(
-            1.0f, 0.0f, 0.0f, -base.half_size.x,
-            0.0f, 1.0f, 0.0f, -base.half_size.y,
-            0.0f, 0.0f, 1.0f, -base.half_size.z,
-            0.0f, 0.0f, 0.0f, 1.0f));
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            -base.half_size.x, -base.half_size.y, -base.half_size.z, 1.0f));
 }
 
 SplineMap::SplineMap(const Plane& base, const Spline& spline) :
@@ -49,22 +49,22 @@ SplineMap::SplineMap(const Plane& base, const Spline& spline) :
     this->topBase.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
     this->base.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
     edgeSplines.push_back(this->spline.transform(glm::mat4x4(
-        1.0f, 0.0f, 0.0f, this->base.span1.x,
-        0.0f, 1.0f, 0.0f, this->base.span1.y,
-        0.0f, 0.0f, 1.0f, this->base.span1.z,
-        0.0f, 0.0f, 0.0f, 1.0f)));
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        this->base.span1.x, this->base.span1.y, this->base.span1.z, 1.0f)));
     edgeSplines[0].update_buffers();
     edgeSplines.push_back(this->spline.transform(glm::mat4x4(
-        1.0f, 0.0f, 0.0f, this->base.span2.x,
-        0.0f, 1.0f, 0.0f, this->base.span2.y,
-        0.0f, 0.0f, 1.0f, this->base.span2.z,
-        0.0f, 0.0f, 0.0f, 1.0f)));
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        this->base.span2.x, this->base.span2.y, this->base.span2.z, 1.0f)));
     edgeSplines[1].update_buffers();
     edgeSplines.push_back(this->spline.transform(glm::mat4x4(
-        1.0f, 0.0f, 0.0f, this->base.size.x,
-        0.0f, 1.0f, 0.0f, this->base.size.y,
-        0.0f, 0.0f, 1.0f, this->base.size.z,
-        0.0f, 0.0f, 0.0f, 1.0f)));
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        this->base.size.x, this->base.size.y, this->base.size.z, 1.0f)));
     edgeSplines[2].update_buffers();
 }
 
