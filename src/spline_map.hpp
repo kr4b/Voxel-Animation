@@ -12,19 +12,17 @@
 
 class SplineMap {
 public:
-    AABB aabb;
     Plane base;
     Spline spline;
+    AABB aabb;
+    const float sizeSquared;
 
-    SplineMap(Plane, Spline);
-
-    void load_uniforms(const GLuint);
+    SplineMap(const Plane&, const Spline&);
 
     std::optional<glm::vec3> texture_coords(const glm::vec3);
 
     void render();
-
-    const float sizeSquared;
+    void clean();
 
 private:
     std::vector<Spline> edgeSplines;

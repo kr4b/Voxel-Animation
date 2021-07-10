@@ -8,10 +8,10 @@
 int main() {
     State state;
     Window window(1280, 720, &state);
-    Pig scene(window, state);
+    Cube scene(window, state);
 
     while (window.update(state)) {
-        scene.render();
+        scene.render(state.debugMode);
     }
   
     return 0;

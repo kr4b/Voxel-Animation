@@ -64,45 +64,51 @@ public:
         Spline spline) :
         state(state),
         window(window),
-        setup(Setup(glm::vec3(-1.0), glm::vec3(1.0))),
-        shader(Shader("assets/simple_vol.vert", "assets/spline_map.frag")),
+        shader("assets/simple_vol.vert", "assets/spline_map.frag"),
+        debugShader("assets/debug.vert", "assets/debug.frag"),
         volume(volume),
         base(base),
-        spline(spline)
+        spline(spline),
+        splineMap(this->base, this->spline)
     {
         init();
     };
 
+    ~SplineMapScene() {
+        glDeleteBuffers(1, &this->splineMapUniform);
+        this->spline.clean();
+        this->base.clean();
+        this->splineMap.clean();
+    }
+
 protected:
     void init() {
-        SplineMap spline_map = SplineMap(get_base(), get_spline());
-
         SplineMapUniform uniform = SplineMapUniform {
             AABBUniform {
-                spline_map.aabb.min,
-                spline_map.aabb.max
+                this->splineMap.aabb.min,
+                this->splineMap.aabb.max
             },
             PlaneUniform {
-                spline_map.base.center,
-                spline_map.base.half_size,
-                spline_map.base.size,
-                spline_map.base.normal,
-                spline_map.base.span1,
-                spline_map.base.span2,
-                spline_map.base.min,
-                spline_map.base.max,
-                spline_map.base.matrix,
-                spline_map.base.inv_matrix
+                this->splineMap.base.center,
+                this->splineMap.base.half_size,
+                this->splineMap.base.size,
+                this->splineMap.base.normal,
+                this->splineMap.base.span1,
+                this->splineMap.base.span2,
+                this->splineMap.base.min,
+                this->splineMap.base.max,
+                this->splineMap.base.matrix,
+                this->splineMap.base.inv_matrix
             },
             SplineUniform {
-                spline_map.spline.a,
-                spline_map.spline.b,
-                spline_map.spline.c,
-                spline_map.spline.d
+                this->splineMap.spline.a,
+                this->splineMap.spline.b,
+                this->splineMap.spline.c,
+                this->splineMap.spline.d
             },
-            spline_map.sizeSquared,
-            spline_map.sizeSquared,
-            spline_map.sizeSquared
+            this->splineMap.sizeSquared,
+            this->splineMap.sizeSquared,
+            this->splineMap.sizeSquared
         };
 
         glCreateBuffers(1, &splineMapUniform);
@@ -110,29 +116,38 @@ protected:
     };
 
 public:
-    void render() {
+    void render(bool debug) {
         get_setup().update(get_window(), get_state());
         get_shader().use();
         glBindBufferBase(GL_UNIFORM_BUFFER, 2, splineMapUniform);
         get_volume().bind();
-        get_setup().render(get_shader());
+        get_setup().start_render(get_shader());
+        if (debug) {
+            get_debug_shader().use();
+            get_setup().debug(get_debug_shader());
+            get_spline_map().render();
+        }
+        get_setup().end_render();
     }
 
-    inline virtual State  &get_state()  { return state;  };
-    inline virtual Window &get_window() { return window; };
-    inline virtual Setup  &get_setup()  { return setup;  };
-    inline virtual Shader &get_shader() { return shader; };
-    inline virtual Volume &get_volume() { return volume; };
-    inline virtual Plane  &get_base()   { return base;   };
-    inline virtual Spline &get_spline() { return spline; };
+    inline virtual State&     get_state()        { return state;       };
+    inline virtual Window&    get_window()       { return window;      };
+    inline virtual Setup&     get_setup()        { return setup;       };
+    inline virtual Shader&    get_shader()       { return shader;      };
+    inline virtual Shader&    get_debug_shader() { return debugShader; };
+    inline virtual Volume&    get_volume()       { return volume;      };
+    inline virtual Plane&     get_base()         { return base;        };
+    inline virtual Spline&    get_spline()       { return spline;      };
+    inline virtual SplineMap& get_spline_map()   { return splineMap;   };
 
 protected:
-    GLuint splineMapUniform;
-    State  &state;
-    Window &window;
-    Setup  setup;
-    Shader shader;
-    Volume &volume;
-    Plane  base;
-    Spline spline;
+    GLuint    splineMapUniform;
+    State&    state;
+    Window&   window;
+    Setup     setup;
+    Shader    shader, debugShader;
+    Volume&   volume;
+    Plane     base;
+    Spline    spline;
+    SplineMap splineMap;
 };

@@ -47,12 +47,6 @@ Spline::Spline(const glm::vec3 a, const glm::vec3 b, const glm::vec3 c, const gl
 	this->init_vao();
 }
 
-void Spline::clean() {
-    glDeleteVertexArrays(1, &this->lineVao);
-    glDeleteVertexArrays(1, &this->pointsVao);
-    glDeleteBuffers(4, this->buffers);
-}
-
 void Spline::init_vao() {
 	glGenVertexArrays(1, &this->lineVao);
 	glBindVertexArray(this->lineVao);
@@ -89,18 +83,6 @@ void Spline::init_vao() {
     glBindVertexArray(0);
 }
 
-void Spline::parameters_from_tangents(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 tangent1, const glm::vec3 tangent2) {
-	const glm::vec3 P0 = tangent1;
-	const glm::vec3 P3 = tangent2;
-
-	this->a = 2.0f * P1 - 2.0f * P2 + 1.0f * P0 + 1.0f * P3;
-	this->b = -3.0f * P1 + 3.0f * P2 - 2.0f * P0 - 1.0f * P3;
-	this->c = P0;
-	this->d = P1;
-
-    this->start = this->position_on_spline(0.0f);
-}
-
 Spline Spline::with_tangents(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 tangent1, const glm::vec3 tangent2) {
 	// float tmp = P2.y;
 	// P2.y = P2.z;
@@ -126,20 +108,6 @@ Spline Spline::with_control_points(const glm::vec3 P1, const glm::vec3 P2, const
 	const glm::vec3 d = P1;
 
     return Spline(a, b, c, d);
-}
-
-void Spline::update_from_screen_coords(const glm::vec2 coords, const glm::mat4x4 inverseProjCamera, const glm::vec3 cameraWorldPos, const glm::vec3 tangent1, const glm::vec3 tangent2) {
-	const glm::vec2 transformed = coords * 2.0f - glm::vec2(1.0f, 1.0f);
-	const glm::vec4 hray = glm::vec4(transformed.x, transformed.y, 1.0f, 1.0f);
-	const glm::vec4 wray = inverseProjCamera * hray;
-
-	const glm::vec3 origin = cameraWorldPos;
-	const glm::vec3 direction = glm::normalize(glm::vec3(wray.x, wray.y, wray.z) / wray.w - origin);
-
-	const glm::vec3 P1 = origin;
-	const glm::vec3 P2 = origin + direction * glm::length(origin) * 2.0f;
-
-    parameters_from_tangents(P1, P2, tangent1, tangent2);
 }
 
 void Spline::update_buffers() {
@@ -210,11 +178,17 @@ void Spline::render() const {
 		glBindVertexArray(0);
 }
 
+void Spline::clean() {
+    glDeleteVertexArrays(1, &this->lineVao);
+    glDeleteVertexArrays(1, &this->pointsVao);
+    glDeleteBuffers(4, this->buffers);
+}
+
 void Spline::set_color(const glm::vec3 color) {
     this->color = color;
 }
 
-std::vector<float> Spline::get_extremes() {
+std::vector<float> Spline::get_extremes() const {
 	const glm::vec3 a = this->a * glm::vec3(3.0f, 3.0f, 3.0f);
 	const glm::vec3 b = this->b * glm::vec3(2.0f, 2.0f, 2.0f);
 

@@ -7,7 +7,7 @@ void error_callback(int error, const char* description) {
   printf("GLFW Error: %s\n", description);
 }
 
-Window::Window(const int width, const int height, State* state) {
+Window::Window(const int width, const int height, State* state) : frames(0) {
   if (!glfwInit()) {
     throw std::runtime_error("Failed to initialize GLFW");
   }

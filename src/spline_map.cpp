@@ -24,74 +24,48 @@ const AABB createEncompassingAABB(Plane base, Spline spline) {
     );
 }
 
-const Plane createTopBase(Plane base, Spline spline) {
+const Plane createTopBase(const Plane& base, const Spline& spline) {
     const glm::vec3 height = spline.position_on_spline(1.0f) - spline.position_on_spline(0.0f);
     return Plane(base.center + height, base.half_size);
 }
 
-SplineMap::SplineMap(Plane base, Spline spline) :
+const Spline transformSpline(const Plane& base, const Spline& spline) {
+    return spline.transform(base.matrix).transform(
+        glm::mat4x4(
+            1.0f, 0.0f, 0.0f, -base.half_size.x,
+            0.0f, 1.0f, 0.0f, -base.half_size.y,
+            0.0f, 0.0f, 1.0f, -base.half_size.z,
+            0.0f, 0.0f, 0.0f, 1.0f));
+}
+
+SplineMap::SplineMap(const Plane& base, const Spline& spline) :
     base(base),
-    spline(spline.transform(base.matrix).transform(
-        glm::mat4x4(
-            1.0f, 0.0f, 0.0f, -base.half_size.x,
-            0.0f, 1.0f, 0.0f, -base.half_size.y,
-            0.0f, 0.0f, 1.0f, -base.half_size.z,
-            0.0f, 0.0f, 0.0f, 1.0f))),
-    aabb(createEncompassingAABB(base, spline.transform(base.matrix).transform(
-        glm::mat4x4(
-            1.0f, 0.0f, 0.0f, -base.half_size.x,
-            0.0f, 1.0f, 0.0f, -base.half_size.y,
-            0.0f, 0.0f, 1.0f, -base.half_size.z,
-            0.0f, 0.0f, 0.0f, 1.0f)))),
-    sizeSquared(dot(base.size, base.size)),
-    topBase(createTopBase(base, this->spline)) {
+    spline(transformSpline(this->base, spline)),
+    aabb(createEncompassingAABB(this->base, this->spline)),
+    sizeSquared(dot(this->base.size, this->base.size)),
+    topBase(createTopBase(this->base, this->spline)) {
 
     this->spline.update_buffers();
     this->topBase.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
     this->base.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
     edgeSplines.push_back(this->spline.transform(glm::mat4x4(
-        1.0f, 0.0f, 0.0f, base.span1.x,
-        0.0f, 1.0f, 0.0f, base.span1.y,
-        0.0f, 0.0f, 1.0f, base.span1.z,
+        1.0f, 0.0f, 0.0f, this->base.span1.x,
+        0.0f, 1.0f, 0.0f, this->base.span1.y,
+        0.0f, 0.0f, 1.0f, this->base.span1.z,
         0.0f, 0.0f, 0.0f, 1.0f)));
     edgeSplines[0].update_buffers();
     edgeSplines.push_back(this->spline.transform(glm::mat4x4(
-        1.0f, 0.0f, 0.0f, base.span2.x,
-        0.0f, 1.0f, 0.0f, base.span2.y,
-        0.0f, 0.0f, 1.0f, base.span2.z,
+        1.0f, 0.0f, 0.0f, this->base.span2.x,
+        0.0f, 1.0f, 0.0f, this->base.span2.y,
+        0.0f, 0.0f, 1.0f, this->base.span2.z,
         0.0f, 0.0f, 0.0f, 1.0f)));
     edgeSplines[1].update_buffers();
     edgeSplines.push_back(this->spline.transform(glm::mat4x4(
-        1.0f, 0.0f, 0.0f, base.size.x,
-        0.0f, 1.0f, 0.0f, base.size.y,
-        0.0f, 0.0f, 1.0f, base.size.z,
+        1.0f, 0.0f, 0.0f, this->base.size.x,
+        0.0f, 1.0f, 0.0f, this->base.size.y,
+        0.0f, 0.0f, 1.0f, this->base.size.z,
         0.0f, 0.0f, 0.0f, 1.0f)));
     edgeSplines[2].update_buffers();
-}
-
-void SplineMap::load_uniforms(const GLuint program) {
-    glUniform3f(glGetUniformLocation(program, "spline_map.aabb.min"), this->aabb.min.x, this->aabb.min.y, this->aabb.min.z);
-    glUniform3f(glGetUniformLocation(program, "spline_map.aabb.max"), this->aabb.max.x, this->aabb.max.y, this->aabb.max.z);
-
-    glUniform3f(glGetUniformLocation(program, "spline_map.base.center"), this->base.center.x, this->base.center.y, this->base.center.z);
-    glUniform3f(glGetUniformLocation(program, "spline_map.base.half_size"), this->base.half_size.x, this->base.half_size.y, this->base.half_size.z);
-    glUniform3f(glGetUniformLocation(program, "spline_map.base.size"), this->base.size.x, this->base.size.y, this->base.size.z);
-    glUniform3f(glGetUniformLocation(program, "spline_map.base.normal"), this->base.normal.x, this->base.normal.y, this->base.normal.z);
-    glUniform3f(glGetUniformLocation(program, "spline_map.base.span1"), this->base.span1.x, this->base.span1.y, this->base.span1.z);
-    glUniform3f(glGetUniformLocation(program, "spline_map.base.span2"), this->base.span2.x, this->base.span2.y, this->base.span2.z);
-    glUniform3f(glGetUniformLocation(program, "spline_map.base.min"), this->base.min.x, this->base.min.y, this->base.min.z);
-    glUniform3f(glGetUniformLocation(program, "spline_map.base.max"), this->base.max.x, this->base.max.y, this->base.max.z);
-    glUniformMatrix4fv(glGetUniformLocation(program, "spline_map.base.matrix"), 1, false, glm::value_ptr(this->base.matrix));
-    glUniformMatrix4fv(glGetUniformLocation(program, "spline_map.base.inv_matrix"), 1, false, glm::value_ptr(this->base.inv_matrix));
-
-    glUniform3f(glGetUniformLocation(program, "spline_map.spline.a"), this->spline.a.x, this->spline.a.y, this->spline.a.z);
-    glUniform3f(glGetUniformLocation(program, "spline_map.spline.b"), this->spline.b.x, this->spline.b.y, this->spline.b.z);
-    glUniform3f(glGetUniformLocation(program, "spline_map.spline.c"), this->spline.c.x, this->spline.c.y, this->spline.c.z);
-    glUniform3f(glGetUniformLocation(program, "spline_map.spline.d"), this->spline.d.x, this->spline.d.y, this->spline.d.z);
-
-    glUniform1f(glGetUniformLocation(program, "spline_map.size_squared"), this->sizeSquared);
-    glUniform1f(glGetUniformLocation(program, "spline_map.width"), this->sizeSquared);
-    glUniform1f(glGetUniformLocation(program, "spline_map.height"), this->sizeSquared);
 }
 
 std::optional<glm::vec3> SplineMap::texture_coords(const glm::vec3 pos) {
@@ -125,5 +99,12 @@ void SplineMap::render() {
     this->spline.render();
     for (const Spline& edgeSpline : this->edgeSplines) {
         edgeSpline.render();
+    }
+}
+
+void SplineMap::clean() {
+    this->topBase.clean();
+    for (Spline& edgeSpline : this->edgeSplines) {
+        edgeSpline.clean();
     }
 }

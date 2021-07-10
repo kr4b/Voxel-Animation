@@ -25,10 +25,8 @@ public:
 
 	void render() const;
 	void update_buffers();
-    void clean();
+	void clean();
 
-	void update_from_screen_coords(const glm::vec2, const glm::mat4x4, const glm::vec3, const glm::vec3, const glm::vec3);
-	void parameters_from_tangents(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
 	static Spline with_tangents(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
 	static Spline with_control_points(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
 
@@ -38,7 +36,7 @@ public:
 
     void set_color(const glm::vec3);
 
-	std::vector<float> get_extremes();
+	std::vector<float> get_extremes() const;
 	std::optional<float> intersect_spline_plane(const Plane&);
 
 	Spline transform(const glm::mat4x4 &matrix) const {
