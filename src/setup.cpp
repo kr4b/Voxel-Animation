@@ -56,7 +56,6 @@ void Setup::update(const Window& window, const State& state) {
 }
 
 void Setup::start_render(const Shader& shader) const {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glBindVertexArray(this->vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }

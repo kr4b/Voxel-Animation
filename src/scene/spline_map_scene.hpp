@@ -46,7 +46,7 @@ struct PlaneUniform
 struct SplineMapUniform
 {
     alignas(16) AABBUniform aabb;
-    alignas(16) PlaneUniform plane;
+    alignas(16) PlaneUniform base;
     alignas(16) SplineUniform spline;
 
     alignas(16) float size_squared;

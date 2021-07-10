@@ -5,8 +5,10 @@ layout(location = 1) in vec3 color;
 
 layout(location = 0) out vec3 iColor;
 
-uniform mat4 proj;
-uniform mat4 view;
+layout(std140, binding = 0) uniform UMatrices {
+    uniform mat4 proj;
+    uniform mat4 view;
+};
 
 void main() {
 	iColor = color;
