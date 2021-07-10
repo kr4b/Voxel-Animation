@@ -9,7 +9,7 @@
 const AABB createEncompassingAABB(Plane base, Spline spline) {
     std::vector<float> extremes = spline.get_extremes();
     glm::vec3 min = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-    glm::vec3 max = glm::vec3(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
+    glm::vec3 max = glm::vec3(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
     for (const float t : extremes) {
         if (t >= 0.0f && t <= 1.0f) {
             const glm::vec3 pos = spline.position_on_spline(t);
@@ -33,16 +33,16 @@ SplineMap::SplineMap(Plane base, Spline spline) :
     base(base),
     spline(spline.transform(base.matrix).transform(
         glm::mat4x4(
-            1.0f, 0.0f, 0.0f, -base.half_size.x,
-            0.0f, 1.0f, 0.0f, -base.half_size.y,
-            0.0f, 0.0f, 1.0f, -base.half_size.z,
-            0.0f, 0.0f, 0.0f, 1.0f))),
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            -base.half_size.x, -base.half_size.y, -base.half_size.z, 1.0f))),
     aabb(createEncompassingAABB(base, spline.transform(base.matrix).transform(
         glm::mat4x4(
-            1.0f, 0.0f, 0.0f, -base.half_size.x,
-            0.0f, 1.0f, 0.0f, -base.half_size.y,
-            0.0f, 0.0f, 1.0f, -base.half_size.z,
-            0.0f, 0.0f, 0.0f, 1.0f)))),
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            -base.half_size.x, -base.half_size.y, -base.half_size.z, 1.0f)))),
     sizeSquared(dot(base.size, base.size)),
     topBase(createTopBase(base, this->spline)) {
 

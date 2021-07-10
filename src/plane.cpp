@@ -32,7 +32,7 @@ Plane::Plane(glm::vec3 center, glm::vec3 half_size) : center(center), half_size(
     float sinAngle = sin(rotationAngle);
 
     // https://en.wikipedia.org/wiki/Rotation_matrix#Conversion_from_rotation_matrix_and_to_axis%E2%80%93angle
-    this->matrix = glm::mat4x4(
+    this->matrix = glm::transpose(glm::mat4x4(
         cosAngle + rotationAxis.x * rotationAxis.x * (1.0f - cosAngle),
         rotationAxis.x * rotationAxis.y * (1.0f - cosAngle) - rotationAxis.z * sinAngle,
         rotationAxis.x * rotationAxis.z * (1.0f - cosAngle) + rotationAxis.y * sinAngle,
@@ -49,7 +49,7 @@ Plane::Plane(glm::vec3 center, glm::vec3 half_size) : center(center), half_size(
         this->center.z,
 
         0.0f, 0.0f, 0.0f, 1.0f
-    );
+    ));
     /*
     float hypotXy = hypotf(this->normal.x, this->normal.y);
     this->matrix = glm::mat4x4(
