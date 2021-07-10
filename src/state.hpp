@@ -29,7 +29,7 @@ struct State {
   float splineDist = 0.1f;
 
   static constexpr float scrollMult = 0.1f;
-  static constexpr float motionRotMult = 0.6f;
+  static constexpr float motionRotMult = 0.00006f;
 };
 
 namespace state {

@@ -80,15 +80,16 @@ void state::motion_callback(GLFWwindow* win, double x, double y) {
     auto const lastX = state->lastX;
     auto const lastY = state->lastY;
     state->lastX = x;
-    state->lastX = y;
+    state->lastY = y;
     if (!std::isnan(lastX)) {
       auto const deltaX = x - lastX;
       auto const deltaY = y - lastY;
 
       if (state->inControl) {
         state->cameraRot =
-            glm::quat(glm::degrees(state->motionRotMult * deltaX), 0.0f, 1.0f, 0.0f) *
-            glm::quat(glm::degrees(state->motionRotMult * deltaY), 1.0f, 0.0f, 0.0f) * state->cameraRot;
+            glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), float(glm::degrees(state->motionRotMult * deltaX)), glm::vec3(0.0f, 1.0f, 0.0f)) *
+            glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), float(glm::degrees(state->motionRotMult * deltaY)), glm::vec3(1.0f, 0.0f, 0.0f)) *
+            state->cameraRot;
       }
     }
   }

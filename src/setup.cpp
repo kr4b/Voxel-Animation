@@ -70,7 +70,6 @@ void Setup::update(const Window& window, const State& state) const {
 void Setup::render(const Shader& shader) const {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    shader.use();
     glBindVertexArray(this->vao);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
