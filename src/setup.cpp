@@ -1,4 +1,4 @@
-#define GLM_SWIZZLE
+#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 #include <glm/vec2.hpp>
 #include <glm/matrix.hpp>
@@ -15,7 +15,7 @@ struct CameraUniform
 };
 
 Setup::Setup() {
-    glClearColor(0.0f, 0.6f, 0.8f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
     glCreateVertexArrays(1, &this->vao);
 

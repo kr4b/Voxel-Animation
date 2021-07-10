@@ -494,7 +494,7 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in floa
     const bool result = intersect_ray_aabb(ray, spline_map.aabb, ts);
 
     if (result) {
-        for (float i = ts.x; i <= ts.y; i += step_size) {
+        for (float i = max(0.0, ts.x); i <= ts.y; i += step_size) {
             const vec3 pos = ray.origin + ray.direction * i;
             vec3 coords;
 
@@ -506,7 +506,7 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in floa
                 &&  texel.z >= 0 && texel.z < size.z) {
                     const float color = texelFetch(texVol, texel, 0).r;
 
-                    if (color > 0.5) {
+                    if (color > 0.25) {
                         t = i;
                         return true;
                     }
@@ -603,5 +603,7 @@ void main() {
     if (walk_spline_map(ray, uSplineMap.spline_map, textureSize(texVol, 0), 0.025, texel, t)) {
         // oColor = texelFetch(texVol, texel, 0).rrr;
         oColor = vec3(texel) / vec3(textureSize(texVol, 0));
+    } else {
+        discard;
     }
 }
