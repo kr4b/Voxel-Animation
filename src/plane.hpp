@@ -46,4 +46,3 @@ private:
     GLuint vao;
     GLuint buffers[2];
 };
-

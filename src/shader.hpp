@@ -12,6 +12,5 @@ public:
 
   inline void use() const { glUseProgram(this->program); }
 
-private:
   GLuint program;
 };

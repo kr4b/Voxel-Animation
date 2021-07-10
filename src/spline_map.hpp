@@ -24,9 +24,9 @@ public:
 
     void render();
 
+    const float sizeSquared;
+
 private:
-    float sizeSquared;
     std::vector<Spline> edgeSplines;
     Plane topBase;
 };
-

@@ -90,10 +90,6 @@ void Spline::init_vao() {
 }
 
 void Spline::parameters_from_tangents(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 tangent1, const glm::vec3 tangent2) {
-	// float tmp = P2.y;
-	// P2.y = P2.z;
-	// P2.z = tmp - 0.5f;
-
 	const glm::vec3 P0 = tangent1;
 	const glm::vec3 P3 = tangent2;
 
@@ -105,16 +101,31 @@ void Spline::parameters_from_tangents(const glm::vec3 P1, const glm::vec3 P2, co
     this->start = this->position_on_spline(0.0f);
 }
 
+Spline Spline::with_tangents(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 tangent1, const glm::vec3 tangent2) {
+	// float tmp = P2.y;
+	// P2.y = P2.z;
+	// P2.z = tmp - 0.5f;
 
-void Spline::parameters_from_points(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 P0, const glm::vec3 P3) {
+	const glm::vec3 P0 = tangent1;
+	const glm::vec3 P3 = tangent2;
+
+	const glm::vec3 a = 2.0f * P1 - 2.0f * P2 + 1.0f * P0 + 1.0f * P3;
+	const glm::vec3 b = -3.0f * P1 + 3.0f * P2 - 2.0f * P0 - 1.0f * P3;
+	const glm::vec3 c = P0;
+	const glm::vec3 d = P1;
+
+    return Spline(a, b, c, d);
+}
+
+Spline Spline::with_control_points(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 P0, const glm::vec3 P3) {
 	const float tau = 0.2f;
 
-	this->a = -tau * P0 + (2.0f - tau) * P1 + (tau - 2.0f) * P2 + tau * P3;
-	this->b = 2.0f * tau * P0 + (tau - 3.0f) * P1 + (3.0f - 2.0f * tau) * P2 - tau * P3;
-	this->c = -tau * P0 + tau * P2;
-	this->d = P1;
+	const glm::vec3 a = -tau * P0 + (2.0f - tau) * P1 + (tau - 2.0f) * P2 + tau * P3;
+	const glm::vec3 b = 2.0f * tau * P0 + (tau - 3.0f) * P1 + (3.0f - 2.0f * tau) * P2 - tau * P3;
+	const glm::vec3 c = -tau * P0 + tau * P2;
+	const glm::vec3 d = P1;
 
-    this->start = this->position_on_spline(0.0f);
+    return Spline(a, b, c, d);
 }
 
 void Spline::update_from_screen_coords(const glm::vec2 coords, const glm::mat4x4 inverseProjCamera, const glm::vec3 cameraWorldPos, const glm::vec3 tangent1, const glm::vec3 tangent2) {
@@ -241,7 +252,7 @@ std::optional<float> Spline::intersect_spline_plane(const Plane &plane) {
 	return std::nullopt;
 }
 
-inline glm::vec3 Spline::position_on_spline(float t) const {
+glm::vec3 Spline::position_on_spline(float t) const {
 	return t * t * t * this->a + t * t * this->b + t * this->c + this->d;
 }
 

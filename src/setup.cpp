@@ -21,14 +21,18 @@ struct CameraUniform
 };
 
 Setup::Setup(glm::vec3 volumeMin, glm::vec3 volumeMax) {
+    glClearColor(0.0f, 0.6f, 0.8f, 1.0f);
+
     glCreateVertexArrays(1, &this->vao);
 
     const VolumeUniform volume { volumeMin, volumeMax };
     glCreateBuffers(1, &this->volumeUniform);
     glNamedBufferStorage(this->volumeUniform, sizeof(VolumeUniform), &volume, GL_NONE);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 0, this->volumeUniform);
 
     glCreateBuffers(1, &this->cameraUniform);
     glNamedBufferStorage(this->cameraUniform, sizeof(CameraUniform), nullptr, GL_DYNAMIC_STORAGE_BIT);
+    glBindBufferBase(GL_UNIFORM_BUFFER, 1, this->cameraUniform);
 }
 
 Setup::~Setup() {
@@ -67,6 +71,8 @@ void Setup::render(const Shader& shader) const {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     shader.use();
+    glBindVertexArray(this->vao);
+
     glDrawArrays(GL_TRIANGLES, 0, 3);
 
     glUseProgram(0);

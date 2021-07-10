@@ -1,5 +1,7 @@
 #include "shader.hpp"
 
+#include <iostream>
+
 GLuint load_shader(const char* path, const GLenum type) {
   int status;
   std::ifstream file(path);
@@ -15,7 +17,8 @@ GLuint load_shader(const char* path, const GLenum type) {
     char log[1024];
     glGetShaderInfoLog(shader, sizeof(log), NULL, log);
     char error[sizeof(log) + 64];
-    snprintf(error, sizeof(error), "%s shader compilation failed: %s\n", type == GL_VERTEX_SHADER ? "Vertex" : "Fragment");
+    snprintf(error, sizeof(error), "%s shader compilation failed: %s\n", type == GL_VERTEX_SHADER ? "Vertex" : "Fragment", log);
+    std::cout << error << std::endl;
     throw new std::runtime_error(error);
   }
 
@@ -37,7 +40,8 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     char log[1024];
     glGetProgramInfoLog(program, sizeof(log), NULL, log);
     char error[sizeof(log) + 64];
-    snprintf(error, sizeof(error), "Program linking failed: %s\n");
+    snprintf(error, sizeof(error), "Program linking failed: %s\n", log);
+    std::cout << error << std::endl;
     throw new std::runtime_error(error);
   }
 

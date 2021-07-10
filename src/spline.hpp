@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <iostream>
 #include <optional>
+#include <vector>
 
 #include "math_util.hpp"
 #include "plane.hpp"
@@ -28,7 +29,8 @@ public:
 
 	void update_from_screen_coords(const glm::vec2, const glm::mat4x4, const glm::vec3, const glm::vec3, const glm::vec3);
 	void parameters_from_tangents(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
-	void parameters_from_points(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
+	static Spline with_tangents(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
+	static Spline with_control_points(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
 
 	glm::vec3 position_on_spline(const float t) const;
 

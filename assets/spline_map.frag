@@ -12,6 +12,11 @@ layout( location = 0 ) in vec2 v2fTexCoord;
 
 layout( location = 0 ) out vec3 oColor;
 
+layout( std140, binding = 0 ) uniform UVolume {
+    vec3 volMin;
+    vec3 volMax;
+} uVolume;
+
 layout( std140, binding = 1 ) uniform UCamera {
 	mat4 inverseProjCamera;
 	vec3 cameraWorldPos;
@@ -74,7 +79,9 @@ struct SplineMap {
     float height;
 };
 
-uniform SplineMap spline_map;
+layout( std140, binding = 2 ) uniform USplineMap {
+    SplineMap spline_map;
+} uSplineMap;
 
 // Function Signatures
 ///////////////////////////////////////
@@ -487,6 +494,7 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in floa
     const bool result = intersect_ray_aabb(ray, spline_map.aabb, ts);
 
     if (result) {
+        discard;
         for (float i = ts.x; i <= ts.y; i += step_size) {
             const vec3 pos = ray.origin + ray.direction * i;
             vec3 coords;
@@ -593,7 +601,7 @@ void main() {
 
     ivec3 texel;
     float t;
-    if (walk_spline_map(ray, spline_map, textureSize(texVol, 0), 0.025, texel, t)) {
+    if (walk_spline_map(ray, uSplineMap.spline_map, textureSize(texVol, 0), 0.025, texel, t)) {
         // oColor = texelFetch(texVol, texel, 0).rrr;
         oColor = vec3(texel) / vec3(textureSize(texVol, 0));
     }
