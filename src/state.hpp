@@ -21,12 +21,11 @@ struct State {
 
   bool inControl = false;
   bool debugMode = false;
-  bool refreshSpline = true;
-  bool refreshSplineSource = true;
+  bool refreshRayEmitter = true;
   bool displayRays = false;
 
-  size_t splineCount = 2;
-  float splineDist = 0.1f;
+  size_t rayCount = 2;
+  float rayGap = 0.1f;
 
   static constexpr float scrollMult = 0.1f;
   static constexpr float motionRotMult = 0.00006f;

@@ -1,5 +1,3 @@
-#define GLM_FORCE_SWIZZLE
-#include <glm/glm.hpp>
 #include <glm/vec2.hpp>
 #include <glm/matrix.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -41,15 +39,17 @@ void Setup::update(const Window& window, const State& state) {
 
     this->view = glm::translate(glm::mat4(1.0f), state.cameraOff) * glm::toMat4(state.cameraRot);
     const glm::vec4 cameraWorldPos = glm::inverse(this->view) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    const glm::vec2 reciprocalWindowSize = glm::vec2(
+    this->reciprocalWindowSize = glm::vec2(
         1.0f / float(size.first),
         1.0f / float(size.second)
     );
 
+    this->invProjView = glm::inverse(this->proj * this->view);
+
     const CameraUniform camera {
-        glm::inverse(this->proj * this->view),
-        cameraWorldPos.xyz() / cameraWorldPos.w,
-        reciprocalWindowSize,
+        this->invProjView,
+        glm::vec3(cameraWorldPos.x, cameraWorldPos.y, cameraWorldPos.z) / cameraWorldPos.w,
+        this->reciprocalWindowSize,
     };
 
     glNamedBufferSubData(this->cameraUniform, 0, sizeof(CameraUniform), &camera);

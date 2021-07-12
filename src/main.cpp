@@ -9,14 +9,13 @@
 int main() {
     State state;
     Window window(1280, 720, &state);
-    Axis axis(window, state);
     Pig scene(window, state);
 
     while (window.update(state)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        scene.render(state.debugMode);
-        if (state.debugMode) axis.render();
+        scene.update();
+        scene.render();
     }
   
     return 0;

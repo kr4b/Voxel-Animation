@@ -53,22 +53,22 @@ SplineMap::SplineMap(const Plane& base, const Spline& spline) :
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         this->base.span1.x, this->base.span1.y, this->base.span1.z, 1.0f)));
-    edgeSplines[0].update_buffers();
+    edgeSplines.back().update_buffers();
     edgeSplines.push_back(this->spline.transform(glm::mat4x4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         this->base.span2.x, this->base.span2.y, this->base.span2.z, 1.0f)));
-    edgeSplines[1].update_buffers();
+    edgeSplines.back().update_buffers();
     edgeSplines.push_back(this->spline.transform(glm::mat4x4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         this->base.size.x, this->base.size.y, this->base.size.z, 1.0f)));
-    edgeSplines[2].update_buffers();
+    edgeSplines.back().update_buffers();
 }
 
-std::optional<glm::vec3> SplineMap::texture_coords(const glm::vec3 pos) {
+std::optional<glm::vec3> SplineMap::texture_coords(const glm::vec3 pos) const {
     const Plane plane(pos, this->base.size);
 
     auto result = this->spline.intersect_spline_plane(plane);

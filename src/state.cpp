@@ -13,7 +13,7 @@ void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
       break;
     // Space => create new debug spline
     case GLFW_KEY_SPACE:
-      state->refreshSpline = true;
+      state->refreshRayEmitter = true;
       state->lastCameraRot = state->cameraRot;
       state->lastCameraOff = state->cameraOff;
       break;
@@ -29,23 +29,23 @@ void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
       break;
     // Up arrow => increase debug spline count
     case GLFW_KEY_UP:
-      state->refreshSplineSource = true;
-      state->splineCount += 1;
+      state->refreshRayEmitter = true;
+      state->rayCount += 1;
       break;
       // Up arrow => decrease debug spline count
     case GLFW_KEY_DOWN:
-      state->refreshSplineSource = true;
-      state->splineCount = glm::max(1, int(state->splineCount) - 1);
+      state->refreshRayEmitter = true;
+      state->rayCount = glm::max(1, int(state->rayCount) - 1);
       break;
       // Up arrow => increase debug spline distance
     case GLFW_KEY_RIGHT:
-      state->refreshSplineSource = true;
-      state->splineDist = glm::min(1.0f, state->splineDist + 0.01f);
+      state->refreshRayEmitter = true;
+      state->rayGap = glm::min(1.0f, state->rayGap + 0.01f);
       break;
       // Up arrow => decrease debug spline distance
     case GLFW_KEY_LEFT:
-      state->refreshSplineSource = true;
-      state->splineDist = glm::max(0.01f, state->splineDist - 0.01f);
+      state->refreshRayEmitter = true;
+      state->rayGap = glm::max(0.01f, state->rayGap - 0.01f);
       break;
 
     case GLFW_KEY_R:

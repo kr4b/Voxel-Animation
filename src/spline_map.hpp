@@ -19,7 +19,7 @@ public:
 
     SplineMap(const Plane&, const Spline&);
 
-    std::optional<glm::vec3> texture_coords(const glm::vec3);
+    std::optional<glm::vec3> texture_coords(const glm::vec3) const;
 
     void render();
     void clean();

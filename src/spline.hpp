@@ -18,54 +18,51 @@
 
 class Spline {
 public:
-	glm::vec3 a, b, c, d;
+    glm::vec3 a, b, c, d;
 
-	Spline();
-	Spline(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
+    Spline();
+    Spline(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
 
-	void render() const;
-	void update_buffers();
-	void clean();
+    void render() const;
+    void update_buffers();
+    void clean();
 
-	static Spline with_tangents(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
-	static Spline with_control_points(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
+    static Spline with_tangents(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
+    static Spline with_control_points(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
 
-	glm::vec3 position_on_spline(const float t) const;
+    glm::vec3 position_on_spline(const float t) const;
 
-	std::optional<glm::vec2> intersect_spline_aabb(const glm::vec3, const glm::vec3);
+    std::optional<glm::vec2> intersect_spline_aabb(const glm::vec3, const glm::vec3);
 
     void set_color(const glm::vec3);
 
-	std::vector<float> get_extremes() const;
-	std::optional<float> intersect_spline_plane(const Plane&);
+    std::vector<float> get_extremes() const;
+    std::optional<float> intersect_spline_plane(const Plane&) const;
 
-	Spline transform(const glm::mat4x4 &matrix) const {
-		glm::vec4 ta = matrix * glm::vec4(this->a.x, this->a.y, this->a.z, 0.0f);
-		glm::vec4 tb = matrix * glm::vec4(this->b.x, this->b.y, this->b.z, 0.0f);
-		glm::vec4 tc = matrix * glm::vec4(this->c.x, this->c.y, this->c.z, 0.0f);
-		glm::vec4 td = matrix * glm::vec4(this->d.x, this->d.y, this->d.z, 1.0f);
+    Spline transform(const glm::mat4x4 &matrix) const {
+        glm::vec4 ta = matrix * glm::vec4(this->a.x, this->a.y, this->a.z, 0.0f);
+        glm::vec4 tb = matrix * glm::vec4(this->b.x, this->b.y, this->b.z, 0.0f);
+        glm::vec4 tc = matrix * glm::vec4(this->c.x, this->c.y, this->c.z, 0.0f);
+        glm::vec4 td = matrix * glm::vec4(this->d.x, this->d.y, this->d.z, 1.0f);
 
-		return Spline(
-			glm::vec3(ta.x, ta.y, ta.z),
-			glm::vec3(tb.x, tb.y, tb.z),
-			glm::vec3(tc.x, tc.y, tc.z),
-			glm::vec3(td.x, td.y, td.z)
-		);
-	}
+        return Spline(
+            glm::vec3(ta.x, ta.y, ta.z),
+            glm::vec3(tb.x, tb.y, tb.z),
+            glm::vec3(tc.x, tc.y, tc.z),
+            glm::vec3(td.x, td.y, td.z)
+        );
+    }
 
 private:
-	bool intersection;
-	glm::vec3 worldEntry, worldExit;
-	glm::vec2 lastCursorPos;
-    glm::vec3 start;
+    bool intersection;
     glm::vec3 color;
-	GLuint lineVao, pointsVao;
-	GLuint buffers[4];
+    GLuint lineVao;
+    GLuint buffers[2];
 
     void init_vao();
 
-	glm::vec3 intersected_aabb(const glm::vec3 t, glm::vec3 aAABBMin, glm::vec3 aAABBMax);
-	bool calculate_near_far(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3, glm::vec2*);
+    glm::vec3 intersected_aabb(const glm::vec3 t, glm::vec3 aAABBMin, glm::vec3 aAABBMax);
+    bool calculate_near_far(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3, glm::vec2*);
 };
 
 float point_in_aabb(const glm::vec3, const glm::vec3, const glm::vec3);

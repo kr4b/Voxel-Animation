@@ -13,6 +13,8 @@
 #include "state.hpp"
 #include "volume.hpp"
 #include "window.hpp"
+#include "debug_scene.hpp"
+#include "ray_emitter_scene.hpp"
 
 struct AABBUniform
 {
@@ -116,38 +118,48 @@ protected:
     };
 
 public:
-    void render(bool debug) {
+    void update() {
         get_setup().update(get_window(), get_state());
+        get_ray_emitter().update(get_setup(), get_state(), get_spline_map(), get_volume());
+    }
+
+    void render() {
         get_shader().use();
         glBindBufferBase(GL_UNIFORM_BUFFER, 2, splineMapUniform);
         get_volume().bind();
         get_setup().start_render(get_shader());
-        if (debug) {
+        if (get_state().debugMode) {
             get_debug_shader().use();
             get_setup().debug(get_debug_shader());
+            get_axis().render(get_setup());
             get_spline_map().render();
+            get_ray_emitter().render();
         }
         get_setup().end_render();
     }
 
-    inline virtual State&     get_state()        { return state;       };
-    inline virtual Window&    get_window()       { return window;      };
-    inline virtual Setup&     get_setup()        { return setup;       };
-    inline virtual Shader&    get_shader()       { return shader;      };
-    inline virtual Shader&    get_debug_shader() { return debugShader; };
-    inline virtual Volume&    get_volume()       { return volume;      };
-    inline virtual Plane&     get_base()         { return base;        };
-    inline virtual Spline&    get_spline()       { return spline;      };
-    inline virtual SplineMap& get_spline_map()   { return splineMap;   };
+    inline virtual State&      get_state()        { return state;       };
+    inline virtual Window&     get_window()       { return window;      };
+    inline virtual Setup&      get_setup()        { return setup;       };
+    inline virtual Shader&     get_shader()       { return shader;      };
+    inline virtual Shader&     get_debug_shader() { return debugShader; };
+    inline virtual Volume&     get_volume()       { return volume;      };
+    inline virtual Plane&      get_base()         { return base;        };
+    inline virtual Spline&     get_spline()       { return spline;      };
+    inline virtual SplineMap&  get_spline_map()   { return splineMap;   };
+    inline virtual Axis&       get_axis()         { return axis;        };
+    inline virtual RayEmitter& get_ray_emitter()  { return rayEmitter;  };
 
 protected:
-    GLuint    splineMapUniform;
-    State&    state;
-    Window&   window;
-    Setup     setup;
-    Shader    shader, debugShader;
-    Volume&   volume;
-    Plane     base;
-    Spline    spline;
-    SplineMap splineMap;
+    GLuint     splineMapUniform;
+    State&     state;
+    Window&    window;
+    Setup      setup;
+    Shader     shader, debugShader;
+    Volume&    volume;
+    Plane      base;
+    Spline     spline;
+    SplineMap  splineMap;
+    Axis       axis;
+    RayEmitter rayEmitter;
 };
