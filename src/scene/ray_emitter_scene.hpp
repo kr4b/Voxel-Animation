@@ -38,7 +38,8 @@ public:
                     glm::normalize(glm::vec3(wray.x, wray.y, wray.z) / wray.w - origin) * glm::length(origin) * 2.0f;
 
                 Ray ray(cameraWorldPos, direction);
-                ray.update_buffers(ray.walk_spline_map(splineMap, volume, 0.025), glm::ivec3(volume.width(), volume.height(), volume.depth()));
+                ray.init_vao();
+                ray.update_buffers(ray.walk_spline_map(splineMap, volume, 0.025f), glm::ivec3(volume.width(), volume.height(), volume.depth()));
                 rays.push_back(ray);
                 currentPos.x += state.rayGap;
             }

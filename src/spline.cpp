@@ -21,8 +21,6 @@ Spline::Spline() {
     this->c = glm::vec3(0.0f);
     this->d = glm::vec3(0.0f);
     this->color = glm::vec3(1.0f);
-
-    this->init_vao();
 }
 
 Spline::Spline(const glm::vec3 a, const glm::vec3 b, const glm::vec3 c, const glm::vec3 d) {
@@ -33,8 +31,6 @@ Spline::Spline(const glm::vec3 a, const glm::vec3 b, const glm::vec3 c, const gl
     this->c = c;
     this->d = d;
     this->color = glm::vec3(1.0f);
-
-    this->init_vao();
 }
 
 void Spline::init_vao() {
@@ -169,7 +165,9 @@ std::optional<float> Spline::intersect_spline_plane(const Plane &plane) const {
         glm::vec3(transformed_max.x, transformed_max.y, transformed_max.z)
     );
 
-    if (result.has_value()) return std::optional<float>(result.value().x);
+    transformed_spline.clean();
+
+    if (result.has_value()) return std::optional<float>((glm::vec2(result.value())).x);
     return std::nullopt;
 }
 

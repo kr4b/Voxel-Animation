@@ -20,8 +20,8 @@ private:
 			root = single_root();
 		}
 		else {
-			fac = 2.0f * sqrt(-p / 3.0f);
-			arccos = acos(3.0f * q / (2.0f * p) * sqrt(-3.0f / p)) / 3.0f;
+			fac = 2.0f * sqrtf(-p / 3.0f);
+			arccos = acosf(3.0f * q / (2.0f * p) * sqrtf(-3.0f / p)) / 3.0f;
 
 			root = second_root();
 		}

@@ -20,6 +20,7 @@ public:
     glm::vec2 intersect_ray_aabb(const AABB&) const;
     std::optional<std::pair<glm::ivec3, float>> walk_spline_map(const SplineMap&, const Volume&, const float);
 
+    void init_vao();
     void update_buffers(std::optional<std::pair<glm::ivec3, float>>, const glm::ivec3);
     void render() const;
     void clean();
@@ -28,6 +29,4 @@ private:
     GLuint lineVao, pointVao;
     GLuint buffers[4];
     bool intersect;
-
-    void init_vao();
 };

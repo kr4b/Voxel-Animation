@@ -23,6 +23,7 @@ public:
     Spline();
     Spline(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
 
+    void init_vao();
     void render() const;
     void update_buffers();
     void clean();
@@ -57,9 +58,7 @@ private:
     bool intersection;
     glm::vec3 color;
     GLuint lineVao;
-    GLuint buffers[2];
-
-    void init_vao();
+    GLuint buffers[4];
 
     glm::vec3 intersected_aabb(const glm::vec3 t, glm::vec3 aAABBMin, glm::vec3 aAABBMax);
     bool calculate_near_far(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3, glm::vec2*);

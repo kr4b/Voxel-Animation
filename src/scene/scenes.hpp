@@ -38,3 +38,21 @@ public:
             glm::vec3(0.0f, 0.0f, -2.0f)))
     {};
 };
+
+class Bonsai : public SplineMapScene {
+public:
+    Bonsai(Window &window, State &state) :
+    SplineMapScene(
+        window,
+        state,
+        load_fld_volume("assets/bonsai.fld", FLDInfo { 3, { 256, 256, 182 }, 1, 1}),
+        Plane(
+            glm::vec3(0.0f, 1.0f, 0.0f),
+            glm::vec3(1.0f, 0.0f, 1.0f)),
+        Spline::with_tangents(
+            glm::vec3(0.0f),
+            glm::vec3(0.0f, 2.0f, 1.0f),
+            glm::vec3(5.0f, 3.0f, 0.0f),
+            glm::vec3(0.0f, 0.0f, -2.0f)))
+    {};
+};

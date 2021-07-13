@@ -6,7 +6,6 @@
 #include <glm/common.hpp>
 
 Ray::Ray(const glm::vec3 origin, const glm::vec3 dir) : origin(origin), dir(dir) {
-    this->init_vao();
 }
 
 void Ray::clean() {
@@ -61,8 +60,8 @@ void Ray::update_buffers(std::optional<std::pair<glm::ivec3, float>> intersectio
         vertices[0] = from.x; vertices[1] = from.y; vertices[2] = from.z;
         vertices[3] = to.x; vertices[4] = to.y; vertices[5] = to.z;
 
-        colors[0] = 0.0f; colors[1] = 1.0f; colors[2] = 0.0f;
-        colors[3] = 0.0f; colors[4] = 1.0f; colors[5] = 0.0f;
+        colors[0] = 0.5f; colors[1] = 0.4f; colors[2] = 0.0f;
+        colors[3] = 0.5f; colors[4] = 0.4f; colors[5] = 0.0f;
 
         glBindVertexArray(this->lineVao);
 
@@ -127,11 +126,12 @@ std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap
     const glm::vec2 ts = this->intersect_ray_aabb(splineMap.aabb);
 
     for (float t = ts.x; t <= ts.y; t += step) {
-        const glm::vec3 pos = this->origin + this->dir * t;
-        if (const auto texCoords = splineMap.texture_coords(pos)) {
-            const int pixelX = int((round(texCoords->x * 1000.0) / 1001.0) * volume.width());
-            const int pixelY = int((round(texCoords->y * 1000.0) / 1001.0) * volume.height());
-            const int pixelZ = int((round(texCoords->z * 1000.0) / 1001.0) * volume.depth());
+        const glm::vec3 pos = this->origin + glm::normalize(this->dir) * t;
+        const std::optional<glm::vec3> texCoords = splineMap.texture_coords(pos);
+        if (texCoords.has_value()) {
+            const int pixelX = int((round((glm::vec3(texCoords.value())).x * 1000.0) / 1001.0) * volume.width());
+            const int pixelY = int((round((glm::vec3(texCoords.value())).y * 1000.0) / 1001.0) * volume.height());
+            const int pixelZ = int((round((glm::vec3(texCoords.value())).z * 1000.0) / 1001.0) * volume.depth());
 
             if (pixelX >= 0 && pixelX < volume.width() && pixelY >= 0 && pixelY < volume.height() && pixelZ >= 0 && pixelZ < volume.depth()) {
                 const float color = volume(pixelX, pixelY, pixelZ);
