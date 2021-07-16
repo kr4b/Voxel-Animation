@@ -16,6 +16,8 @@ void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
       state->refreshRayEmitter = true;
       state->lastCameraRot = state->cameraRot;
       state->lastCameraOff = state->cameraOff;
+      state->lastX = state->prevX;
+      state->lastY = state->prevY;
       break;
     // Tab => toggle debug mode
     case GLFW_KEY_TAB: {
@@ -77,13 +79,13 @@ void state::scroll_callback(GLFWwindow *win, double, double y) {
 
 void state::motion_callback(GLFWwindow* win, double x, double y) {
   if (auto state = reinterpret_cast<State*>(glfwGetWindowUserPointer(win))) {
-    auto const lastX = state->lastX;
-    auto const lastY = state->lastY;
-    state->lastX = x;
-    state->lastY = y;
-    if (!std::isnan(lastX)) {
-      auto const deltaX = x - lastX;
-      auto const deltaY = y - lastY;
+    auto const prevX = state->prevX;
+    auto const prevY = state->prevY;
+    state->prevX = x;
+    state->prevY = y;
+    if (!std::isnan(prevX)) {
+      auto const deltaX = x - prevX;
+      auto const deltaY = y - prevY;
 
       if (state->inControl) {
         state->cameraRot =

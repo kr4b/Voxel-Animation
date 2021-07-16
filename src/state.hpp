@@ -18,6 +18,8 @@ struct State {
 
   double lastX = 0.0;
   double lastY = 0.0;
+  double prevX = 0.0;
+  double prevY = 0.0;
 
   bool inControl = false;
   bool debugMode = false;

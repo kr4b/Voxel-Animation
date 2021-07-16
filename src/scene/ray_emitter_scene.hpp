@@ -16,6 +16,26 @@
 class RayEmitter {
 public:
     void update(const Setup& setup, State& state, const SplineMap& splineMap, const Volume& volume) {
+        this->emit_rays(setup, state, splineMap, volume);
+    }
+
+    void render() const {
+        for (const Ray& ray : rays) {
+            ray.render();
+        }
+    }
+
+    void clean() {
+        for (Ray& ray : rays) {
+            ray.clean();
+        }
+        rays.clear();
+    }
+
+private:
+    std::vector<Ray> rays;
+
+    void emit_rays(const Setup& setup, State& state, const SplineMap& splineMap, const Volume& volume) {
         if (!state.refreshRayEmitter) {
             return;
         }
@@ -49,20 +69,4 @@ public:
 
         state.refreshRayEmitter = false;
     }
-
-    void render() const {
-        for (const Ray& ray : rays) {
-            ray.render();
-        }
-    }
-
-    void clean() {
-        for (Ray& ray : rays) {
-            ray.clean();
-        }
-        rays.clear();
-    }
-
-private:
-    std::vector<Ray> rays;
 };

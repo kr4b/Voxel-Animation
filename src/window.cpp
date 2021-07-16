@@ -1,5 +1,9 @@
 #include <iostream>
 
+#include <imgui.h>
+#include <backends/imgui_impl_opengl3.h>
+#include <backends/imgui_impl_glfw.h>
+
 #include "defaults.hpp"
 #include "window.hpp"
 
@@ -36,9 +40,19 @@ Window::Window(const int width, const int height, State* state) : frames(0) {
   glfwSwapInterval(1);
 
   this->prevTime = std::chrono::high_resolution_clock::now();
+
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+
+  ImGui_ImplGlfw_InitForOpenGL(this->window, true);
+  ImGui_ImplOpenGL3_Init();
+  ImGui::StyleColorsDark();
 }
 
 Window::~Window() {
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
   glfwDestroyWindow(this->window);
   glfwTerminate();
 }
@@ -55,8 +69,14 @@ bool Window::update(const State& state) {
     this->prevTime = now;
     this->frames = 0;
   }
+
   glfwSwapBuffers(this->window);
   glfwPollEvents();
+
+  ImGui_ImplOpenGL3_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+
   return !glfwWindowShouldClose(this->window);
 }
 
