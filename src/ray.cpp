@@ -124,21 +124,20 @@ void Ray::render() const {
 
 std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap& splineMap, const Volume& volume, const float step) {
     const glm::vec2 ts = this->intersect_ray_aabb(splineMap.aabb);
+    const float len = glm::length(this->dir);
 
-    for (float t = ts.x; t <= ts.y; t += step) {
+    for (float t = ts.x; t <= ts.y; t += step / len) {
         const glm::vec3 pos = this->origin + this->dir * t;
         const std::optional<glm::vec3> texCoords = splineMap.texture_coords(pos);
         if (texCoords.has_value()) {
             const glm::ivec3 voxel = glm::ivec3(texCoords.value() * glm::vec3(volume.width(), volume.height(), volume.depth()));
-            printf("%d, %d, %d\n", voxel.x, voxel.y, voxel.z);
 
             if (voxel.x >= 0 && voxel.x < volume.width() &&
                 voxel.y >= 0 && voxel.y < volume.height() &&
                 voxel.z >= 0 && voxel.z < volume.depth()) {
                 const float color = volume(voxel.x, voxel.y, voxel.z);
-                printf("%f\n", color);
 
-                if (color > 0.1f) return std::make_pair(glm::ivec3(voxel.x, voxel.y, voxel.z), t);
+                if (color > 0.25f) return std::make_pair(glm::ivec3(voxel.x, voxel.y, voxel.z), t);
             }
         }
     }
