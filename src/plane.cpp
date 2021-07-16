@@ -19,7 +19,7 @@ Plane::Plane(glm::vec3 center, glm::vec3 half_size) : center(center), half_size(
     this->span1 = v;
     this->span2 = p3 - p2;
 
-    this->size = half_size * glm::vec3(2.0f, 2.0f, 2.0f);
+    this->size = half_size * 2.0f;
 
     this->min = this->center - this->half_size;
     this->max = this->center + this->half_size;

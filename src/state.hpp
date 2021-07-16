@@ -24,7 +24,7 @@ struct State {
   bool refreshRayEmitter = true;
   bool displayRays = false;
 
-  size_t rayCount = 2;
+  size_t rayCount = 1;
   float rayGap = 0.1f;
 
   static constexpr float scrollMult = 0.1f;

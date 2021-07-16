@@ -31,7 +31,7 @@ const Plane createTopBase(const Plane& base, const Spline& spline) {
 
 const Spline transformSpline(const Plane& base, const Spline& spline) {
     return spline.transform(base.matrix).transform(
-        glm::mat4x4(
+        glm::mat4(
             1.0f, 0.0f, 0.0f, 0.0f,
             0.0f, 1.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 1.0f, 0.0f,

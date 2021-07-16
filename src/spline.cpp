@@ -8,9 +8,7 @@
 
 const int detail = 100;
 const glm::vec3 EPSILON = glm::vec3(1.0e-2f, 1.0e-2f, 1.0e-2f);
-const glm::vec3 ZERO_VECTOR = glm::vec3(0.0f);
-const glm::vec3 ONE_VECTOR = glm::vec3(1.0f);
-const glm::vec3 MAX_VALUE = glm::vec3(2.0f, 2.0f, 2.0f);
+const glm::vec3 MAX_VALUE = glm::vec3(2.0f);
 const glm::vec3 MIN_VALUE = -MAX_VALUE;
 
 Spline::Spline() {
@@ -118,7 +116,6 @@ void Spline::render() const {
 	glDrawArrays(GL_LINE_STRIP, 0, detail);
     glLineWidth(1.0f);
 
-
     glBindVertexArray(0);
 }
 
@@ -156,16 +153,14 @@ std::vector<float> Spline::get_extremes() const {
 }
 
 std::optional<float> Spline::intersect_spline_plane(const Plane &plane) const {
-    const glm::vec4 transformed_min = plane.inv_matrix * glm::vec4(plane.min.x, plane.min.y, plane.min.z, 1.0f);
-    const glm::vec4 transformed_max = plane.inv_matrix * glm::vec4(plane.max.x, plane.max.y, plane.max.z, 1.0f);
+    const glm::vec4 transformed_min = plane.inv_matrix * glm::vec4(plane.min, 1.0f);
+    const glm::vec4 transformed_max = plane.inv_matrix * glm::vec4(plane.max, 1.0f);
     Spline transformed_spline = this->transform(plane.inv_matrix);
 
     std::optional<glm::vec2> result = transformed_spline.intersect_spline_aabb(
-        glm::vec3(transformed_min.x, transformed_min.y, transformed_min.z),
-        glm::vec3(transformed_max.x, transformed_max.y, transformed_max.z)
+        glm::vec3(transformed_max.x, transformed_max.y, transformed_max.z),
+        glm::vec3(transformed_min.x, transformed_min.y, transformed_min.z)
     );
-
-    transformed_spline.clean();
 
     if (result.has_value()) return std::optional<float>((glm::vec2(result.value())).x);
     return std::nullopt;
@@ -233,11 +228,11 @@ bool Spline::calculate_near_far(const glm::vec3 t1, const glm::vec3 t2, const gl
     const glm::vec3 it1 = this->intersected_aabb(t1, aAABBMin, aAABBMax);
     const glm::vec3 it2 = this->intersected_aabb(t2, aAABBMin, aAABBMax);
 
-    const glm::vec3 nt1 = t1 * it1 + (ONE_VECTOR - it1) * MAX_VALUE;
-    const glm::vec3 nt2 = t2 * it2 + (ONE_VECTOR - it2) * MAX_VALUE;
+    const glm::vec3 nt1 = t1 * it1 + (1.0f - it1) * MAX_VALUE;
+    const glm::vec3 nt2 = t2 * it2 + (1.0f - it2) * MAX_VALUE;
 
-    const glm::vec3 ft1 = t1 * it1 + (ONE_VECTOR - it1) * MIN_VALUE;
-    const glm::vec3 ft2 = t2 * it2 + (ONE_VECTOR - it2) * MIN_VALUE;
+    const glm::vec3 ft1 = t1 * it1 + (1.0f - it1) * MIN_VALUE;
+    const glm::vec3 ft2 = t2 * it2 + (1.0f - it2) * MIN_VALUE;
 
     const glm::vec3 inear = glm::vec3(std::min(nt1.x, nt2.x), std::min(nt1.y, nt2.y), std::min(nt1.z, nt2.z));
     ts->x = std::min(ts->x, std::min(inear.x, std::min(inear.y, inear.z)));
@@ -253,7 +248,7 @@ glm::vec3 Spline::intersected_aabb(const glm::vec3 t, glm::vec3 aAABBMin, glm::v
     const glm::vec3 P1 = this->position_on_spline(t.y);
     const glm::vec3 P2 = this->position_on_spline(t.z);
 
-    const glm::vec3 resultT = step(ZERO_VECTOR, t) * step(t, ONE_VECTOR);
+    const glm::vec3 resultT = step(glm::vec3(0.0f), t) * step(t, glm::vec3(1.0f));
     const float result0 = point_in_aabb(P0, aAABBMin, aAABBMax);
     const float result1 = point_in_aabb(P1, aAABBMin, aAABBMax);
     const float result2 = point_in_aabb(P2, aAABBMin, aAABBMax);

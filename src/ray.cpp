@@ -79,7 +79,7 @@ void Ray::update_buffers(std::optional<std::pair<glm::ivec3, float>> intersectio
         const float t = intersection.value().second;
         const glm::vec3 pos = this->origin + this->dir * t;
         vertices[0] = pos.x; vertices[1] = pos.y; vertices[2] = pos.z;
-        colors[0] = 1.0f; colors[1] = 0.0f; colors[2] = 0.0f;
+        colors[0] = 1.0f; colors[1] = 1.0f; colors[2] = 1.0f;
 
         glBindVertexArray(this->pointVao);
 
@@ -126,17 +126,19 @@ std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap
     const glm::vec2 ts = this->intersect_ray_aabb(splineMap.aabb);
 
     for (float t = ts.x; t <= ts.y; t += step) {
-        const glm::vec3 pos = this->origin + glm::normalize(this->dir) * t;
+        const glm::vec3 pos = this->origin + this->dir * t;
         const std::optional<glm::vec3> texCoords = splineMap.texture_coords(pos);
         if (texCoords.has_value()) {
-            const int pixelX = int((round((glm::vec3(texCoords.value())).x * 1000.0) / 1001.0) * volume.width());
-            const int pixelY = int((round((glm::vec3(texCoords.value())).y * 1000.0) / 1001.0) * volume.height());
-            const int pixelZ = int((round((glm::vec3(texCoords.value())).z * 1000.0) / 1001.0) * volume.depth());
+            const glm::ivec3 voxel = glm::ivec3(texCoords.value() * glm::vec3(volume.width(), volume.height(), volume.depth()));
+            printf("%d, %d, %d\n", voxel.x, voxel.y, voxel.z);
 
-            if (pixelX >= 0 && pixelX < volume.width() && pixelY >= 0 && pixelY < volume.height() && pixelZ >= 0 && pixelZ < volume.depth()) {
-                const float color = volume(pixelX, pixelY, pixelZ);
+            if (voxel.x >= 0 && voxel.x < volume.width() &&
+                voxel.y >= 0 && voxel.y < volume.height() &&
+                voxel.z >= 0 && voxel.z < volume.depth()) {
+                const float color = volume(voxel.x, voxel.y, voxel.z);
+                printf("%f\n", color);
 
-                if (color > 0.1f) return std::make_pair(glm::ivec3(pixelX, pixelY, pixelZ), t);
+                if (color > 0.1f) return std::make_pair(glm::ivec3(voxel.x, voxel.y, voxel.z), t);
             }
         }
     }

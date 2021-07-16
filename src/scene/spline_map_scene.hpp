@@ -61,14 +61,14 @@ public:
     SplineMapScene(
         Window &window,
         State  &state,
-        Volume &volume,
+        Volume volume,
         Plane  base,
         Spline spline) :
         state(state),
         window(window),
         shader("assets/simple_vol.vert", "assets/spline_map.frag"),
         debugShader("assets/debug.vert", "assets/debug.frag"),
-        volume(volume),
+        volume(std::move(volume)),
         base(base),
         spline(spline),
         splineMap(this->base, this->spline)
@@ -156,7 +156,7 @@ protected:
     Window&    window;
     Setup      setup;
     Shader     shader, debugShader;
-    Volume&    volume;
+    Volume     volume;
     Plane      base;
     Spline     spline;
     SplineMap  splineMap;
