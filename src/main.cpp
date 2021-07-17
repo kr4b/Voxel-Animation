@@ -11,14 +11,10 @@
 int main() {
     State state;
     Window window(1280, 720, &state);
-    Pig scene(window, state);
+    Cube scene(window, state);
 
     while (window.update(state)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        ImGui::Begin("Test");
-        ImGui::Button("Test");
-        ImGui::End();
 
         scene.update();
         scene.render();

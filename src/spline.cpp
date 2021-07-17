@@ -156,6 +156,8 @@ std::optional<float> Spline::intersect_spline_plane(const Plane &plane) const {
     const glm::vec4 transformed_min = plane.inv_matrix * glm::vec4(plane.min, 1.0f);
     const glm::vec4 transformed_max = plane.inv_matrix * glm::vec4(plane.max, 1.0f);
     Spline transformed_spline = this->transform(plane.inv_matrix);
+    const glm::vec3 a = transformed_spline.position_on_spline(0.0f);
+    const glm::vec3 b = transformed_spline.position_on_spline(1.0f);
 
     std::optional<glm::vec2> result = transformed_spline.intersect_spline_aabb(
         glm::vec3(transformed_max.x, transformed_max.y, transformed_max.z),
@@ -228,11 +230,23 @@ bool Spline::calculate_near_far(const glm::vec3 t1, const glm::vec3 t2, const gl
     const glm::vec3 it1 = this->intersected_aabb(t1, aAABBMin, aAABBMax);
     const glm::vec3 it2 = this->intersected_aabb(t2, aAABBMin, aAABBMax);
 
-    const glm::vec3 nt1 = t1 * it1 + (1.0f - it1) * MAX_VALUE;
-    const glm::vec3 nt2 = t2 * it2 + (1.0f - it2) * MAX_VALUE;
+    glm::vec3 nt1 = t1 * it1 + (1.0f - it1) * MAX_VALUE;
+    nt1.x = isnan(nt1.x) ? MAX_VALUE.x : nt1.x;
+    nt1.y = isnan(nt1.y) ? MAX_VALUE.y : nt1.y;
+    nt1.z = isnan(nt1.z) ? MAX_VALUE.z : nt1.z;
+    glm::vec3 nt2 = t2 * it2 + (1.0f - it2) * MAX_VALUE;
+    nt2.x = isnan(nt2.x) ? MAX_VALUE.x : nt2.x;
+    nt2.y = isnan(nt2.y) ? MAX_VALUE.y : nt2.y;
+    nt2.z = isnan(nt2.z) ? MAX_VALUE.z : nt2.z;
 
-    const glm::vec3 ft1 = t1 * it1 + (1.0f - it1) * MIN_VALUE;
-    const glm::vec3 ft2 = t2 * it2 + (1.0f - it2) * MIN_VALUE;
+    glm::vec3 ft1 = t1 * it1 + (1.0f - it1) * MIN_VALUE;
+    ft1.x = isnan(ft1.x) ? MIN_VALUE.x : ft1.x;
+    ft1.y = isnan(ft1.y) ? MIN_VALUE.y : ft1.y;
+    ft1.z = isnan(ft1.z) ? MIN_VALUE.z : ft1.z;
+    glm::vec3 ft2 = t2 * it2 + (1.0f - it2) * MIN_VALUE;
+    ft2.x = isnan(ft2.x) ? MIN_VALUE.x : ft2.x;
+    ft2.y = isnan(ft2.y) ? MIN_VALUE.y : ft2.y;
+    ft2.z = isnan(ft2.z) ? MIN_VALUE.z : ft2.z;
 
     const glm::vec3 inear = glm::vec3(std::min(nt1.x, nt2.x), std::min(nt1.y, nt2.y), std::min(nt1.z, nt2.z));
     ts->x = std::min(ts->x, std::min(inear.x, std::min(inear.y, inear.z)));

@@ -16,6 +16,7 @@
 class RayEmitter {
 public:
     void update(const Setup& setup, State& state, const SplineMap& splineMap, const Volume& volume) {
+        this->show_ui();
         this->emit_rays(setup, state, splineMap, volume);
     }
 
@@ -68,5 +69,12 @@ private:
         }
 
         state.refreshRayEmitter = false;
+    }
+
+    void show_ui() {
+        ImGui::Begin("Test");
+        ImGui::Button("Test");
+        ImGui::End();
+
     }
 };
