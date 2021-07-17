@@ -11,13 +11,22 @@
 int main() {
     State state;
     Window window(1280, 720, &state);
-    Cube scene(window, state);
+    SplineMapScene* scenePointers[scenes::len] = { NULL };
+    int index = scenes::Cube;
 
     while (window.update(state)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        scene.update();
-        scene.render();
+        if (scenePointers[index] == NULL) {
+            scenePointers[index] = create_scene((scenes::Scene) index, window, state);
+        }
+
+        scenePointers[index]->update();
+        scenePointers[index]->render();
+
+        ImGui::Begin("Scene");
+        ImGui::ListBox("Scenes", &index, scenes::names, scenes::len);
+        ImGui::End();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

@@ -25,8 +25,8 @@ layout( std140, binding = 1 ) uniform UCamera {
 
 layout( binding = 0 ) uniform sampler3D texVol;
 
-uniform int steps;
-uniform float time;
+uniform float step_size;
+uniform float threshold;
 
 /// Structs
 struct Spline {
@@ -489,7 +489,7 @@ bool intersect_ray_aabb(in Ray ray, in AABB aabb, inout vec2 ts) {
     return ts.x <= ts.y && ts.y >= 0.0;
 }
 
-bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in float step_size, inout ivec3 texel, inout float t) {
+bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout ivec3 texel, inout float t) {
     vec2 ts;
     const bool result = intersect_ray_aabb(ray, spline_map.aabb, ts);
 
@@ -506,7 +506,7 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in floa
                 &&  texel.z >= 0 && texel.z < size.z) {
                     const float color = texelFetch(texVol, texel, 0).r;
 
-                    if (color > 0.25) {
+                    if (color > threshold) {
                         t = i;
                         return true;
                     }
@@ -600,7 +600,7 @@ void main() {
 
     ivec3 texel;
     float t;
-    if (walk_spline_map(ray, uSplineMap.spline_map, textureSize(texVol, 0), 0.025, texel, t)) {
+    if (walk_spline_map(ray, uSplineMap.spline_map, textureSize(texVol, 0), texel, t)) {
         // oColor = texelFetch(texVol, texel, 0).rrr;
         oColor = vec3(texel) / vec3(textureSize(texVol, 0));
     } else {

@@ -15,8 +15,8 @@
 
 class RayEmitter {
 public:
-    void update(const Setup& setup, State& state, const SplineMap& splineMap, const Volume& volume) {
-        this->show_ui();
+    void update(const Setup& setup, State& state, SplineMap& splineMap, const Volume& volume) {
+        this->show_ui(splineMap);
         this->emit_rays(setup, state, splineMap, volume);
     }
 
@@ -66,7 +66,7 @@ private:
 
                 Ray ray(cameraWorldPos, direction);
                 ray.init_vao();
-                ray.update_buffers(ray.walk_spline_map(splineMap, volume, 0.025f), glm::ivec3(volume.width(), volume.height(), volume.depth()));
+                ray.update_buffers(ray.walk_spline_map(splineMap, volume, splineMap.stepSize), glm::ivec3(volume.width(), volume.height(), volume.depth()));
                 rays.push_back(ray);
                 currentPos.x += this->rayGap;
             }
@@ -76,12 +76,14 @@ private:
         state.refreshRayEmitter = false;
     }
 
-    void show_ui() {
+    void show_ui(SplineMap& splineMap) {
         ImGui::Begin("Ray Emitter");
         ImGui::Checkbox("Show Rays", &this->showRays);
         ImGui::Checkbox("Show Intersections", &this->showIntersections);
         this->refreshRays |= ImGui::SliderFloat("Gap", &this->rayGap, 0.01f, 0.1f);
         this->refreshRays |= ImGui::SliderInt("Rays", &this->rayCount, 1, 100);
+        this->refreshRays |= ImGui::SliderFloat("Threshold", &splineMap.threshold, 0.0f, 1.0f);
+        this->refreshRays |= ImGui::SliderFloat("Step size", &splineMap.stepSize, 1e-3f, 1.0f);
         ImGui::End();
     }
 };

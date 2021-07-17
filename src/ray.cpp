@@ -139,7 +139,7 @@ std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap
                 voxel.z >= 0 && voxel.z < volume.depth()) {
                 const float color = volume(voxel.x, voxel.y, voxel.z);
 
-                if (color > 0.25f) return std::make_pair(glm::ivec3(voxel.x, voxel.y, voxel.z), t);
+                if (color > splineMap.threshold) return std::make_pair(glm::ivec3(voxel.x, voxel.y, voxel.z), t);
             }
         }
     }

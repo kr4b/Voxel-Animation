@@ -128,6 +128,8 @@ public:
     void render() {
         get_shader().use();
         glBindBufferBase(GL_UNIFORM_BUFFER, 2, splineMapUniform);
+        get_shader().uniformFloat("threshold", get_spline_map().threshold);
+        get_shader().uniformFloat("step_size", get_spline_map().stepSize);
         get_volume().bind();
         get_setup().start_render(get_shader());
         if (get_state().debugMode) {

@@ -19,6 +19,10 @@ public:
     glUniformMatrix4fv(glGetUniformLocation(this->program, name), 1, GL_FALSE, glm::value_ptr(matrix));
   }
 
+  inline void uniformFloat(const char* name, float value) const {
+    glUniform1f(glGetUniformLocation(this->program, name), value);
+  }
+
 private:
   GLuint program;
 };
