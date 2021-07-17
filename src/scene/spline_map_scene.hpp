@@ -117,11 +117,22 @@ protected:
         glNamedBufferStorage(splineMapUniform, sizeof(SplineMapUniform), &uniform, GL_NONE);
     };
 
+private:
+    bool showAxis, showOutline;
+
+    void show_ui() {
+        ImGui::Begin("Debug");
+        ImGui::Checkbox("Show Axis", &this->showAxis);
+        ImGui::Checkbox("Show Outline", &this->showOutline);
+        ImGui::End();
+    }
+
 public:
     void update() {
         get_setup().update(get_window(), get_state());
         if (get_state().debugMode) {
             get_ray_emitter().update(get_setup(), get_state(), get_spline_map(), get_volume());
+            show_ui();
         }
     }
 
@@ -135,8 +146,8 @@ public:
         if (get_state().debugMode) {
             get_debug_shader().use();
             get_setup().debug(get_debug_shader());
-            get_axis().render(get_setup());
-            get_spline_map().render();
+            if (this->showAxis) get_axis().render(get_setup());
+            if (this->showOutline) get_spline_map().render();
             get_ray_emitter().render();
         }
         get_setup().end_render();

@@ -2,22 +2,6 @@
 
 #include "spline_map_scene.hpp"
 
-namespace scenes {
-    enum Scene {
-        Cube,
-        Pig,
-        Bonsai
-    };
-
-    static const char* const names[] = {
-        "cube",
-        "pig",
-        "bonsai",
-    };
-
-    static const int len = sizeof(names) / sizeof(names[0]);
-}
-
 class Cube : public SplineMapScene {
 public:
     Cube(Window &window, State &state) :
@@ -72,6 +56,22 @@ public:
             glm::vec3(0.0f, 0.0f, -2.0f)))
     {};
 };
+
+namespace scenes {
+    enum Scene {
+        Cube,
+        Pig,
+        Bonsai
+    };
+
+    static const char* const names[] = {
+        "cube",
+        "pig",
+        "bonsai",
+    };
+
+    static const int len = sizeof(names) / sizeof(names[0]);
+}
 
 static SplineMapScene* create_scene(scenes::Scene scene, Window& window, State& state) {
     switch (scene) {
