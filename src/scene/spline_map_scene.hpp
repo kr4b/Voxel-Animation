@@ -120,7 +120,9 @@ protected:
 public:
     void update() {
         get_setup().update(get_window(), get_state());
-        get_ray_emitter().update(get_setup(), get_state(), get_spline_map(), get_volume());
+        if (get_state().debugMode) {
+            get_ray_emitter().update(get_setup(), get_state(), get_spline_map(), get_volume());
+        }
     }
 
     void render() {

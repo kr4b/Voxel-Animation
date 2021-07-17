@@ -104,14 +104,16 @@ glm::vec2 Ray::intersect_ray_aabb(const AABB& aabb) const {
     return glm::vec2(near, far);
 }
 
-void Ray::render() const {
+void Ray::render(bool showRays, bool showIntersections) const {
     glBindVertexArray(this->lineVao);
 
-    glLineWidth(3.0f);
-    glDrawArrays(GL_LINE_STRIP, 0, 2);
-    glLineWidth(1.0f);
+    if (showRays) {
+        glLineWidth(3.0f);
+        glDrawArrays(GL_LINE_STRIP, 0, 2);
+        glLineWidth(1.0f);
+    }
 
-    if (this->intersect) {
+    if (this->intersect && showIntersections) {
         glBindVertexArray(this->pointVao);
 
         glPointSize(10.0f);
@@ -131,7 +133,6 @@ std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap
         const std::optional<glm::vec3> texCoords = splineMap.texture_coords(pos);
         if (texCoords.has_value()) {
             const glm::ivec3 voxel = glm::ivec3(texCoords.value() * glm::vec3(volume.width(), volume.height(), volume.depth()));
-            printf("%d, %d, %d\n", voxel.x, voxel.y, voxel.z);
 
             if (voxel.x >= 0 && voxel.x < volume.width() &&
                 voxel.y >= 0 && voxel.y < volume.height() &&

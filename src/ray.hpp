@@ -22,7 +22,7 @@ public:
 
     void init_vao();
     void update_buffers(std::optional<std::pair<glm::ivec3, float>>, const glm::ivec3);
-    void render() const;
+    void render(bool, bool) const;
     void clean();
 
 private:

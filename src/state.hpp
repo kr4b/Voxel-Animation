@@ -24,10 +24,6 @@ struct State {
   bool inControl = false;
   bool debugMode = false;
   bool refreshRayEmitter = true;
-  bool displayRays = false;
-
-  size_t rayCount = 1;
-  float rayGap = 0.1f;
 
   static constexpr float scrollMult = 0.1f;
   static constexpr float motionRotMult = 0.00006f;

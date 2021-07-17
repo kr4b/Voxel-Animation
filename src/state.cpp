@@ -29,30 +29,6 @@ void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
       state->cameraRot = state->lastCameraRot;
       state->cameraOff = state->lastCameraOff;
       break;
-    // Up arrow => increase debug spline count
-    case GLFW_KEY_UP:
-      state->refreshRayEmitter = true;
-      state->rayCount += 1;
-      break;
-      // Up arrow => decrease debug spline count
-    case GLFW_KEY_DOWN:
-      state->refreshRayEmitter = true;
-      state->rayCount = glm::max(1, int(state->rayCount) - 1);
-      break;
-      // Up arrow => increase debug spline distance
-    case GLFW_KEY_RIGHT:
-      state->refreshRayEmitter = true;
-      state->rayGap = glm::min(1.0f, state->rayGap + 0.01f);
-      break;
-      // Up arrow => decrease debug spline distance
-    case GLFW_KEY_LEFT:
-      state->refreshRayEmitter = true;
-      state->rayGap = glm::max(0.01f, state->rayGap - 0.01f);
-      break;
-
-    case GLFW_KEY_R:
-      state->displayRays = !state->displayRays;
-      break;
     }
 
     return;
