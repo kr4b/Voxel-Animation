@@ -11,7 +11,7 @@ void error_callback(int error, const char* description) {
   printf("GLFW Error: %s\n", description);
 }
 
-Window::Window(const int width, const int height, State* state) : frames(0) {
+Window::Window(const int width, const int height) : frames(0) {
   if (!glfwInit()) {
     throw std::runtime_error("Failed to initialize GLFW");
   }
@@ -29,8 +29,6 @@ Window::Window(const int width, const int height, State* state) : frames(0) {
   if (!gladLoadGLLoader((GLADloadproc) glfwGetProcAddress)) {
     throw std::runtime_error("Failed to initialize OpenGL context");
   }
-
-  glfwSetWindowUserPointer(this->window, (void*) state);
 
   glfwSetKeyCallback(this->window, state::key_callback);
   glfwSetMouseButtonCallback(this->window, state::button_callback);
@@ -57,14 +55,22 @@ Window::~Window() {
   glfwTerminate();
 }
 
-bool Window::update(const State& state) {
+bool Window::update(State* state) {
+  glfwSetWindowUserPointer(this->window, (void*) state);
+
   this->frames += 1;
   auto now = std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> timePassed = now - this->prevTime;
   
   if (int(timePassed.count()) > 1000) {
     char newTitle[sizeof(windowDefaults.name) + 32];
-    snprintf(newTitle, sizeof(newTitle), "%s%s - %d FPS", windowDefaults.name, state.debugMode ? " - Debug" : "", frames);
+    snprintf(
+      newTitle,
+      sizeof(newTitle),
+      "%s%s - %d FPS",
+      windowDefaults.name,
+      state && state->debugMode ? " - Debug" : "", frames
+    );
     glfwSetWindowTitle(this->window, newTitle);
     this->prevTime = now;
     this->frames = 0;

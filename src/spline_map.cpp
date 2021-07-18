@@ -49,27 +49,27 @@ SplineMap::SplineMap(const Plane& base, const Spline& spline) :
     this->spline.update_buffers();
     this->topBase.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
     this->base.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
-    edgeSplines.push_back(this->spline.transform(glm::mat4x4(
+    edgeSplines[0] = this->spline.transform(glm::mat4x4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        this->base.span1.x, this->base.span1.y, this->base.span1.z, 1.0f)));
-    edgeSplines.back().init_vao();
-    edgeSplines.back().update_buffers();
-    edgeSplines.push_back(this->spline.transform(glm::mat4x4(
+        this->base.span1.x, this->base.span1.y, this->base.span1.z, 1.0f));
+    edgeSplines[0].init_vao();
+    edgeSplines[0].update_buffers();
+    edgeSplines[1] = this->spline.transform(glm::mat4x4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        this->base.span2.x, this->base.span2.y, this->base.span2.z, 1.0f)));
-    edgeSplines.back().init_vao();
-    edgeSplines.back().update_buffers();
-    edgeSplines.push_back(this->spline.transform(glm::mat4x4(
+        this->base.span2.x, this->base.span2.y, this->base.span2.z, 1.0f));
+    edgeSplines[1].init_vao();
+    edgeSplines[1].update_buffers();
+    edgeSplines[2] = this->spline.transform(glm::mat4x4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        this->base.size.x, this->base.size.y, this->base.size.z, 1.0f)));
-    edgeSplines.back().init_vao();
-    edgeSplines.back().update_buffers();
+        this->base.size.x, this->base.size.y, this->base.size.z, 1.0f));
+    edgeSplines[2].init_vao();
+    edgeSplines[2].update_buffers();
 }
 
 std::optional<glm::vec3> SplineMap::texture_coords(const glm::vec3 pos) const {

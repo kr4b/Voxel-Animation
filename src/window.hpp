@@ -10,10 +10,10 @@
 
 class Window {
 public:
-  Window(const int width, const int height, State* state);
+  Window(const int width, const int height);
   ~Window();
 
-  bool update(const State& state);
+  bool update(State* state);
 
   std::pair<int, int> get_size() const;
 

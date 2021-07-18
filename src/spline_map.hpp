@@ -15,8 +15,6 @@ public:
     Plane base;
     Spline spline;
     AABB aabb;
-    float threshold = 0.25f;
-    float stepSize = 0.025f;
     const float sizeSquared;
 
     SplineMap(const Plane&, const Spline&);
@@ -27,6 +25,6 @@ public:
     void clean();
 
 private:
-    std::vector<Spline> edgeSplines;
+    Spline edgeSplines[3];
     Plane topBase;
 };

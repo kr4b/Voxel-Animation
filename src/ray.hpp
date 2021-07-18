@@ -18,7 +18,7 @@ public:
     Ray(const glm::vec3, const glm::vec3);
 
     glm::vec2 intersect_ray_aabb(const AABB&) const;
-    std::optional<std::pair<glm::ivec3, float>> walk_spline_map(const SplineMap&, const Volume&, const float);
+    std::optional<std::pair<glm::ivec3, float>> walk_spline_map(const SplineMap&, const Volume&, const float, const float);
 
     void init_vao();
     void update_buffers(std::optional<std::pair<glm::ivec3, float>>, const glm::ivec3);

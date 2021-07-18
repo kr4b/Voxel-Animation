@@ -9,8 +9,9 @@
 #include "scene/debug_scene.hpp"
 
 int main() {
-    State state;
-    Window window(1280, 720, &state);
+    State* state = NULL;
+    Window window(1280, 720);
+    Setup setup;
     SplineMapScene* scenePointers[scenes::len] = { NULL };
     int index = scenes::Cube;
 
@@ -18,8 +19,10 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         if (scenePointers[index] == NULL) {
-            scenePointers[index] = create_scene((scenes::Scene) index, window, state);
+            scenePointers[index] = create_scene((scenes::Scene) index, window, setup);
         }
+
+        state = &scenePointers[index]->get_state();
 
         scenePointers[index]->update();
         scenePointers[index]->render();

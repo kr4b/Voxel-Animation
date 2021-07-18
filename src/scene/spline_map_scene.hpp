@@ -60,18 +60,23 @@ class SplineMapScene {
 public:
     SplineMapScene(
         Window &window,
-        State  &state,
+        Setup& setup,
         Volume volume,
         Plane  base,
-        Spline spline) :
-        state(state),
+        glm::vec3 offset,
+        glm::vec3 tangent0,
+        glm::vec3 tangent1) :
         window(window),
+        setup(setup),
         shader("assets/simple_vol.vert", "assets/spline_map.frag"),
         debugShader("assets/debug.vert", "assets/debug.frag"),
         volume(std::move(volume)),
         base(base),
-        spline(spline),
-        splineMap(this->base, this->spline)
+        spline(Spline::with_tangents(glm::vec3(0.0f), offset, tangent0, tangent1)),
+        splineMap(this->base, this->spline),
+        offset(offset),
+        tangent0(tangent0),
+        tangent1(tangent1)
     {
         init();
     };
@@ -85,7 +90,17 @@ public:
 
 protected:
     void init() {
-        SplineMapUniform uniform = SplineMapUniform {
+        const SplineMapUniform uniform = create_uniform();
+
+        glCreateBuffers(1, &splineMapUniform);
+        glNamedBufferStorage(splineMapUniform, sizeof(SplineMapUniform), &uniform, GL_DYNAMIC_STORAGE_BIT);
+    };
+
+private:
+    bool showAxis, showOutline;
+
+    SplineMapUniform create_uniform() {
+        return SplineMapUniform {
             AABBUniform {
                 this->splineMap.aabb.min,
                 this->splineMap.aabb.max
@@ -112,26 +127,49 @@ protected:
             this->splineMap.sizeSquared,
             this->splineMap.sizeSquared
         };
-
-        glCreateBuffers(1, &splineMapUniform);
-        glNamedBufferStorage(splineMapUniform, sizeof(SplineMapUniform), &uniform, GL_NONE);
-    };
-
-private:
-    bool showAxis, showOutline;
+    }
 
     void show_ui() {
+        bool splineMapChange = false;
         ImGui::Begin("Debug");
         ImGui::Checkbox("Show Axis", &this->showAxis);
         ImGui::Checkbox("Show Outline", &this->showOutline);
+        ImGui::PushID("Offset");
+        ImGui::Text("Offset:");
+        splineMapChange |= ImGui::DragFloat("x", &this->offset.x);
+        splineMapChange |= ImGui::DragFloat("y", &this->offset.y);
+        splineMapChange |= ImGui::DragFloat("z", &this->offset.z);
+        ImGui::PopID();
+        ImGui::PushID("Tangent0");
+        ImGui::Text("Tangent 0:");
+        splineMapChange |= ImGui::DragFloat("x", &this->tangent0.x);
+        splineMapChange |= ImGui::DragFloat("y", &this->tangent0.y);
+        splineMapChange |= ImGui::DragFloat("z", &this->tangent0.z);
+        ImGui::PopID();
+        ImGui::PushID("Tangent1");
+        ImGui::Text("Tangent 1:");
+        splineMapChange |= ImGui::DragFloat("x", &this->tangent1.x);
+        splineMapChange |= ImGui::DragFloat("y", &this->tangent1.y);
+        splineMapChange |= ImGui::DragFloat("z", &this->tangent1.z);
+        ImGui::PopID();
         ImGui::End();
+
+        if (splineMapChange) {
+            this->spline.clean();
+            this->spline = Spline::with_tangents(glm::vec3(0.0f), this->offset, this->tangent0, this->tangent1);
+            this->splineMap.clean();
+            const SplineMap splineMap = SplineMap(this->base, this->spline);
+            std::memcpy(&this->splineMap, &splineMap, sizeof(SplineMap));
+            const SplineMapUniform uniform = create_uniform();
+            glNamedBufferSubData(this->splineMapUniform, 0, sizeof(SplineMapUniform), &uniform);
+        }
     }
 
 public:
     void update() {
         get_setup().update(get_window(), get_state());
         if (get_state().debugMode) {
-            get_ray_emitter().update(get_setup(), get_state(), get_spline_map(), get_volume());
+            get_ray_emitter().update(get_setup(), get_state(), get_spline_map(), get_volume(), &this->threshold, &this->stepSize);
             show_ui();
         }
     }
@@ -139,8 +177,8 @@ public:
     void render() {
         get_shader().use();
         glBindBufferBase(GL_UNIFORM_BUFFER, 2, splineMapUniform);
-        get_shader().uniformFloat("threshold", get_spline_map().threshold);
-        get_shader().uniformFloat("step_size", get_spline_map().stepSize);
+        get_shader().uniformFloat("threshold", this->threshold);
+        get_shader().uniformFloat("step_size", this->stepSize);
         get_volume().bind();
         get_setup().start_render(get_shader());
         if (get_state().debugMode) {
@@ -167,9 +205,9 @@ public:
 
 protected:
     GLuint     splineMapUniform;
-    State&     state;
+    State      state;
     Window&    window;
-    Setup      setup;
+    Setup&     setup;
     Shader     shader, debugShader;
     Volume     volume;
     Plane      base;
@@ -177,4 +215,7 @@ protected:
     SplineMap  splineMap;
     Axis       axis;
     RayEmitter rayEmitter;
+    glm::vec3  offset, tangent0, tangent1;
+    float threshold = 0.25f;
+    float stepSize = 0.025f;
 };

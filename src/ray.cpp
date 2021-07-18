@@ -124,11 +124,11 @@ void Ray::render(bool showRays, bool showIntersections) const {
     glBindVertexArray(0);
 }
 
-std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap& splineMap, const Volume& volume, const float step) {
+std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap& splineMap, const Volume& volume, const float threshold, const float stepSize) {
     const glm::vec2 ts = this->intersect_ray_aabb(splineMap.aabb);
     const float len = glm::length(this->dir);
 
-    for (float t = ts.x; t <= ts.y; t += step / len) {
+    for (float t = ts.x; t <= ts.y; t += stepSize / len) {
         const glm::vec3 pos = this->origin + this->dir * t;
         const std::optional<glm::vec3> texCoords = splineMap.texture_coords(pos);
         if (texCoords.has_value()) {
@@ -139,7 +139,7 @@ std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap
                 voxel.z >= 0 && voxel.z < volume.depth()) {
                 const float color = volume(voxel.x, voxel.y, voxel.z);
 
-                if (color > splineMap.threshold) return std::make_pair(glm::ivec3(voxel.x, voxel.y, voxel.z), t);
+                if (color > threshold) return std::make_pair(glm::ivec3(voxel.x, voxel.y, voxel.z), t);
             }
         }
     }
