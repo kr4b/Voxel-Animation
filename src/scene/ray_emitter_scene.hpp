@@ -35,8 +35,9 @@ public:
 
 private:
     std::vector<Ray> rays;
-    bool showRays, showIntersections;
-    bool refreshRays;
+    bool showRays = true;
+    bool showIntersections = true;
+    bool refreshRays = false;
     int rayCount = 1;
     float rayGap = 0.05f;
 

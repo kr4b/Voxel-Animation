@@ -47,6 +47,7 @@ SplineMap::SplineMap(const Plane& base, const Spline& spline) :
 
     this->spline.init_vao();
     this->spline.update_buffers();
+    this->spline.with_transform(this->base);
     this->topBase.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
     this->base.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
     edgeSplines[0] = this->spline.transform(glm::mat4x4(
@@ -73,9 +74,9 @@ SplineMap::SplineMap(const Plane& base, const Spline& spline) :
 }
 
 std::optional<glm::vec3> SplineMap::texture_coords(const glm::vec3 pos) const {
-    const Plane plane(pos, this->base.size);
+    const glm::vec4 p = this->base.inv_matrix * glm::vec4(pos, 1.0f);
+    std::optional<float> result = this->spline.intersect_spline_plane(glm::vec3(p.x, p.y, p.z));
 
-    std::optional<float> result = this->spline.intersect_spline_plane(plane);
     if (result.has_value()) {
         const float t = result.value();
         const glm::vec3 edgePos1 = this->spline.position_on_spline(t);

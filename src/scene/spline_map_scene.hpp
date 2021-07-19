@@ -40,6 +40,8 @@ struct PlaneUniform
     alignas(16) glm::vec3 span2;
     alignas(16) glm::vec3 min;
     alignas(16) glm::vec3 max;
+    alignas(16) glm::vec3 transformedMin;
+    alignas(16) glm::vec3 transformedMax;
 
     alignas(16) glm::mat4x4 matrix;
     alignas(16) glm::mat4x4 inv_matrix;
@@ -50,6 +52,7 @@ struct SplineMapUniform
     alignas(16) AABBUniform aabb;
     alignas(16) PlaneUniform base;
     alignas(16) SplineUniform spline;
+    alignas(16) SplineUniform transformedSpline;
 
     alignas(16) float size_squared;
     alignas(16) float width;
@@ -114,6 +117,8 @@ private:
                 this->splineMap.base.span2,
                 this->splineMap.base.min,
                 this->splineMap.base.max,
+                this->splineMap.base.transformedMin,
+                this->splineMap.base.transformedMax,
                 this->splineMap.base.matrix,
                 this->splineMap.base.inv_matrix
             },
@@ -122,6 +127,12 @@ private:
                 this->splineMap.spline.b,
                 this->splineMap.spline.c,
                 this->splineMap.spline.d
+            },
+            SplineUniform {
+                this->splineMap.spline.transformedSpline->a,
+                this->splineMap.spline.transformedSpline->b,
+                this->splineMap.spline.transformedSpline->c,
+                this->splineMap.spline.transformedSpline->d
             },
             this->splineMap.sizeSquared,
             this->splineMap.sizeSquared,

@@ -57,6 +57,7 @@ struct Plane {
     vec3 normal;
     vec3 span1, span2;
     vec3 min, max;
+    vec3 transformedMin, transformedMax;
 
     mat4 matrix;
     mat4 inv_matrix;
@@ -72,6 +73,7 @@ struct SplineMap {
     AABB aabb;
     Plane base;
     Spline spline;
+    Spline transformedSpline;
 
     float size_squared;
 
@@ -101,10 +103,7 @@ Spline spline_with_control_points(in vec3 point1, in vec3 point2, in vec3 contro
 Spline spline_transform(in Spline spline, in mat4 matrix);
 void spline_get_extremes(in Spline spline, float extremes[8]);
 vec3 position_on_spline(in Spline spline, in float t);
-bool intersect_spline_aabb(in Spline spline, in AABB aabb, inout vec2 ts);
-bool intersect_spline_plane(in Spline spline, in Plane plane, inout float t);
-bool calculate_near_far(in Spline spline, in AABB aabb, in vec3 t1, in vec3 t2, inout vec2 ts);
-vec3 intersected_aabb(in Spline spline, in AABB aabb, in vec3 t);
+bool intersect_spline_plane(in Spline spline, in vec4 p, inout float t);
 
 ////////////////////////////////////
 //   _____        _      _        // 
@@ -249,104 +248,27 @@ vec3 position_on_spline(in Spline spline, in float t) {
     return spline.a * t * t * t + spline.b * t * t + spline.c * t + spline.d;
 }
 
-bool intersect_spline_aabb(in Spline spline, in AABB aabb, inout vec2 ts) {
+bool intersect_spline_plane(in Spline spline, in vec4 p, inout float t) {
     const vec3 conversion = -spline.b / (3.0 * spline.a);
+    Cubic cubic = cubic_constructor(
+        spline.a.y,
+        spline.b.y,
+        spline.c.y,
+        spline.d.y - p.y
+    );
 
-    Cubic cubic_min_x = cubic_constructor(spline.a.x, spline.b.x, spline.c.x, spline.d.x - aabb.min.x);
-    Cubic cubic_min_y = cubic_constructor(spline.a.y, spline.b.y, spline.c.y, spline.d.y - aabb.min.y);
-    Cubic cubic_min_z = cubic_constructor(spline.a.z, spline.b.z, spline.c.z, spline.d.z - aabb.min.z);
-    Cubic cubic_max_x = cubic_constructor(spline.a.x, spline.b.x, spline.c.x, spline.d.x - aabb.max.x);
-    Cubic cubic_max_y = cubic_constructor(spline.a.y, spline.b.y, spline.c.y, spline.d.y - aabb.max.y);
-    Cubic cubic_max_z = cubic_constructor(spline.a.z, spline.b.z, spline.c.z, spline.d.z - aabb.max.z);
-
-    const vec3 t1 = conversion + vec3(
-        second_root(cubic_min_x),
-        second_root(cubic_min_y),
-        second_root(cubic_min_z));
-    const vec3 t2 = conversion + vec3(
-        second_root(cubic_max_x),
-        second_root(cubic_max_y),
-        second_root(cubic_max_z));
-
-    ts = vec2(2.0, -2.0);
-    bool result = calculate_near_far(spline, aabb, t1, t2, ts);
-
-    if (!result) {
-        const vec3 first_t1 = conversion + vec3(
-            first_root(cubic_min_x),
-            first_root(cubic_min_y),
-            first_root(cubic_min_z));
-        const vec3 first_t2 = conversion + vec3(
-            first_root(cubic_max_x),
-            first_root(cubic_max_y),
-            first_root(cubic_max_z));
-
-        result = calculate_near_far(spline, aabb, first_t1, first_t2, ts);
-
-        if (!result) {
-            const vec3 third_t1 = conversion + vec3(
-                third_root(cubic_min_x),
-                third_root(cubic_min_y),
-                third_root(cubic_min_z));
-            const vec3 third_t2 = conversion + vec3(
-                third_root(cubic_max_x),
-                third_root(cubic_max_y),
-                third_root(cubic_max_z));
-
-            result = calculate_near_far(spline, aabb, third_t1, third_t2, ts);
+    t = conversion.y + first_root(cubic);
+    if (t < 0.0 || t > 1.0) {
+        t = conversion.y + second_root(cubic);
+        if (t < 0.0 || t > 1.0) {
+            t = conversion.y + third_root(cubic);
+            if (t < 0.0 || t > 1.0) {
+                return false;
+            }
         }
     }
 
-    return result;
-}
-
-bool intersect_spline_plane(in Spline spline, in Plane plane, inout float t) {
-    const vec3 transformed_min = (plane.inv_matrix * vec4(plane.min, 1.0)).xyz;
-    const vec3 transformed_max = (plane.inv_matrix * vec4(plane.max, 1.0)).xyz;
-    const Spline transformed_spline = spline_transform(spline, plane.inv_matrix);
-
-    AABB aabb = aabb_constructor(transformed_min, transformed_max);
-    vec2 ts;
-
-    const bool result = intersect_spline_aabb(transformed_spline, aabb, ts);
-    t = ts.x;
-
-    return result;
-}
-
-bool calculate_near_far(in Spline spline, in AABB aabb, in vec3 t1, in vec3 t2, inout vec2 ts) {
-    const vec3 it1 = intersected_aabb(spline, aabb, t1);
-    const vec3 it2 = intersected_aabb(spline, aabb, t2);
-
-    const vec3 nt1 = t1 * it1 + (1.0 - it1) * MAX_VALUE;
-    const vec3 nt2 = t2 * it2 + (1.0 - it2) * MAX_VALUE;
-
-    const vec3 ft1 = t1 * it1 + (1.0 - it1) * MIN_VALUE;
-    const vec3 ft2 = t2 * it2 + (1.0 - it2) * MIN_VALUE;
-
-    const vec3 inear = min(nt1, nt2);
-    const vec3 ifar  = max(ft1, ft2);
-
-    ts.x = min(ts.x, min(inear.x, min(inear.y, inear.z)));
-    ts.y = max(ts.y, max(ifar.x,  max(ifar.y, ifar.z)));
-
-    return ts.x <= ts.y && ts.y >= 0.0;
-}
-
-vec3 intersected_aabb(in Spline spline, in AABB aabb, in vec3 t) {
-    const vec3 P0 = position_on_spline(spline, t.x);
-    const vec3 P1 = position_on_spline(spline, t.y);
-    const vec3 P2 = position_on_spline(spline, t.z);
-
-    const vec3 resultT = step(vec3(0.0), t) * step(t, vec3(1.0));
-    const vec3 result0 = step(aabb.min - EPSILON, P0) * step(P0, aabb.max + EPSILON);
-    const vec3 result1 = step(aabb.min - EPSILON, P1) * step(P1, aabb.max + EPSILON);
-    const vec3 result2 = step(aabb.min - EPSILON, P2) * step(P2, aabb.max + EPSILON);
-
-    return vec3(
-        resultT.x * result0.x * result0.y * result0.z,
-        resultT.y * result1.x * result1.y * result1.z,
-        resultT.z * result2.x * result2.y * result2.z);
+    return true;
 }
 
 // Cubic
@@ -557,10 +479,10 @@ AABB create_encompassing_aabb(in Plane base, in Spline spline) {
 }
 
 bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords) {
-    const Plane plane = plane_constructor(pos, spline_map.base.size);
+    const vec4 p = spline_map.base.inv_matrix * vec4(pos, 1.0);
     float t;
 
-    if (intersect_spline_plane(spline_map.spline, plane, t)) {
+    if (intersect_spline_plane(spline_map.transformedSpline, p, t)) {
         const vec3 edge1 = position_on_spline(spline_map.spline, t);
         const vec3 edge2 = edge1 + spline_map.base.size;
         const vec3 diff1 = pos - edge1;

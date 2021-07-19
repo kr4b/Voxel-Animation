@@ -60,6 +60,9 @@ Plane::Plane(glm::vec3 center, glm::vec3 half_size) : center(center), half_size(
     );
     */
     this->inv_matrix = glm::inverse(this->matrix);
+
+    this->transformedMin = this->inv_matrix * glm::vec4(this->min, 1.0f);
+    this->transformedMax = this->inv_matrix * glm::vec4(this->max, 1.0f);
 }
 
 void Plane::init_vao(const glm::vec3 color) {

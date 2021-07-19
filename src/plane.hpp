@@ -27,6 +27,8 @@ public:
     glm::mat4x4 matrix;
     glm::mat4x4 inv_matrix;
 
+    glm::vec3 transformedMin, transformedMax;
+
     Plane(glm::vec3 center, glm::vec3 half_size);
 
     void init_vao(const glm::vec3);
@@ -42,6 +44,7 @@ public:
     }
 
     std::optional<glm::vec2> intersect(const Ray&) const;
+
 private:
     GLuint vao;
     GLuint buffers[2];
