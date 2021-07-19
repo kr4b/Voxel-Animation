@@ -74,9 +74,7 @@ public:
         shader("assets/simple_vol.vert", "assets/spline_map.frag"),
         debugShader("assets/debug.vert", "assets/debug.frag"),
         volume(std::move(volume)),
-        base(base),
-        spline(Spline::with_tangents(glm::vec3(0.0f), offset, tangent0, tangent1)),
-        splineMap(this->base, this->spline),
+        splineMap(base, Spline::with_tangents(glm::vec3(0.0f), offset, tangent0, tangent1)),
         offset(offset),
         tangent0(tangent0),
         tangent1(tangent1)
@@ -86,8 +84,6 @@ public:
 
     ~SplineMapScene() {
         glDeleteBuffers(1, &this->splineMapUniform);
-        this->spline.clean();
-        this->base.clean();
         this->splineMap.clean();
     }
 
@@ -166,10 +162,9 @@ private:
         ImGui::End();
 
         if (splineMapChange) {
-            this->spline.clean();
-            this->spline = Spline::with_tangents(glm::vec3(0.0f), this->offset, this->tangent0, this->tangent1);
+            const Spline spline = Spline::with_tangents(glm::vec3(0.0f), this->offset, this->tangent0, this->tangent1);
             this->splineMap.clean();
-            const SplineMap splineMap = SplineMap(this->base, this->spline);
+            const SplineMap splineMap = SplineMap(this->splineMap.base, spline);
             std::memcpy(&this->splineMap, &splineMap, sizeof(SplineMap));
             const SplineMapUniform uniform = create_uniform();
             glNamedBufferSubData(this->splineMapUniform, 0, sizeof(SplineMapUniform), &uniform);
@@ -208,8 +203,6 @@ public:
     inline virtual Shader&     get_shader()       { return shader;      };
     inline virtual Shader&     get_debug_shader() { return debugShader; };
     inline virtual Volume&     get_volume()       { return volume;      };
-    inline virtual Plane&      get_base()         { return base;        };
-    inline virtual Spline&     get_spline()       { return spline;      };
     inline virtual SplineMap&  get_spline_map()   { return splineMap;   };
     inline virtual Axis&       get_axis()         { return axis;        };
     inline virtual RayEmitter& get_ray_emitter()  { return rayEmitter;  };
@@ -221,8 +214,6 @@ protected:
     Setup&     setup;
     Shader     shader, debugShader;
     Volume     volume;
-    Plane      base;
-    Spline     spline;
     SplineMap  splineMap;
     Axis       axis;
     RayEmitter rayEmitter;
