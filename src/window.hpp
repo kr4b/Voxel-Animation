@@ -17,8 +17,11 @@ public:
 
   std::pair<int, int> get_size() const;
 
+  inline double get_delta_time() const { return this->deltaTime; };
+
 private:
   GLFWwindow* window;
-  std::chrono::steady_clock::time_point prevTime;
+  std::chrono::steady_clock::time_point prevUpdate, prevFrame;
+  double deltaTime;
   int frames;
 };
