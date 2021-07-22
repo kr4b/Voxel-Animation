@@ -97,10 +97,6 @@ layout( std140, binding = 2 ) uniform USplineMap {
 //         |_|                        //
 //                                    //
 ////////////////////////////////////////
-Spline spline_constructor(in vec3 a, in vec3 b, in vec3 c, in vec3 d);
-Spline spline_with_tangents(in vec3 point1, in vec3 point2, in vec3 tangent1, in vec3 tangent2);
-Spline spline_with_control_points(in vec3 point1, in vec3 point2, in vec3 control1, in vec3 control2);
-Spline spline_transform(in Spline spline, in mat4 matrix);
 void spline_get_extremes(in Spline spline, float extremes[8]);
 vec3 position_on_spline(in Spline spline, in float t);
 bool intersect_spline_plane(in Spline spline, in vec4 p, inout float t);
@@ -120,29 +116,6 @@ float single_real_root(inout Cubic cubic);
 float first_root(inout Cubic cubic);
 float second_root(inout Cubic cubic);
 float third_root(inout Cubic cubic);
-
-////////////////////////////////////////
-//                      ____   ____   //
-//     /\        /\    |  _ \ |  _ \  //
-//    /  \      /  \   | |_) || |_) | //
-//   / /\ \    / /\ \  |  _ < |  _ <  //
-//  / ____ \  / ____ \ | |_) || |_) | //
-// /_/    \_\/_/    \_\|____/ |____/  //
-//                                    //
-////////////////////////////////////////
-AABB aabb_constructor(in vec3 aabb_min, in vec3 aabb_max);
-
-/////////////////////////////////////
-//  _____   _                      //
-// |  __ \ | |                     //
-// | |__) || |  __ _  _ __    ___  //
-// |  ___/ | | / _` || '_ \  / _ \ //
-// | |     | || (_| || | | ||  __/ //
-// |_|     |_| \__,_||_| |_| \___| //
-//                                 //
-/////////////////////////////////////
-Plane plane_constructor(in vec3 center, in vec3 half_size);
-Plane plane_transform(in Plane plane, in mat4 matrix);
 
 ///////////////////////////
 //  _____                //
@@ -170,50 +143,10 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in floa
 //         |_|                                      |_|     //
 //                                                          //
 //////////////////////////////////////////////////////////////
-SplineMap spline_map_constructor(in Plane base, in Spline spline);
-AABB create_encompassing_aabb(in Plane base, in Spline spline);
 bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords);
 
 // Function Implementations
 // Spline
-Spline spline_constructor(in vec3 a, in vec3 b, in vec3 c, in vec3 d) {
-    Spline spline;
-    spline.a = a;
-    spline.b = b;
-    spline.c = c;
-    spline.d = d;
-    return spline;
-}
-
-Spline spline_with_tangents(in vec3 point1, in vec3 point2, in vec3 tangent1, in vec3 tangent2) {
-    const vec3 a = point1 *  2.0 + point2 * -2.0 + tangent1 *  1.0 + tangent2 *  1.0;
-    const vec3 b = point1 * -3.0 + point2 *  3.0 + tangent1 * -2.0 + tangent2 * -1.0;
-    const vec3 c = tangent1;
-    const vec3 d = point1;
-
-    return spline_constructor(a, b, c, d);
-}
-
-Spline spline_with_control_points(in vec3 point1, in vec3 point2, in vec3 control1, in vec3 control2) {
-    const float tau = 0.2;
-
-    const vec3 a = control1 * -1.0 * tau + point1 * (2.0 - tau) + point2 * (tau - 2.0)       + control2 *  tau;
-    const vec3 b = control1 *  2.0 * tau + point1 * (tau - 3.0) + point2 * (3.0 - 2.0 * tau) + control2 * -tau;
-    const vec3 c = control1 * -tau + point2 * tau;
-    const vec3 d = point1;
-
-    return spline_constructor(a, b, c, d);
-}
-
-Spline spline_transform(in Spline spline, in mat4 matrix) {
-    return spline_constructor(
-        (matrix * vec4(spline.a, 0.0)).xyz,
-        (matrix * vec4(spline.b, 0.0)).xyz,
-        (matrix * vec4(spline.c, 0.0)).xyz,
-        (matrix * vec4(spline.d, 1.0)).xyz
-    );
-}
-
 void spline_get_extremes(in Spline spline, float extremes[8]) {
     const vec3 a = spline.a * 3.0;
     const vec3 b = spline.b * 2.0;
@@ -258,11 +191,11 @@ bool intersect_spline_plane(in Spline spline, in vec4 p, inout float t) {
     );
 
     t = conversion.y + first_root(cubic);
-    if (t < 0.0 || t > 1.0) {
+    if (t < -EPSILON || t > 1.0 + EPSILON) {
         t = conversion.y + second_root(cubic);
-        if (t < 0.0 || t > 1.0) {
+        if (t < -EPSILON || t > 1.0 + EPSILON) {
             t = conversion.y + third_root(cubic);
-            if (t < 0.0 || t > 1.0) {
+            if (t < -EPSILON || t > 1.0 + EPSILON) {
                 return false;
             }
         }
@@ -324,69 +257,6 @@ float third_root(inout Cubic cubic){
     return cubic.root;
 }
 
-// AABB
-AABB aabb_constructor(in vec3 aabb_min, in vec3 aabb_max) {
-    AABB aabb;
-    aabb.min = min(aabb_min, aabb_max);
-    aabb.max = max(aabb_min, aabb_max);
-
-    return aabb;
-}
-
-// Plane
-Plane plane_constructor(in vec3 center, in vec3 half_size) {
-    Plane plane;
-    plane.center = center;
-    plane.half_size = half_size;
-    plane.size = half_size * 2.0;
-
-    const vec3 p1 = center - half_size;
-    const vec3 p2 = center + vec3(half_size.x, -half_size.y, abs(half_size.y) * half_size.z + abs(half_size.x) * -half_size.z);
-    const vec3 p3 = center + half_size;
-    const vec3 v = p2 - p1;
-    const vec3 w = p3 - p1;
-    plane.normal = normalize(vec3(v.y * w.z - v.z * w.y, v.z * w.x - v.x * w.z, v.x * w.y - v.y * w.x));
-    plane.span1 = v;
-    plane.span2 = w;
-
-    plane.min = center - half_size;
-    plane.max = center + half_size;
-
-    const vec3 rotation_axis   = cross(vec3(0.0, 1.0, 0.0), plane.normal);
-    const float rotation_angle = acos(dot(vec3(0.0, 1.0, 0.0), plane.normal));
-
-    float cosAngle = cos(rotation_angle);
-    float sinAngle = sin(rotation_angle);
-
-    // https://en.wikipedia.org/wiki/Rotation_matrix#Conversion_from_rotation_matrix_and_to_axis%E2%80%93angle
-    plane.matrix = mat4(
-        cosAngle + rotation_axis.x * rotation_axis.x * (1.0 - cosAngle),
-        rotation_axis.x * rotation_axis.y * (1.0 - cosAngle) - rotation_axis.z * sinAngle,
-        rotation_axis.x * rotation_axis.z * (1.0 - cosAngle) + rotation_axis.y * sinAngle,
-        plane.center.x,
-
-        rotation_axis.y * rotation_axis.x * (1.0 - cosAngle) + rotation_axis.z * sinAngle,
-        cosAngle + rotation_axis.y * rotation_axis.y * (1.0 - cosAngle),
-        rotation_axis.y * rotation_axis.z * (1.0 - cosAngle) - rotation_axis.x * sinAngle,
-        plane.center.y,
-
-        rotation_axis.z * rotation_axis.x * (1.0 - cosAngle) - rotation_axis.y * sinAngle,
-        rotation_axis.z * rotation_axis.y * (1.0 - cosAngle) + rotation_axis.x * sinAngle,
-        cosAngle + rotation_axis.z * rotation_axis.z * (1.0 - cosAngle),
-        plane.center.z,
-
-        0.0, 0.0, 0.0, 1.0
-    );
-
-    plane.inv_matrix = inverse(plane.matrix);
-
-    return plane;
-}
-
-Plane plane_transform(in Plane plane, in mat4 matrix) {
-    return plane_constructor((matrix * vec4(plane.center, 1.0)).xyz, plane.half_size);
-}
-
 // Ray
 Ray ray_constructor(in vec3 origin, in vec3 direction) {
     Ray ray;
@@ -422,16 +292,11 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
 
             if (texture_coords(spline_map, pos, coords)) {
                 texel = ivec3(coords * size);
+                const float color = texelFetch(texVol, texel, 0).r;
 
-                if (texel.x >= 0 && texel.x < size.x
-                &&  texel.y >= 0 && texel.y < size.y
-                &&  texel.z >= 0 && texel.z < size.z) {
-                    const float color = texelFetch(texVol, texel, 0).r;
-
-                    if (color > threshold) {
-                        t = i;
-                        return true;
-                    }
+                if (color > threshold) {
+                    t = i;
+                    return true;
                 }
             }
         }
@@ -441,43 +306,6 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
 }
 
 // SplineMap
-SplineMap spline_map_constructor(in Plane base, in Spline spline) {
-    SplineMap spline_map;
-    spline_map.base = base;
-    spline_map.spline = spline_transform(
-        spline_transform(spline, base.matrix),
-        mat4(
-            1.0, 0.0, 0.0, -base.half_size.x,
-            0.0, 1.0, 0.0, -base.half_size.y,
-            0.0, 0.0, 1.0, -base.half_size.z,
-            0.0, 0.0, 0.0, 1.0
-        ));
-    spline_map.aabb = create_encompassing_aabb(base, spline);
-    spline_map.size_squared = dot(base.size, base.size);
-
-    return spline_map;
-}
-
-AABB create_encompassing_aabb(in Plane base, in Spline spline) {
-    float extremes[8];
-    spline_get_extremes(spline, extremes);
-
-    vec3 position = position_on_spline(spline, extremes[0]);
-    vec3 aabb_min = position;
-    vec3 aabb_max = position;
-
-    for (int i = 1; i < 8; i++) {
-        position = position_on_spline(spline, extremes[i]);
-        aabb_min = min(aabb_min, position);
-        aabb_max = max(aabb_max, position);
-    }
-
-    return aabb_constructor(
-        aabb_min,
-        aabb_max + base.size
-    );
-}
-
 bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords) {
     const vec4 p = spline_map.base.inv_matrix * vec4(pos, 1.0);
     float t;
@@ -488,8 +316,8 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords) {
         const vec3 diff1 = pos - edge1;
         const vec3 diff2 = pos - edge2;
 
-        if (dot(diff1, diff1) > spline_map.size_squared
-        ||  dot(diff2, diff2) > spline_map.size_squared) {
+        if (dot(diff1, diff1) > spline_map.size_squared - EPSILON
+        ||  dot(diff2, diff2) > spline_map.size_squared - EPSILON) {
             return false;
         }
 
