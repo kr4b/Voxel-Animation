@@ -123,24 +123,23 @@ void Spline::clean() {
 }
 
 std::vector<float> Spline::get_extremes() const {
-    const glm::vec3 a = this->a * glm::vec3(3.0f, 3.0f, 3.0f);
-    const glm::vec3 b = this->b * glm::vec3(2.0f, 2.0f, 2.0f);
+    const glm::vec3 a = this->a * 3.0f;
+    const glm::vec3 b = this->b * 2.0f;
+    const glm::vec3 D = b * b - 4.0f * a * this->c;
 
     std::vector<float> values = { -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 1.0f };
 
-    const glm::vec3 D = b * b - glm::vec3(4.0f, 4.0f, 4.0f) * a * this->c;
-
     if (D.x >= 0.0f) {
-        values[0] = (-b.x + sqrt(D.x)) / (2.0f * a.x);
-        values[1] = (-b.x - sqrt(D.x)) / (2.0f * a.x);
+        values[0] = (2.0f * c.x) / (-b.x + sqrt(D.x));
+        values[1] = (2.0f * c.x) / (-b.x - sqrt(D.x));
     }
     if (D.y >= 0.0f) {
-        values[2] = (-b.y + sqrt(D.y)) / (2.0f * a.y);
-        values[3] = (-b.y - sqrt(D.y)) / (2.0f * a.y);
+        values[2] = (2.0f * c.y) / (-b.y + sqrt(D.y));
+        values[3] = (2.0f * c.y) / (-b.y - sqrt(D.y));
     }
     if (D.z >= 0.0f) {
-        values[4] = (-b.z + sqrt(D.z)) / (2.0f * a.z);
-        values[5] = (-b.z - sqrt(D.z)) / (2.0f * a.z);
+        values[4] = (2.0f * c.z) / (-b.z + sqrt(D.z));
+        values[5] = (2.0f * c.z) / (-b.z - sqrt(D.z));
     }
 
     return values;
