@@ -59,22 +59,36 @@ class Spline {
         );
     }
 
+    solve_quadratic(a: number, b: number, c: number): [ number, number ] {
+        // ax^2 + bx + c = 0
+        const D = b * b - 4.0 * a * c;
+
+        if (D >= 0) {
+            if (a === 0.0) {
+                if (b === 0.0) {
+                    return [ -1, -1 ];
+                }
+                return [ -c / b, -c / b ];
+            }
+            return [
+                (-b + Math.sqrt(D)) / (2.0 * a),
+                (-b - Math.sqrt(D)) / (2.0 * a)
+            ];
+        }
+
+        return [ -1, -1 ];
+    }
+
     get_extremes(): Float32Array {
         // Solve for t: at^2 + bt + c = 0
         const a: vec2 = scale(this.a, 3);
         const b: vec2 = scale(this.b, 2);
 
-        const values: Float32Array = Float32Array.of(-1, -1, -1, -1, 0, 1); // Include the edges
-        const D: vec2 = subtract(multiply(b, b), scale(multiply(a, this.c), 4));
-        
-        if (D.x >= 0) {
-            values[0] = (-b.x + Math.sqrt(D.x)) / (2 * a.x)
-            values[1] = (-b.x - Math.sqrt(D.x)) / (2 * a.x)
-        }
-        if (D.y >= 0) {
-            values[2] = (-b.y + Math.sqrt(D.y)) / (2 * a.y)
-            values[3] = (-b.y - Math.sqrt(D.y)) / (2 * a.y)
-        }
+        const values: Float32Array = Float32Array.of(
+            ...this.solve_quadratic(a.x, b.x, this.c.x),
+            ...this.solve_quadratic(a.y, b.y, this.c.y),
+            0, 1
+        );
 
         return values;
     }
@@ -134,7 +148,7 @@ class Spline {
      * @returns true if it intersected, false otherwise
      */
     intersect_spline_aabb(aabb: AABB): boolean {
-        const conversion: vec2 = divide(scale(this.b, -1), scale(this.a, 3));
+        const conversion: vec2 = divide(scale(this.b, -1), scale(add(this.a, vec2(1e-6, 1e-6)), 3));
 
         const cubic_min_x = new DepressedCubic(this.a.x, this.b.x, this.c.x, this.d.x - aabb.min.x);
         const cubic_min_y = new DepressedCubic(this.a.y, this.b.y, this.c.y, this.d.y - aabb.min.y);
