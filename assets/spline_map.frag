@@ -1,7 +1,7 @@
 #version 450
 
 // Constants
-#define MAX_SPLINES 5
+#define MAX_SPLINES 3
 #define VOLUME_STEPS 1024
 #define MAX_SAMPLERS 1
 #define M_PI 3.14159265
@@ -103,9 +103,8 @@ layout( std140, binding = 2 ) uniform USplineMap {
 //         |_|                        //
 //                                    //
 ////////////////////////////////////////
-void spline_get_extremes(in Spline spline, float extremes[8]);
 vec3 position_on_spline(in Spline spline, in float t);
-bool intersect_spline_plane(in Spline spline, in vec4 p, inout float t);
+bool intersect_spline_plane(in Spline spline, in float index, in float factor, in vec4 p, inout float t);
 
 ////////////////////////////////////
 //   _____        _      _        // 
@@ -149,7 +148,6 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in floa
 //          |_|                                                        //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
-void spline_chain_get_extremes(in SplineChain spline_chain, float extremes[8 * MAX_SPLINES]);
 vec3 position_on_spline_chain(in SplineChain spline_chain, in float t);
 bool intersect_spline_chain_plane(in SplineChain spline_chain, in vec4 p, inout float t);
 
@@ -168,41 +166,11 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords);
 
 // Function Implementations
 // Spline
-void spline_get_extremes(in Spline spline, float extremes[8]) {
-    const vec3 a = spline.a * 3.0;
-    const vec3 b = spline.b * 2.0;
-    const vec3 c = spline.c;
-    const vec3 D = b * b - 4.0 * a * c;
-
-    extremes[0] = -1.0; extremes[1] = -1.0; // X
-    extremes[2] = -1.0; extremes[3] = -1.0; // Y
-    extremes[4] = -1.0; extremes[5] = -1.0; // Z
-    extremes[6] =  0.0; extremes[7] =  1.0; // Start & End
-
-    if (D.x >= 0.0) {
-        const float Dx = sqrt(D.x);
-        extremes[0] = (-b.x + Dx) / a.x * 0.5;
-        extremes[1] = (-b.x - Dx) / a.x * 0.5;
-    }
-
-    if (D.y >= 0.0) {
-        const float Dy = sqrt(D.y);
-        extremes[2] = (-b.y + Dy) / a.y * 0.5;
-        extremes[3] = (-b.y - Dy) / a.y * 0.5;
-    }
-
-    if (D.z >= 0.0) {
-        const float Dz = sqrt(D.z);
-        extremes[4] = (-b.z + Dz) / a.z * 0.5;
-        extremes[5] = (-b.z - Dz) / a.z * 0.5;
-    }
-}
-
 vec3 position_on_spline(in Spline spline, in float t) {
     return spline.a * t * t * t + spline.b * t * t + spline.c * t + spline.d;
 }
 
-bool intersect_spline_plane(in Spline spline, in vec4 p, inout float t) {
+bool intersect_spline_plane(in Spline spline, in float index, in float factor, in vec4 p, inout float t) {
     const vec3 conversion = -spline.b / (3.0 * spline.a);
     Cubic cubic = cubic_constructor(
         spline.a.y,
@@ -222,6 +190,7 @@ bool intersect_spline_plane(in Spline spline, in vec4 p, inout float t) {
         }
     }
 
+    t = t * factor + index;
     return true;
 }
 
@@ -327,27 +296,6 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
 }
 
 // SplineChain
-void spline_chain_get_extremes(in SplineChain spline_chain, float extremes[8 * MAX_SPLINES]) {
-    const float inv_amount = 1.0 / spline_chain.amount;
-    float j = 0;
-
-    for (int i = 0; i < int(spline_chain.amount); i++) {
-        float temp[8];
-        spline_get_extremes(spline_chain.splines[i], temp);
-
-        extremes[i * 8]     = temp[0] * inv_amount + j;
-        extremes[i * 8 + 1] = temp[1] * inv_amount + j;
-        extremes[i * 8 + 2] = temp[2] * inv_amount + j;
-        extremes[i * 8 + 3] = temp[3] * inv_amount + j;
-        extremes[i * 8 + 4] = temp[4] * inv_amount + j;
-        extremes[i * 8 + 5] = temp[5] * inv_amount + j;
-        extremes[i * 8 + 6] = temp[6] * inv_amount + j;
-        extremes[i * 8 + 7] = temp[7] * inv_amount + j;
-
-        j += inv_amount;
-    }
-}
-
 vec3 position_on_spline_chain(in SplineChain spline_chain, in float t) {
     const float clamped_t = max(0.0, min(t, 1.0 - 1e-4));
     const int   index     = int(floor(clamped_t * spline_chain.amount));
@@ -357,13 +305,16 @@ vec3 position_on_spline_chain(in SplineChain spline_chain, in float t) {
 }
 
 bool intersect_spline_chain_plane(in SplineChain spline_chain, in vec4 p, inout float t) {
-    bool r0 = spline_chain.amount > 0.0 && intersect_spline_plane(spline_chain.splines[0], p, t);
-    bool r1 = spline_chain.amount > 1.0 && !r0 && intersect_spline_plane(spline_chain.splines[1], p, t);
-    bool r2 = spline_chain.amount > 2.0 && !r1 && intersect_spline_plane(spline_chain.splines[2], p, t);
-    bool r3 = spline_chain.amount > 3.0 && !r2 && intersect_spline_plane(spline_chain.splines[3], p, t);
-    bool r4 = spline_chain.amount > 4.0 && !r3 && intersect_spline_plane(spline_chain.splines[4], p, t);
+    const int iamount = int(spline_chain.amount);
+    const float inv_amount = 1.0 / spline_chain.amount;
 
-    return r0 || r1 || r2 || r3 || r4;
+    return (
+        (iamount > 0 && intersect_spline_plane(spline_chain.splines[0], 0.0, inv_amount, p, t))
+     || (iamount > 1 && intersect_spline_plane(spline_chain.splines[1], 1.0 * inv_amount, inv_amount, p, t))
+     || (iamount > 2 && intersect_spline_plane(spline_chain.splines[2], 2.0 * inv_amount, inv_amount, p, t))
+    //  || (iamount > 3 && intersect_spline_plane(spline_chain.splines[3], 3.0 * inv_amount, inv_amount, p, t))
+    //  || (iamount > 4 && intersect_spline_plane(spline_chain.splines[4], 4.0 * inv_amount, inv_amount, p, t))
+    );
 }
 
 // SplineMap

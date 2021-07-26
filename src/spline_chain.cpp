@@ -5,9 +5,7 @@ SplineChain::SplineChain() {
     this->splines.push_back(Spline());
 }
 
-SplineChain::SplineChain(std::vector<Spline> splines): splines(splines) {
-    assert(this->splines.size() <= MAX_SPLINES);
-}
+SplineChain::SplineChain(std::vector<Spline> splines): splines(splines) {}
 
 void SplineChain::init_vao() {
     for (Spline& spline : this->splines) {

@@ -1,7 +1,5 @@
 #pragma once
 
-#define MAX_SPLINES 5
-
 #include <glad/glad.h>
 
 #include <glm/vec2.hpp>

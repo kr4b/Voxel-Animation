@@ -1,5 +1,7 @@
 #pragma once
 
+#define MAX_SPLINES 3
+
 #include <glad/glad.h>
 
 #include <glm/gtc/type_ptr.hpp>
@@ -173,16 +175,16 @@ private:
                 splineUniforms[0],
                 splineUniforms[1],
                 splineUniforms[2],
-                splineUniforms[3],
-                splineUniforms[4],
+                // splineUniforms[3],
+                // splineUniforms[4],
                 float(this->splineMap.splineChain.splines.size())
             },
             SplineChainUniform {
                 transformedSplineUniforms[0],
                 transformedSplineUniforms[1],
                 transformedSplineUniforms[2],
-                transformedSplineUniforms[3],
-                transformedSplineUniforms[4],
+                // transformedSplineUniforms[3],
+                // transformedSplineUniforms[4],
                 float(this->splineMap.splineChain.splines.size())
             },
             this->splineMap.sizeSquared,
@@ -209,10 +211,12 @@ private:
         ImGui::EndTable();
 
         if (ImGui::Button("Push")) {
-            glm::vec3 next = glm::vec3(this->points.back());
-            next.y += 1.0f;
-            this->points.push_back(next);
-            splineMapChange = true;
+            if (this->splineMap.splineChain.splines.size() < MAX_SPLINES) {
+                glm::vec3 next = glm::vec3(this->points.back());
+                next.y += 1.0f;
+                this->points.push_back(next);
+                splineMapChange = true;
+            }
         }
         ImGui::SameLine();
         if (ImGui::Button("Pop")) {
