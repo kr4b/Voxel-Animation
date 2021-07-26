@@ -80,7 +80,7 @@ public:
         offset(0.0f, 2.0f, 0.0f),
         tangent0(0.0f, 0.0f, 0.0f),
         tangent1(0.0f, 0.0f, 0.0f),
-        wireframeAABB(WireframeAABB(this->splineMap.aabb))
+        wireframeAABB(WireframeAABB(this->splineMap.aabb, glm::vec3(0.90, 0.49, 0.13)))
     {
         init();
     };
@@ -185,6 +185,8 @@ private:
         std::memcpy(&this->splineMap, &splineMap, sizeof(SplineMap));
         const SplineMapUniform uniform = create_uniform();
         glNamedBufferSubData(this->splineMapUniform, 0, sizeof(SplineMapUniform), &uniform);
+
+        get_encompassing_aabb().update(this->splineMap.aabb);
     }
 
 public:

@@ -8,7 +8,7 @@
 class WireframeAABB {
 public:
     WireframeAABB(const AABB& aabb) {
-        init(aabb, glm::vec3(0.93, 0.94, 0.95));
+        init(aabb, glm::vec3(1.0f));
     }
     
     WireframeAABB(const AABB& aabb, const glm::vec3 color) {
@@ -23,6 +23,25 @@ public:
 
         glBindVertexArray(0);
         glLineWidth(1.0f);
+    }
+
+    void update(const AABB& aabb) {
+        const unsigned int points_length = 3 * 8;
+        const float points[points_length] = {
+            aabb.min.x, aabb.min.y, aabb.min.z, // 0  -X -Y -Z
+            aabb.min.x, aabb.min.y, aabb.max.z, // 1  -X -Y  Z
+            aabb.min.x, aabb.max.y, aabb.min.z, // 2  -X  Y -Z
+            aabb.min.x, aabb.max.y, aabb.max.z, // 3  -X  Y  Z
+            aabb.max.x, aabb.min.y, aabb.min.z, // 4   X -Y -Z
+            aabb.max.x, aabb.min.y, aabb.max.z, // 5   X -Y  Z
+            aabb.max.x, aabb.max.y, aabb.min.z, // 6   X  Y -Z
+            aabb.max.x, aabb.max.y, aabb.max.z, // 7   X  Y  Z
+        };
+
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(GLfloat) * points_length, points);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
 protected:
@@ -60,27 +79,28 @@ protected:
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
 
-        GLuint vbos[3];
-        glGenBuffers(3, vbos);
-        glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * points_length, points, GL_STATIC_DRAW);
+        GLuint vbos[2];
+        glGenBuffers(1, &vertex_buffer);
+        glGenBuffers(2, vbos);
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * points_length, points, GL_DYNAMIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
         glEnableVertexAttribArray(0);
 
-        glBindBuffer(GL_ARRAY_BUFFER, vbos[1]);
+        glBindBuffer(GL_ARRAY_BUFFER, vbos[0]);
         glBufferData(GL_ARRAY_BUFFER, sizeof(GLfloat) * 3, color_data, GL_STATIC_DRAW);
         glVertexAttribPointer(1, 3, GL_FLOAT, false, 0, 0);
         glVertexAttribDivisor(1, indices_length / 2);
         glEnableVertexAttribArray(1);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[2]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbos[1]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * indices_length, indices, GL_STATIC_DRAW);
 
         glBindVertexArray(0);
     }
 
 private:
-    GLuint vao;
+    GLuint vao, vertex_buffer;
 };
 
 class Axis {
