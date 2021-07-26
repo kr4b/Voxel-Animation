@@ -7,17 +7,17 @@
 #include <glm/mat4x4.hpp>
 
 #include "aabb.hpp"
-#include "spline.hpp"
+#include "spline_chain.hpp"
 #include "plane.hpp"
 
 class SplineMap {
 public:
     Plane base;
-    Spline spline;
+    SplineChain splineChain;
     AABB aabb;
     const float sizeSquared;
 
-    SplineMap(const Plane&, const Spline&);
+    SplineMap(const Plane&, const SplineChain&);
 
     std::optional<glm::vec3> texture_coords(const glm::vec3) const;
 
@@ -25,6 +25,6 @@ public:
     void clean();
 
 private:
-    Spline edgeSplines[3];
+    SplineChain edgeSplines[3];
     Plane topBase;
 };

@@ -66,15 +66,17 @@ Spline Spline::with_tangents(const glm::vec3 P1, const glm::vec3 P2, const glm::
     return Spline(a, b, c, d);
 }
 
-Spline Spline::with_control_points(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 P0, const glm::vec3 P3) {
-    const float tau = 0.2f;
-
+Spline Spline::with_control_points(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 P0, const glm::vec3 P3, const float tau) {
     const glm::vec3 a = -tau * P0 + (2.0f - tau) * P1 + (tau - 2.0f) * P2 + tau * P3;
     const glm::vec3 b = 2.0f * tau * P0 + (tau - 3.0f) * P1 + (3.0f - 2.0f * tau) * P2 - tau * P3;
     const glm::vec3 c = -tau * P0 + tau * P2;
     const glm::vec3 d = P1;
 
     return Spline(a, b, c, d);
+}
+
+Spline Spline::with_control_points(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 P0, const glm::vec3 P3) {
+    return Spline::with_control_points(P1, P2, P0, P3, 0.2f);
 }
 
 void Spline::update_buffers() {

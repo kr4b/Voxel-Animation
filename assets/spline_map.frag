@@ -1,6 +1,7 @@
 #version 450
 
 // Constants
+#define MAX_SPLINES 5
 #define VOLUME_STEPS 1024
 #define MAX_SAMPLERS 1
 #define M_PI 3.14159265
@@ -57,7 +58,7 @@ struct Plane {
     vec3 normal;
     vec3 span1, span2;
     vec3 min, max;
-    vec3 transformedMin, transformedMax;
+    vec3 transformed_min, transformed_max;
 
     mat4 matrix;
     mat4 inv_matrix;
@@ -69,11 +70,16 @@ struct Ray {
     vec3 inv_dir;
 };
 
+struct SplineChain {
+    Spline splines[MAX_SPLINES];
+    float amount;
+};
+
 struct SplineMap {
     AABB aabb;
     Plane base;
-    Spline spline;
-    Spline transformedSpline;
+    SplineChain spline_chain;
+    SplineChain transformed_spline_chain;
 
     float size_squared;
 
@@ -131,6 +137,21 @@ float third_root(inout Cubic cubic);
 Ray ray_constructor(in vec3 origin, in vec3 direction);
 bool intersect_ray_aabb(in Ray ray, in AABB aabb, inout vec2 ts);
 bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in float step_size, inout ivec3 texel, inout float t);
+
+/////////////////////////////////////////////////////////////////////////
+//    _____         _  _                _____  _             _         //
+//   / ____|       | |(_)              / ____|| |           (_)        //
+//  | (___   _ __  | | _  _ __    ___ | |     | |__    __ _  _  _ __   //
+//   \___ \ | '_ \ | || || '_ \  / _ \| |     | '_ \  / _` || || '_ \  //
+//   ____) || |_) || || || | | ||  __/| |____ | | | || (_| || || | | | //
+//  |_____/ | .__/ |_||_||_| |_| \___| \_____||_| |_| \__,_||_||_| |_| //
+//          | |                                                        //
+//          |_|                                                        //
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
+void spline_chain_get_extremes(in SplineChain spline_chain, float extremes[8 * MAX_SPLINES]);
+vec3 position_on_spline_chain(in SplineChain spline_chain, in float t);
+bool intersect_spline_chain_plane(in SplineChain spline_chain, in vec4 p, inout float t);
 
 //////////////////////////////////////////////////////////////
 //   _____         _  _               __  __                //
@@ -305,13 +326,53 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
     return false;
 }
 
+// SplineChain
+void spline_chain_get_extremes(in SplineChain spline_chain, float extremes[8 * MAX_SPLINES]) {
+    const float inv_amount = 1.0 / spline_chain.amount;
+    float j = 0;
+
+    for (int i = 0; i < int(spline_chain.amount); i++) {
+        float temp[8];
+        spline_get_extremes(spline_chain.splines[i], temp);
+
+        extremes[i * 8]     = temp[0] * inv_amount + j;
+        extremes[i * 8 + 1] = temp[1] * inv_amount + j;
+        extremes[i * 8 + 2] = temp[2] * inv_amount + j;
+        extremes[i * 8 + 3] = temp[3] * inv_amount + j;
+        extremes[i * 8 + 4] = temp[4] * inv_amount + j;
+        extremes[i * 8 + 5] = temp[5] * inv_amount + j;
+        extremes[i * 8 + 6] = temp[6] * inv_amount + j;
+        extremes[i * 8 + 7] = temp[7] * inv_amount + j;
+
+        j += inv_amount;
+    }
+}
+
+vec3 position_on_spline_chain(in SplineChain spline_chain, in float t) {
+    const float clamped_t = max(0.0, min(t, 1.0 - 1e-4));
+    const int   index     = int(floor(clamped_t * spline_chain.amount));
+    const float t_prime   = (clamped_t - float(index) / spline_chain.amount) * spline_chain.amount;
+
+    return position_on_spline(spline_chain.splines[index], t_prime);
+}
+
+bool intersect_spline_chain_plane(in SplineChain spline_chain, in vec4 p, inout float t) {
+    bool r0 = spline_chain.amount > 0.0 && intersect_spline_plane(spline_chain.splines[0], p, t);
+    bool r1 = spline_chain.amount > 1.0 && !r0 && intersect_spline_plane(spline_chain.splines[1], p, t);
+    bool r2 = spline_chain.amount > 2.0 && !r1 && intersect_spline_plane(spline_chain.splines[2], p, t);
+    bool r3 = spline_chain.amount > 3.0 && !r2 && intersect_spline_plane(spline_chain.splines[3], p, t);
+    bool r4 = spline_chain.amount > 4.0 && !r3 && intersect_spline_plane(spline_chain.splines[4], p, t);
+
+    return r0 || r1 || r2 || r3 || r4;
+}
+
 // SplineMap
 bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords) {
     const vec4 p = spline_map.base.inv_matrix * vec4(pos, 1.0);
     float t;
 
-    if (intersect_spline_plane(spline_map.transformedSpline, p, t)) {
-        const vec3 edge1 = position_on_spline(spline_map.spline, t);
+    if (intersect_spline_chain_plane(spline_map.transformed_spline_chain, p, t)) {
+        const vec3 edge1 = position_on_spline_chain(spline_map.spline_chain, t);
         const vec3 edge2 = edge1 + spline_map.base.size;
         const vec3 diff1 = pos - edge1;
         const vec3 diff2 = pos - edge2;

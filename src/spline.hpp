@@ -31,6 +31,7 @@ public:
     void clean();
 
     static Spline with_tangents(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
+    static Spline with_control_points(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3, const float);
     static Spline with_control_points(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
 
     glm::vec3 position_on_spline(const float t) const;
