@@ -69,14 +69,14 @@ namespace scenes {
 
 static SplineMapScene* create_scene(scenes::Scene scene, Window& window, Setup& setup) {
     switch (scene) {
-        case scenes::Cube:
-            return new Cube(window, setup);
-            break;
         case scenes::Pig:
             return new Pig(window, setup);
             break;
         case scenes::Bonsai:
             return new Bonsai(window, setup);
             break;
+        case scenes::Cube:
+        default:
+            return new Cube(window, setup);
     }
 }

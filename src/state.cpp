@@ -1,4 +1,5 @@
 #include "state.hpp"
+#include <imgui.h>
 
 void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
   if (auto state = reinterpret_cast<State*>(glfwGetWindowUserPointer(win))) {
@@ -36,6 +37,7 @@ void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
 }
 
 void state::button_callback(GLFWwindow *win, int but, int act, int) {
+  if (ImGui::GetIO().WantCaptureMouse) return;
   if (auto state = reinterpret_cast<State*>(glfwGetWindowUserPointer(win))) {
     if (GLFW_MOUSE_BUTTON_LEFT == but) {
       if ((state->inControl = (GLFW_PRESS == act)))
@@ -47,6 +49,7 @@ void state::button_callback(GLFWwindow *win, int but, int act, int) {
 }
 
 void state::scroll_callback(GLFWwindow *win, double, double y) {
+  if (ImGui::GetIO().WantCaptureMouse) return;
   if (auto state = reinterpret_cast<State*>(glfwGetWindowUserPointer(win))) {
     auto dist = 1.f - state->scrollMult * float(y);
     state->cameraOff *= dist;
@@ -54,6 +57,7 @@ void state::scroll_callback(GLFWwindow *win, double, double y) {
 }
 
 void state::motion_callback(GLFWwindow* win, double x, double y) {
+  if (ImGui::GetIO().WantCaptureMouse) return;
   if (auto state = reinterpret_cast<State*>(glfwGetWindowUserPointer(win))) {
     auto const prevX = state->prevX;
     auto const prevY = state->prevY;

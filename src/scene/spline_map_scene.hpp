@@ -77,7 +77,8 @@ public:
         splineMap(base, Spline::with_tangents(glm::vec3(0.0f), offset, tangent0, tangent1)),
         offset(offset),
         tangent0(tangent0),
-        tangent1(tangent1)
+        tangent1(tangent1),
+        wireframeAABB(WireframeAABB(this->splineMap.aabb))
     {
         init();
     };
@@ -96,7 +97,7 @@ protected:
     };
 
 private:
-    bool showAxis, showOutline;
+    bool showAxis, showOutline, showEncompassingAABB;
 
     SplineMapUniform create_uniform() {
         return SplineMapUniform {
@@ -141,6 +142,7 @@ private:
         ImGui::Begin("Debug");
         ImGui::Checkbox("Show Axis", &this->showAxis);
         ImGui::Checkbox("Show Outline", &this->showOutline);
+        ImGui::Checkbox("Show Encompassing AABB", &this->showEncompassingAABB);
         ImGui::PushID("Offset");
         ImGui::Text("Offset:");
         splineMapChange |= ImGui::DragFloat("x", &this->offset.x);
@@ -192,20 +194,22 @@ public:
             get_setup().debug(get_debug_shader());
             if (this->showAxis) get_axis().render(get_setup());
             if (this->showOutline) get_spline_map().render();
+            if (this->showEncompassingAABB) get_encompassing_aabb().render(get_setup());
             get_ray_emitter().render();
         }
         get_setup().end_render();
     }
 
-    inline virtual State&      get_state()        { return state;       };
-    inline virtual Window&     get_window()       { return window;      };
-    inline virtual Setup&      get_setup()        { return setup;       };
-    inline virtual Shader&     get_shader()       { return shader;      };
-    inline virtual Shader&     get_debug_shader() { return debugShader; };
-    inline virtual Volume&     get_volume()       { return volume;      };
-    inline virtual SplineMap&  get_spline_map()   { return splineMap;   };
-    inline virtual Axis&       get_axis()         { return axis;        };
-    inline virtual RayEmitter& get_ray_emitter()  { return rayEmitter;  };
+    inline virtual State&           get_state()             { return state;         };
+    inline virtual Window&          get_window()            { return window;        };
+    inline virtual Setup&           get_setup()             { return setup;         };
+    inline virtual Shader&          get_shader()            { return shader;        };
+    inline virtual Shader&          get_debug_shader()      { return debugShader;   };
+    inline virtual Volume&          get_volume()            { return volume;        };
+    inline virtual SplineMap&       get_spline_map()        { return splineMap;     };
+    inline virtual Axis&            get_axis()              { return axis;          };
+    inline virtual RayEmitter&      get_ray_emitter()       { return rayEmitter;    };
+    inline virtual WireframeAABB&   get_encompassing_aabb() { return wireframeAABB; };
 
 protected:
     GLuint     splineMapUniform;
@@ -217,6 +221,7 @@ protected:
     SplineMap  splineMap;
     Axis       axis;
     RayEmitter rayEmitter;
+    WireframeAABB wireframeAABB;
     glm::vec3  offset, tangent0, tangent1;
     float threshold = 0.25f;
     float stepSize = 0.025f;

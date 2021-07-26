@@ -71,7 +71,7 @@ onload = () => {
     // const base: Plane = new Plane(vec2(0.1, -0.2), scale(norm(vec2(0.5, 0.3)), aabbMax.x - aabbMin.x));
 
     // const spline = Spline.with_control_points(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-15.0, -3.0), vec2(12.0, 0.0));
-    const spline = Spline.with_control_points(vec2(0, 0), vec2(0, aabbMax.y - aabbMin.y), vec2(-15.0, -3.0), vec2(12.0, 0.0));
+    const spline = Spline.with_control_points(vec2(0, 0), vec2(0, 1), vec2(-15.0, -3.0), vec2(20.0, -10.0));
     const spline_map = new SplineMap(base, spline);
 
     let t = 0;
