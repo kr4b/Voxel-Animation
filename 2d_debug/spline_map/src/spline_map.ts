@@ -1,30 +1,30 @@
 import { AABB } from "./aabb.js";
 import { Plane } from "./plane.js";
 import { Ray } from "./ray.js";
-import Spline from "./spline.js";
+import SplineChain from "./spline_chain.js";
 import { add, dist, dot, length, mat3, max, min, multiply, scale, subtract, vec2 } from "./vec2.js";
 
-class SplineMap {
+class SplineChainMap {
   aabb: AABB;
   base: Plane;
-  spline: Spline;
+  spline: SplineChain;
 
   // Not the encompassing AABB
   width: number;
   height: number;
 
-  constructor(base: Plane, spline: Spline) {
+  constructor(base: Plane, spline: SplineChain) {
     this.base = base;
-    this.spline = Spline.transform(Spline.transform(spline, this.base.matrix), mat3(1, 0, -this.base.half_size.x, 0, 1, -this.base.half_size.y, 0, 0, 1));
+    this.spline = SplineChain.transform(SplineChain.transform(spline, this.base.matrix), mat3(1, 0, -this.base.half_size.x, 0, 1, -this.base.half_size.y, 0, 0, 1));
     // Create the encompassing AABB
-    const extremes = Array.from(this.spline.get_extremes().filter(t => t >= 0 && t <= 1)).map(t => this.spline.position_on_spline(t));
+    const extremes = Array.from(this.spline.get_extremes().filter(t => t >= 0 && t <= 1)).map(t => this.spline.position_on_chain(t));
     this.aabb = new AABB(
       min(...extremes),
       add(this.base.size, max(...extremes)),
     );
 
     this.width = length(this.base.size);
-    this.height = dist(this.spline.position_on_spline(1), this.spline.position_on_spline(0));
+    this.height = dist(this.spline.position_on_chain(1), this.spline.position_on_chain(0));
   }
 
   draw(ctx: CanvasRenderingContext2D) {
@@ -39,7 +39,7 @@ class SplineMap {
 
     ctx.globalAlpha = 0.4;
     ctx.strokeStyle = "aquamarine"
-    Spline.transform(this.spline, mat3(1, 0, this.base.size.x, 0, 1, this.base.size.y, 0, 0, 1)).draw(ctx);
+    SplineChain.transform(this.spline, mat3(1, 0, this.base.size.x, 0, 1, this.base.size.y, 0, 0, 1)).draw(ctx);
 
     ctx.strokeStyle = "slategray"
     Plane.transform(this.base, mat3(1, 0, this.base.normal.x * this.height, 0, 1, this.base.normal.y * this.height, 0, 0, 1)).draw(ctx);
@@ -79,7 +79,7 @@ class SplineMap {
     }
     const t = this.spline.ts.x;
     // Determine whether the point is in the plane
-    const edgePos1 = this.spline.position_on_spline(t);
+    const edgePos1 = this.spline.position_on_chain(t);
     const diff1 = subtract(edgePos1, pos);
     const edgePos2 = add(edgePos1, this.base.size);
     const diff2 = subtract(edgePos2, pos);
@@ -96,4 +96,4 @@ class SplineMap {
   }
 }
 
-export default SplineMap;
+export default SplineChainMap;

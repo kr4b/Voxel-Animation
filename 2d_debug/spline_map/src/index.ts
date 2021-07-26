@@ -1,6 +1,7 @@
 import { Plane } from "./plane.js";
 import { Ray } from "./ray.js";
 import Spline from "./spline.js";
+import SplineChain from "./spline_chain.js";
 import SplineMap from "./spline_map.js";
 import { norm, scale, vec2 } from "./vec2.js";
 
@@ -43,8 +44,8 @@ const pixelSizeX = 2.0 / canvasWidth;
 const pixelSizeY = 2.0 / canvasHeight;
 
 onload = () => {
-    canvas = <HTMLCanvasElement> document.getElementById("canvas");
-    ctx = <CanvasRenderingContext2D> canvas.getContext("2d")
+    canvas = <HTMLCanvasElement>document.getElementById("canvas");
+    ctx = <CanvasRenderingContext2D>canvas.getContext("2d")
 
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
@@ -71,8 +72,17 @@ onload = () => {
     // const base: Plane = new Plane(vec2(0.1, -0.2), scale(norm(vec2(0.5, 0.3)), aabbMax.x - aabbMin.x));
 
     // const spline = Spline.with_control_points(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-15.0, -3.0), vec2(12.0, 0.0));
-    const spline = Spline.with_control_points(vec2(0, 0), vec2(0, 1), vec2(-15.0, -3.0), vec2(20.0, -10.0));
-    const spline_map = new SplineMap(base, spline);
+    // const spline = Spline.with_control_points(vec2(0, 0), vec2(0, 1), vec2(-15.0, -3.0), vec2(20.0, -10.0));
+    const spline_chain = SplineChain.from_points_with_outer_tangents(
+        vec2(1, 0.3),
+        vec2(0, 0),
+        [
+            vec2(0, 0),
+            vec2(0.0, 0.3),
+            vec2(0.0, 0.5),
+        ], 1.0);
+
+    const spline_map = new SplineMap(base, spline_chain);
 
     let t = 0;
     setInterval(() => {
@@ -120,7 +130,7 @@ function render_texture(ctx: CanvasRenderingContext2D, spline_map: SplineMap) {
         const t = y / 100;
 
         // Determine x offset
-        const splinePos = spline.position_on_spline(t);
+        const splinePos = spline.position_on_chain(t);
         const pixelY = Math.floor(t * size);
 
         // Draw the slice for each pixel

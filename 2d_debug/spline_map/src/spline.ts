@@ -24,8 +24,8 @@ class Spline {
     }
 
     static with_tangents(point1: vec2, point2: vec2, tangent1: vec2, tangent2: vec2): Spline {
-        const a = add(scale(point1,  2), scale(point2, -2), scale(tangent1,  1), scale(tangent2,  1));
-        const b = add(scale(point1, -3), scale(point2,  3), scale(tangent1, -2), scale(tangent2, -1));
+        const a = add(scale(point1, 2), scale(point2, -2), scale(tangent1, 1), scale(tangent2, 1));
+        const b = add(scale(point1, -3), scale(point2, 3), scale(tangent1, -2), scale(tangent2, -1));
         const c = copy(tangent1);
         const d = copy(point1);
 
@@ -33,11 +33,9 @@ class Spline {
     }
 
     // http://www.cs.cmu.edu/~462/www/projects/assn2/assn2/catmullRom.pdf
-    static with_control_points(point1: vec2, point2: vec2, control1: vec2, control2: vec2): Spline {
-        const tau = 0.2;
-
-        const a = add(scale(control1, -1 * tau), scale(point1, 2 - tau), scale(point2, tau - 2), scale(control2,  tau));
-        const b = add(scale(control1,  2 * tau), scale(point1, tau - 3), scale(point2, 3 - 2 * tau), scale(control2, -tau));
+    static with_control_points(point1: vec2, point2: vec2, control1: vec2, control2: vec2, tau: number = 0.2): Spline {
+        const a = add(scale(control1, -1 * tau), scale(point1, 2 - tau), scale(point2, tau - 2), scale(control2, tau));
+        const b = add(scale(control1, 2 * tau), scale(point1, tau - 3), scale(point2, 3 - 2 * tau), scale(control2, -tau));
         const c = add(scale(control1, -tau), scale(point2, tau));
         const d = copy(point1);
 
@@ -59,16 +57,16 @@ class Spline {
         );
     }
 
-    solve_quadratic(a: number, b: number, c: number): [ number, number ] {
+    solve_quadratic(a: number, b: number, c: number): [number, number] {
         // ax^2 + bx + c = 0
         const D = b * b - 4.0 * a * c;
 
         if (D >= 0) {
             if (a === 0.0) {
                 if (b === 0.0) {
-                    return [ -1, -1 ];
+                    return [-1, -1];
                 }
-                return [ -c / b, -c / b ];
+                return [-c / b, -c / b];
             }
             return [
                 (-b + Math.sqrt(D)) / (2.0 * a),
@@ -76,7 +74,7 @@ class Spline {
             ];
         }
 
-        return [ -1, -1 ];
+        return [-1, -1];
     }
 
     get_extremes(): Float32Array {
@@ -113,7 +111,7 @@ class Spline {
 
         ctx.beginPath();
         ctx.moveTo(this.d.x, this.d.y);
-        for (t = step; t < 1; t += step) {
+        for (t = 0; t <= 1 + step; t += step) {
             tt = t * t;
             ttt = tt * t;
             ctx.lineTo(
@@ -125,7 +123,7 @@ class Spline {
         ctx.stroke();
         ctx.beginPath()
         ctx.setLineDash([0.05, 0.1]);
-        for (t = 1; t < 1; t += step) {
+        for (t = 1; t <= 1; t += step) {
             tt = t * t;
             ttt = tt * t;
             ctx.lineTo(
@@ -138,7 +136,7 @@ class Spline {
     }
 
     position_on_spline(t: number): vec2 {
-	    return add(scale(this.a, t * t * t), scale(this.b, t * t), scale(this.c, t), copy(this.d));
+        return add(scale(this.a, t * t * t), scale(this.b, t * t), scale(this.c, t), copy(this.d));
     }
 
     /**
@@ -173,7 +171,7 @@ class Spline {
 
                 result = this.calculate_near_far(third_t1, third_t2, aabb.min, aabb.max, this.ts);
             }
-        }                                                        
+        }
 
         return result;
     }
@@ -218,10 +216,10 @@ class Spline {
         const ft2 = add(multiply(t2, it2), multiply(subtract(vec2(1, 1), it2), MIN_VALUE));
 
         const inear = vec2(min(nt1.x, nt2.x), min(nt1.y, nt2.y));
-        const ifar  = vec2(max(ft1.x, ft2.x), max(ft1.y, ft2.y));
+        const ifar = vec2(max(ft1.x, ft2.x), max(ft1.y, ft2.y));
 
         ts.x = min(ts.x, min(inear.x, inear.y));
-        ts.y = max(ts.y, max(ifar.x,  ifar.y));
+        ts.y = max(ts.y, max(ifar.x, ifar.y));
 
         return ts.x <= ts.y && ts.y >= 0;
     }
@@ -244,7 +242,7 @@ class Spline {
         const resultT = multiply(step(vec2(0, 0), t), step(t, vec2(1, 1)));
         const result0 = multiply(step(subtract(aabbMin, EPSILON), P0), step(P0, add(aabbMax, EPSILON)));
         const result1 = multiply(step(subtract(aabbMin, EPSILON), P1), step(P1, add(aabbMax, EPSILON)));
-        
+
         return vec2(
             resultT.x * result0.x * result0.y,
             resultT.y * result1.x * result1.y);
