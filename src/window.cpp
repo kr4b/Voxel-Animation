@@ -37,7 +37,8 @@ Window::Window(const int width, const int height) : frames(0) {
 
   glfwSwapInterval(1);
 
-  this->prevTime = std::chrono::high_resolution_clock::now();
+  this->prevUpdate = std::chrono::high_resolution_clock::now();
+  this->prevFrame = this->prevUpdate;
 
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
@@ -60,7 +61,9 @@ bool Window::update(State* state) {
 
   this->frames += 1;
   auto now = std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double, std::milli> timePassed = now - this->prevTime;
+  std::chrono::duration<double, std::milli> timePassed = now - this->prevUpdate;
+  std::chrono::duration<double, std::milli> deltaTime = now - this->prevFrame;
+  this->deltaTime = deltaTime.count();
   
   if (int(timePassed.count()) > 1000) {
     char newTitle[sizeof(windowDefaults.name) + 32];
@@ -72,9 +75,11 @@ bool Window::update(State* state) {
       state && state->debugMode ? " - Debug" : "", frames
     );
     glfwSetWindowTitle(this->window, newTitle);
-    this->prevTime = now;
+    this->prevUpdate = now;
     this->frames = 0;
   }
+
+  this->prevFrame = now;
 
   glfwSwapBuffers(this->window);
   glfwPollEvents();

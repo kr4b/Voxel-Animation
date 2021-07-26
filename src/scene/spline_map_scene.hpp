@@ -64,20 +64,22 @@ public:
     SplineMapScene(
         Window &window,
         Setup& setup,
-        Volume volume,
-        Plane  base,
-        glm::vec3 offset,
-        glm::vec3 tangent0,
-        glm::vec3 tangent1) :
+        Volume volume) :
         window(window),
         setup(setup),
         shader("assets/simple_vol.vert", "assets/spline_map.frag"),
         debugShader("assets/debug.vert", "assets/debug.frag"),
         volume(std::move(volume)),
-        splineMap(base, Spline::with_tangents(glm::vec3(0.0f), offset, tangent0, tangent1)),
-        offset(offset),
-        tangent0(tangent0),
-        tangent1(tangent1),
+        splineMap(
+            Plane(
+                glm::vec3(0.0f, 1.0f, 0.0f),
+                glm::vec3(1.0f, 0.0f, 1.0f)
+            ),
+            Spline::with_tangents(glm::vec3(0.0f), offset, tangent0, tangent1)
+        ),
+        offset(0.0f, 2.0f, 0.0f),
+        tangent0(0.0f, 0.0f, 0.0f),
+        tangent1(0.0f, 0.0f, 0.0f),
         wireframeAABB(WireframeAABB(this->splineMap.aabb))
     {
         init();
@@ -97,7 +99,14 @@ protected:
     };
 
 private:
-    bool showAxis, showOutline, showEncompassingAABB;
+    bool showAxis = true;
+    bool showOutline = true;
+    bool showEncompassingAABB = true;
+    bool animate = false;
+    glm::vec3  offset, tangent0, tangent1;
+    float threshold = 0.25f;
+    float stepSize = 0.025f;
+    double time = 0.0;
 
     SplineMapUniform create_uniform() {
         return SplineMapUniform {
@@ -161,21 +170,33 @@ private:
         splineMapChange |= ImGui::DragFloat("y", &this->tangent1.y);
         splineMapChange |= ImGui::DragFloat("z", &this->tangent1.z);
         ImGui::PopID();
+        ImGui::Checkbox("Animate", &this->animate);
         ImGui::End();
 
         if (splineMapChange) {
-            const Spline spline = Spline::with_tangents(glm::vec3(0.0f), this->offset, this->tangent0, this->tangent1);
-            this->splineMap.clean();
-            const SplineMap splineMap = SplineMap(this->splineMap.base, spline);
-            std::memcpy(&this->splineMap, &splineMap, sizeof(SplineMap));
-            const SplineMapUniform uniform = create_uniform();
-            glNamedBufferSubData(this->splineMapUniform, 0, sizeof(SplineMapUniform), &uniform);
+            update_spline_map();
         }
+    }
+
+    void update_spline_map() {
+        const Spline spline = Spline::with_tangents(glm::vec3(0.0f), this->offset, this->tangent0, this->tangent1);
+        this->splineMap.clean();
+        const SplineMap splineMap = SplineMap(this->splineMap.base, spline);
+        std::memcpy(&this->splineMap, &splineMap, sizeof(SplineMap));
+        const SplineMapUniform uniform = create_uniform();
+        glNamedBufferSubData(this->splineMapUniform, 0, sizeof(SplineMapUniform), &uniform);
     }
 
 public:
     void update() {
         get_setup().update(get_window(), get_state());
+
+        if (this->animate) {
+            this->time += get_window().get_delta_time() * 0.001;
+            this->tangent0 = glm::vec3(float(sin(this->time)) * 3.0f, 0.0f, 0.0f);
+            this->tangent1 = glm::vec3(float(cos(this->time)) * 3.0f, 0.0f, 0.0f);
+            update_spline_map();
+        }
         if (get_state().debugMode) {
             get_ray_emitter().update(get_setup(), get_state(), get_spline_map(), get_volume(), &this->threshold, &this->stepSize);
             show_ui();
@@ -222,7 +243,4 @@ protected:
     Axis       axis;
     RayEmitter rayEmitter;
     WireframeAABB wireframeAABB;
-    glm::vec3  offset, tangent0, tangent1;
-    float threshold = 0.25f;
-    float stepSize = 0.025f;
 };
