@@ -62,6 +62,24 @@ SplineChain SplineChain::from_points_with_outer_tangents(glm::vec3 first_tangent
     return SplineChain(splines);
 }
 
+SplineChain SplineChain::from_points_with_tangents(std::vector<glm::vec3> points, std::vector<glm::vec3> tangents) {
+    assert(points.size() > 1);
+    std::vector<Spline> splines;
+
+    for (int i = 1; i < points.size(); i++) {
+        splines.push_back(
+            Spline::with_tangents(
+                points[i - 1],
+                points[i],
+                tangents[i - 1],
+                tangents[i]
+            )
+        );
+    }
+
+    return SplineChain(splines);
+}
+
 glm::vec3 SplineChain::position_on_chain(const float t) const {
     const float clamped_t = std::max(0.0f, std::min(t, 1.0f - 1e-4f));
     const unsigned int index = (unsigned int) floor(clamped_t * float(this->splines.size()));

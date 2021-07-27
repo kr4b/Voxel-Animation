@@ -89,16 +89,13 @@ public:
                 glm::vec3(0.0f, 1.0f, 0.0f),
                 glm::vec3(1.0f, 0.0f, 1.0f)
             ),
-            SplineChain::from_points_with_outer_tangents(
-                tangent0,
-                tangent1,
-                std::deque<glm::vec3>(this->anchorPoints, this->anchorPoints + 2),
-                tau
+            SplineChain::from_points_with_tangents(
+                std::vector<glm::vec3>(this->anchorPoints, this->anchorPoints + 2),
+                std::vector<glm::vec3>(this->anchorTangents, this->anchorTangents + 2)
             )
         ),
         anchorPoints{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 2.0f, 0.0f) },
-        tangent0(0.0f, 0.0f, 0.0f),
-        tangent1(0.0f, 0.0f, 0.0f),
+        anchorTangents{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f) },
         tau(0.2f),
         wireframeAABB(WireframeAABB(this->splineMap.aabb, glm::vec3(0.90, 0.49, 0.13)))
     {
@@ -123,9 +120,9 @@ private:
     bool showOutline = true;
     bool showEncompassingAABB = true;
     bool animate = false;
-    glm::vec3 tangent0, tangent1;
-    glm::vec3 anchorPoints[2];
-    std::deque<glm::vec2> middlePoints;
+    glm::vec3 anchorPoints[2], anchorTangents[2];
+    std::vector<glm::vec2> middlePoints;
+    std::vector<glm::vec3> middleTangents;
     float tau;
     float threshold = 0.25f;
     float stepSize = 0.025f;
@@ -225,13 +222,15 @@ private:
 
         for (int i = 0; i < this->middlePoints.size(); i++) {
             ImGui::PushID(i);
-            splineMapChange |= ImGui::DragFloat2("xz", glm::value_ptr(this->middlePoints[i]));
+            splineMapChange |= ImGui::DragFloat2("pos", glm::value_ptr(this->middlePoints[i]));
+            splineMapChange |= ImGui::DragFloat3("tan", glm::value_ptr(this->middleTangents[i]));
             ImGui::PopID();
         }
 
         if (ImGui::Button("Push")) {
             if (this->splineMap.splineChain.splines.size() < MAX_SPLINES) {
                 this->middlePoints.push_back(glm::vec2());
+                this->middleTangents.push_back(glm::vec3());
                 splineMapChange = true;
             }
         }
@@ -239,6 +238,7 @@ private:
         if (ImGui::Button("Pop")) {
             if (this->middlePoints.size() > 0) {
                 this->middlePoints.pop_back();
+                this->middleTangents.pop_back();
                 splineMapChange = true;
             }
         }
@@ -246,15 +246,15 @@ private:
         ImGui::PopID();
         ImGui::PushID("Tangent0");
         ImGui::Text("Tangent 0:");
-        splineMapChange |= ImGui::DragFloat("x", &this->tangent0.x);
-        splineMapChange |= ImGui::DragFloat("y", &this->tangent0.y);
-        splineMapChange |= ImGui::DragFloat("z", &this->tangent0.z);
+        splineMapChange |= ImGui::DragFloat("x", &this->anchorTangents[0].x);
+        splineMapChange |= ImGui::DragFloat("y", &this->anchorTangents[0].y);
+        splineMapChange |= ImGui::DragFloat("z", &this->anchorTangents[0].z);
         ImGui::PopID();
         ImGui::PushID("Tangent1");
         ImGui::Text("Tangent 1:");
-        splineMapChange |= ImGui::DragFloat("x", &this->tangent1.x);
-        splineMapChange |= ImGui::DragFloat("y", &this->tangent1.y);
-        splineMapChange |= ImGui::DragFloat("z", &this->tangent1.z);
+        splineMapChange |= ImGui::DragFloat("x", &this->anchorTangents[1].x);
+        splineMapChange |= ImGui::DragFloat("y", &this->anchorTangents[1].y);
+        splineMapChange |= ImGui::DragFloat("z", &this->anchorTangents[1].z);
         ImGui::PopID();
         ImGui::PushID("Tau");
         splineMapChange |= ImGui::DragFloat("Tau", &this->tau, 0.1f, 0.0f, 1.0f);
@@ -268,15 +268,20 @@ private:
     }
 
     void update_spline_map() {
-        std::deque<glm::vec3> points;
+        std::vector<glm::vec3> points;
+        std::vector<glm::vec3> tangents;
+
         const float deltaY = (anchorPoints[1].y - anchorPoints[0].y) / float(middlePoints.size() + 1);
+        points.push_back(anchorPoints[0]);
+        tangents.push_back(anchorTangents[0]);
         for (int i = 0; i < middlePoints.size(); i++) {
             points.push_back(glm::vec3(middlePoints[i].x, anchorPoints[0].y + deltaY * float(i + 1), middlePoints[i].y));
+            tangents.push_back(middleTangents[i]);
         }
-        points.push_front(anchorPoints[0]);
         points.push_back(anchorPoints[1]);
+        tangents.push_back(anchorTangents[1]);
 
-        const SplineChain splineChain = SplineChain::from_points_with_outer_tangents(this->tangent0, this->tangent1, points, this->tau);
+        const SplineChain splineChain = SplineChain::from_points_with_tangents(points, tangents);
         this->splineMap.clean();
         const SplineMap splineMap = SplineMap(this->splineMap.base, splineChain);
         std::memcpy(&this->splineMap, &splineMap, sizeof(SplineMap));
@@ -292,8 +297,8 @@ public:
 
         if (this->animate) {
             this->time += get_window().get_delta_time() * 0.001;
-            this->tangent0 = glm::vec3(float(sin(this->time)) * 3.0f, 0.0f, 0.0f);
-            this->tangent1 = glm::vec3(float(cos(this->time)) * 3.0f, 0.0f, 0.0f);
+            this->anchorTangents[0] = glm::vec3(float(sin(this->time)) * 3.0f, 0.0f, 0.0f);
+            this->anchorTangents[1] = glm::vec3(float(cos(this->time)) * 3.0f, 0.0f, 0.0f);
             update_spline_map();
         }
         if (get_state().debugMode) {
