@@ -73,6 +73,7 @@ struct Ray {
 struct SplineChain {
     Spline splines[MAX_SPLINES];
     float amount;
+    vec3 y_bounds;
 };
 
 struct SplineMap {
@@ -104,7 +105,7 @@ layout( std140, binding = 2 ) uniform USplineMap {
 //                                    //
 ////////////////////////////////////////
 vec3 position_on_spline(in Spline spline, in float t);
-bool intersect_spline_plane(in Spline spline, in float index, in float factor, in vec4 p, inout float t);
+bool intersect_spline_plane(in Spline spline, in vec4 p, inout float t);
 
 ////////////////////////////////////
 //   _____        _      _        // 
@@ -170,7 +171,7 @@ vec3 position_on_spline(in Spline spline, in float t) {
     return spline.a * t * t * t + spline.b * t * t + spline.c * t + spline.d;
 }
 
-bool intersect_spline_plane(in Spline spline, in float index, in float factor, in vec4 p, inout float t) {
+bool intersect_spline_plane(in Spline spline, in vec4 p, inout float t) {
     const vec3 conversion = -spline.b / (3.0 * spline.a);
     Cubic cubic = cubic_constructor(
         spline.a.y,
@@ -190,7 +191,6 @@ bool intersect_spline_plane(in Spline spline, in float index, in float factor, i
         }
     }
 
-    t = t * factor + index;
     return true;
 }
 
@@ -297,24 +297,18 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
 
 // SplineChain
 vec3 position_on_spline_chain(in SplineChain spline_chain, in float t) {
-    const float clamped_t = max(0.0, min(t, 1.0 - 1e-4));
-    const int   index     = int(floor(clamped_t * spline_chain.amount));
-    const float t_prime   = (clamped_t - float(index) / spline_chain.amount) * spline_chain.amount;
+    const int   index   = int(t * spline_chain.amount);
+    const float t_prime = t * spline_chain.amount - float(index);
 
     return position_on_spline(spline_chain.splines[index], t_prime);
 }
 
 bool intersect_spline_chain_plane(in SplineChain spline_chain, in vec4 p, inout float t) {
-    const int iamount = int(spline_chain.amount);
-    const float inv_amount = 1.0 / spline_chain.amount;
+    const int index = int((p.y - spline_chain.y_bounds.x) * spline_chain.y_bounds.z);
+    const bool result = intersect_spline_plane(spline_chain.splines[index], p, t);
+    t = (t + float(index)) / spline_chain.amount;
 
-    return (
-        (iamount > 0 && intersect_spline_plane(spline_chain.splines[0], 0.0, inv_amount, p, t))
-     || (iamount > 1 && intersect_spline_plane(spline_chain.splines[1], 1.0 * inv_amount, inv_amount, p, t))
-     || (iamount > 2 && intersect_spline_plane(spline_chain.splines[2], 2.0 * inv_amount, inv_amount, p, t))
-    //  || (iamount > 3 && intersect_spline_plane(spline_chain.splines[3], 3.0 * inv_amount, inv_amount, p, t))
-    //  || (iamount > 4 && intersect_spline_plane(spline_chain.splines[4], 4.0 * inv_amount, inv_amount, p, t))
-    );
+    return result;
 }
 
 // SplineMap
