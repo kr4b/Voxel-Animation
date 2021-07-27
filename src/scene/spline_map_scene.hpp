@@ -69,8 +69,8 @@ struct SplineMapUniform
     alignas(16) SplineChainUniform transformed_spline_chain;
 
     alignas(16) float size_squared;
-    alignas(16) float width;
-    alignas(16) float height;
+    float width;
+    float height;
 };
 
 class SplineMapScene {
@@ -201,7 +201,7 @@ private:
             },
             this->splineMap.sizeSquared,
             this->splineMap.sizeSquared,
-            this->splineMap.sizeSquared
+            yBounds.x - yBounds.y
         };
     }
 
