@@ -1,7 +1,7 @@
 #version 450
 
 // Constants
-#define MAX_SPLINES 3
+#define MAX_SPLINES 4
 #define VOLUME_STEPS 1024
 #define MAX_SAMPLERS 1
 #define M_PI 3.14159265
@@ -300,7 +300,20 @@ vec3 position_on_spline_chain(in SplineChain spline_chain, in float t) {
     const int   index   = int(t * spline_chain.amount);
     const float t_prime = t * spline_chain.amount - float(index);
 
-    return position_on_spline(spline_chain.splines[index], t_prime);
+    if (index == 0) {
+        return position_on_spline(spline_chain.splines[0], t_prime);
+    }
+    if (index == 1) {
+        return position_on_spline(spline_chain.splines[1], t_prime);
+    }
+    if (index == 2) {
+        return position_on_spline(spline_chain.splines[2], t_prime);
+    }
+    if (index == 3) {
+        return position_on_spline(spline_chain.splines[3], t_prime);
+    }
+
+    return vec3(0.0);
 }
 
 bool intersect_spline_chain_plane(in SplineChain spline_chain, in vec4 p, inout float t) {

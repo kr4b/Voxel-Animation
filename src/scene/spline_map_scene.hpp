@@ -1,6 +1,6 @@
 #pragma once
 
-#define MAX_SPLINES 3
+#define MAX_SPLINES 4
 
 #include <glad/glad.h>
 
@@ -187,8 +187,7 @@ private:
                 splineUniforms[0],
                 splineUniforms[1],
                 splineUniforms[2],
-                // splineUniforms[3],
-                // splineUniforms[4],
+                splineUniforms[3],
                 float(this->splineMap.splineChain.splines.size()),
                 yBounds
             },
@@ -196,8 +195,7 @@ private:
                 transformedSplineUniforms[0],
                 transformedSplineUniforms[1],
                 transformedSplineUniforms[2],
-                // transformedSplineUniforms[3],
-                // transformedSplineUniforms[4],
+                transformedSplineUniforms[3],
                 float(this->splineMap.splineChain.splines.size()),
                 transformedYBounds
             },
