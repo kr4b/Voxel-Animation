@@ -133,14 +133,8 @@ std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap
         const std::optional<glm::vec3> texCoords = splineMap.texture_coords(pos);
         if (texCoords.has_value()) {
             const glm::ivec3 voxel = glm::ivec3(texCoords.value() * glm::vec3(volume.width(), volume.height(), volume.depth()));
-
-            if (voxel.x >= 0 && voxel.x < volume.width() &&
-                voxel.y >= 0 && voxel.y < volume.height() &&
-                voxel.z >= 0 && voxel.z < volume.depth()) {
-                const float color = volume(voxel.x, voxel.y, voxel.z);
-
-                if (color > threshold) return std::make_pair(glm::ivec3(voxel.x, voxel.y, voxel.z), t);
-            }
+            const float color = volume(voxel.x, voxel.y, voxel.z);
+            if (color > threshold) return std::make_pair(glm::ivec3(voxel.x, voxel.y, voxel.z), t);
         }
     }
     return std::nullopt;
