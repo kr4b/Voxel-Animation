@@ -280,10 +280,10 @@ private:
         points.push_back(anchorPoints[1]);
         tangents.push_back(anchorTangents[1]);
 
-        const SplineChain splineChain = SplineChain::from_points_with_tangents(points, tangents);
         this->splineMap.clean();
-        const SplineMap splineMap = SplineMap(this->splineMap.base, splineChain);
-        std::memcpy(&this->splineMap, &splineMap, sizeof(SplineMap));
+        const SplineChain splineChain = SplineChain::from_points_with_tangents(points, tangents);
+        SplineMap splineMap = SplineMap(this->splineMap.base, splineChain);
+        std::memmove(&this->splineMap, &splineMap, sizeof(SplineMap));
         const SplineMapUniform uniform = create_uniform();
         glNamedBufferSubData(this->splineMapUniform, 0, sizeof(SplineMapUniform), &uniform);
 

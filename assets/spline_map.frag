@@ -181,11 +181,11 @@ bool intersect_spline_plane(in Spline spline, in vec4 p, inout float t) {
     );
 
     t = conversion.y + first_root(cubic);
-    if (t < -EPSILON || t > 1.0 + EPSILON) {
+    if (t < 0.0 || t > 1.0) {
         t = conversion.y + second_root(cubic);
-        if (t < -EPSILON || t > 1.0 + EPSILON) {
+        if (t < 0.0 || t > 1.0) {
             t = conversion.y + third_root(cubic);
-            if (t < -EPSILON || t > 1.0 + EPSILON) {
+            if (t < 0.0 || t > 1.0) {
                 return false;
             }
         }

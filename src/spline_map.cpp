@@ -108,8 +108,8 @@ void SplineMap::render() {
 
 void SplineMap::clean() {
     this->base.clean();
-    this->splineChain.clean();
     this->topBase.clean();
+    this->splineChain.clean();
     for (SplineChain& edgeSpline : this->edgeSplines) {
         edgeSpline.clean();
     }
