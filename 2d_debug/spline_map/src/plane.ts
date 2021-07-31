@@ -9,7 +9,7 @@ class Plane {
 
     min: vec2;
     max: vec2;
-    
+
     matrix: mat3;
     inv_matrix: mat3;
 
@@ -38,16 +38,22 @@ class Plane {
         );
 
         this.inv_matrix = mat3(
-            cos, sin, this.center.x * cos + this.center.y * sin,
-            -sin, cos, this.center.y * cos - this.center.x * sin,
+            cos, sin, -this.center.x * cos - this.center.y * sin,
+            -sin, cos, -this.center.y * cos + this.center.x * sin,
             0, 0, 1
         );
     }
 
     static transform(plane: Plane, matrix: mat3): Plane {
+        const rotation = mat3(
+            matrix.m00, matrix.m01, 0,
+            matrix.m10, matrix.m11, 0,
+            0, 0, 1
+        );
+
         return new Plane(
             transform(plane.center, matrix),
-            plane.half_size
+            transform(plane.half_size, rotation)
         );
     }
 

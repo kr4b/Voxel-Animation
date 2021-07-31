@@ -1,9 +1,8 @@
 import { Plane } from "./plane.js";
 import { Ray } from "./ray.js";
-import Spline from "./spline.js";
 import SplineChain from "./spline_chain.js";
 import SplineMap from "./spline_map.js";
-import { norm, scale, vec2 } from "./vec2.js";
+import { add, norm, scale, vec2 } from "./vec2.js";
 
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
@@ -73,14 +72,16 @@ onload = () => {
 
     // const spline = Spline.with_control_points(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-15.0, -3.0), vec2(12.0, 0.0));
     // const spline = Spline.with_control_points(vec2(0, 0), vec2(0, 1), vec2(-15.0, -3.0), vec2(20.0, -10.0));
-    const spline_chain = SplineChain.from_points_with_outer_tangents(
-        vec2(1, 0.3),
-        vec2(0, 0),
+    const spline_chain = SplineChain.from_points_with_tangents(
         [
             vec2(0, 0),
-            vec2(0.0, 0.3),
             vec2(0.0, 0.5),
-        ], 1.0);
+        ],
+        [
+            vec2(3.0, 0.0),
+            vec2(0.0, 0.0)
+        ]
+    );
 
     const spline_map = new SplineMap(base, spline_chain);
 

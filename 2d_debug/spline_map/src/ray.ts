@@ -1,6 +1,8 @@
 import { AABB } from "./aabb.js";
+import DepressedCubic from "./depressed_cubic.js";
+import Spline from "./spline.js";
 import SplineMap from "./spline_map.js";
-import { add, divide, max, min, mix, scale, subtract, vec2 } from "./vec2.js";
+import { add, divide, max, min, scale, subtract, vec2 } from "./vec2.js";
 
 const VOLUME_STEPS: number = 1024;
 
@@ -50,7 +52,7 @@ class Ray {
 
     /// Walks the ray through the given spline map
     walk_spline_map(spline_map: SplineMap, step: number, pixels: number[][], size: number): [vec2, number] | null {
-        const { x: t1, y: t2 } = spline_map.intersect_ray(this);
+        const { x: t1, y: t2 } = spline_map.intersect_ray_alt(this);
 
         for (let t = t1; t <= t2; t += step) {
             const pos = add(this.origin, scale(this.dir, t));
@@ -70,6 +72,33 @@ class Ray {
 
         return null;
     }
+
+    intersect_ray_spline(transformed_spline: Spline, original_spline: Spline): number {
+        const EPSILON = 1e-3
+        const conversion: vec2 = divide(scale(transformed_spline.b, -1), scale(add(transformed_spline.a, vec2(1e-6, 1e-6)), 3));
+        const cubic = new DepressedCubic(
+            transformed_spline.a.y,
+            transformed_spline.b.y,
+            transformed_spline.c.y,
+            transformed_spline.d.y
+        );
+
+        let result = 20.0;
+        let t = conversion.y + cubic.first_root();
+        if (t >= EPSILON && t <= 1.0 + EPSILON)
+            result = Math.min(result, (original_spline.position_on_spline(t).x - this.origin.x) / this.dir.x);
+
+        t = conversion.y + cubic.second_root();
+        if (t >= EPSILON && t <= 1.0 + EPSILON)
+            result = Math.min(result, (original_spline.position_on_spline(t).x - this.origin.x) / this.dir.x);
+        
+        t = conversion.y + cubic.third_root();
+        if (t >= EPSILON && t <= 1.0 + EPSILON)
+            result = Math.min(result, (original_spline.position_on_spline(t).x - this.origin.x) / this.dir.x);
+
+        return result;
+    }
 }
 
 export { Ray };
+
