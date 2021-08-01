@@ -328,7 +328,7 @@ Volume load_fld_volume(char const* fileName, FLDInfo info) {
 }
 
 Volume load_cube() {
-    const int size = 256;
+    const int size = 4;
     Volume cube(size, size, size);
 
     for (int i = 0; i < size; i++) {

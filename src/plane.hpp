@@ -29,6 +29,8 @@ public:
 
     glm::vec3 transformedMin, transformedMax;
 
+    float span1Squared, span2Squared;
+
     Plane(glm::vec3 center, glm::vec3 half_size);
 
     void init_vao(const glm::vec3);

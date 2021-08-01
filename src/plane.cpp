@@ -18,6 +18,8 @@ Plane::Plane(glm::vec3 center, glm::vec3 half_size) : center(center), half_size(
     this->normal = glm::normalize(glm::vec3(v.y * w.z - v.z * w.y, v.z * w.x - v.x * w.z, v.x * w.y - v.y * w.x));
     this->span1 = v;
     this->span2 = p3 - p2;
+    this->span1Squared = dot(this->span1, this->span1);
+    this->span2Squared = dot(this->span2, this->span2);
 
     this->size = half_size * 2.0f;
 

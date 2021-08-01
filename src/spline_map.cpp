@@ -42,7 +42,6 @@ SplineMap::SplineMap(const Plane& base, const SplineChain& splineChain) :
     base(base),
     splineChain(transformSplineChain(this->base, splineChain)),
     aabb(createEncompassingAABB(this->base, this->splineChain)),
-    sizeSquared(dot(this->base.size, this->base.size)),
     topBase(createTopBase(this->base, this->splineChain)) {
 
     this->splineChain.init_vao();
@@ -79,19 +78,19 @@ std::optional<glm::vec3> SplineMap::texture_coords(const glm::vec3 pos) const {
 
     if (result.has_value()) {
         const float t = result.value();
-        const glm::vec3 edgePos1 = this->splineChain.position_on_chain(t);
-        const glm::vec3 edgePos2 = edgePos1 + this->base.size;
-        const glm::vec3 diff1 = pos - edgePos1;
-        const glm::vec3 diff2 = pos - edgePos2;
-        if (dot(diff1, diff1) > this->sizeSquared || dot(diff2, diff2) > this->sizeSquared) {
+        const glm::vec3 edgePos = this->splineChain.position_on_chain(t);
+        const glm::vec3 diff = pos - edgePos;
+        const float dot1 = dot(diff, this->base.span1);
+        const float dot2 = dot(diff, this->base.span2);
+        if (dot1 < 0.0f || dot2 < 0.0f || dot1 > this->base.span1Squared || dot2 > this->base.span2Squared) {
             return std::nullopt;
         }
 
         // Calculate and return texture coordinates
         // x and z are the distance to the base spline, decomposed into components
         // y is currently assumed to be t
-        const float xComp = dot(diff1, this->base.span1) / dot(this->base.span1, this->base.span1);
-        const float zComp = dot(diff1, this->base.span2) / dot(this->base.span2, this->base.span2);
+        const float xComp = dot1 / this->base.span1Squared;
+        const float zComp = dot2 / this->base.span2Squared;
         return glm::vec3(xComp, t, zComp);
     }
 
@@ -109,8 +108,8 @@ void SplineMap::render() {
 
 void SplineMap::clean() {
     this->base.clean();
-    this->splineChain.clean();
     this->topBase.clean();
+    this->splineChain.clean();
     for (SplineChain& edgeSpline : this->edgeSplines) {
         edgeSpline.clean();
     }
