@@ -103,7 +103,7 @@ onload = () => {
 
             ray.draw(ctx);
 
-            const result = ray.walk_spline_map(spline_map, pixelSizeY, pixels, size);
+            const result = ray.walk_spline_map(spline_map, pixelSizeY, pixels, size, ctx);
             if (result !== null) {
                 const [texCoords, t] = result;
                 const color = pixels[texCoords.y * size + texCoords.x];

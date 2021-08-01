@@ -2,13 +2,13 @@ import { AABB } from "./aabb.js";
 import DepressedCubic from "./depressed_cubic.js";
 import { Plane } from "./plane.js";
 import { Ray } from "./ray.js";
-import Spline from "./spline.js";
 import SplineChain from "./spline_chain.js";
 import { add, dist, divide, dot, length, mat3, max, min, multiply, scale, subtract, transform, vec2 } from "./vec2.js";
 
 class SplineChainMap {
     aabb: AABB;
     base: Plane;
+    bottom_base: Plane;
     spline: SplineChain;
     furthest_spline: SplineChain;
 
@@ -30,6 +30,7 @@ class SplineChainMap {
 
         this.width = length(this.base.size);
         this.height = dist(this.spline.position_on_chain(1), this.spline.position_on_chain(0));
+        this.bottom_base = Plane.transform(this.base, mat3(1, 0, 0, 0, 1, this.height, 0, 0, 1));
     }
 
     draw(ctx: CanvasRenderingContext2D) {
@@ -67,6 +68,7 @@ class SplineChainMap {
         // ctx.stroke();
     }
 
+    // TODO: Use more efficient way of getting the intersection points
     intersect_ray_alt(ray: Ray): vec2 {
         const plane = new Plane(ray.origin, ray.dir);
 
@@ -77,17 +79,22 @@ class SplineChainMap {
         const t0 = ray.intersect_ray_spline(transformed0.splines[0], this.spline.splines[0]);
         const t1 = ray.intersect_ray_spline(transformed1.splines[0], this.furthest_spline.splines[0]);
 
-        if (t0 > 10 && t1 > 10) return vec2(1, 0);
+        const tb0 = ray.intersect_ray_plane(this.base);
+        const tb1 = ray.intersect_ray_plane(this.bottom_base);
 
-        const taabb = ray.intersect_ray_aabb(this.aabb);
+        const results = [ ...t0, ...t1, tb0, tb1 ];
 
-        const tnear = Math.min(t0, t1);
-        const tfar = Math.max(t0, t1);
+        const tnear = Math.min(...results);
+        const tfar = Math.min(...results.map(t => t === tnear ? 20 : t));
 
         const ts = vec2(
-            tfar > 10 ? taabb.x : tnear,
-            tfar > 10 ? tnear : Math.min(tfar, taabb.y)
+            tnear,
+            tfar
         );
+
+        if (tnear > 10 || tfar > 10) {
+            return vec2(1.0, 0.0);
+        }
 
         return ts;
     }
