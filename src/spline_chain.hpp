@@ -35,6 +35,7 @@ public:
     static SplineChain from_points_with_tangents(std::vector<glm::vec3>, std::vector<glm::vec3>);
 
     glm::vec3 position_on_chain(const float t) const;
+    glm::vec3 position_on_transformed_chain(const float t) const;
 
     std::vector<float> get_extremes() const;
     std::optional<float> intersect_spline_plane(const glm::vec3) const;

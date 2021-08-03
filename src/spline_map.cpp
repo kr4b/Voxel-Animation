@@ -44,11 +44,18 @@ SplineMap::SplineMap(const Plane& base, const SplineChain& splineChain) :
     aabb(createEncompassingAABB(this->base, this->splineChain)),
     topBase(createTopBase(this->base, this->splineChain)) {
 
+    const glm::vec3 start = splineChain.splines.front().position_on_spline(0.0f);
+    const glm::vec3 end = splineChain.splines.back().position_on_spline(1.0f);
+    this->width = abs(length(this->base.span1));
+    this->height = abs(length(end - start));
+    this->depth = abs(length(this->base.span2));
+
     this->splineChain.init_vao();
     this->splineChain.update_buffers();
     this->splineChain.with_transform(this->base);
     this->topBase.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
     this->base.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
+
     edgeSplines[0] = this->splineChain.transform(glm::mat4x4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
@@ -73,25 +80,18 @@ SplineMap::SplineMap(const Plane& base, const SplineChain& splineChain) :
 }
 
 std::optional<glm::vec3> SplineMap::texture_coords(const glm::vec3 pos) const {
-    const glm::vec4 p = this->base.inv_matrix * glm::vec4(pos, 1.0f);
-    std::optional<float> result = this->splineChain.intersect_spline_plane(glm::vec3(p.x, p.y, p.z));
+    const glm::vec4 pw = this->base.inv_matrix * glm::vec4(pos, 1.0f);
+    const glm::vec3 p = glm::vec3(pw.x, pw.y, pw.z) / pw.w;
+    std::optional<float> result = this->splineChain.intersect_spline_plane(p);
 
     if (result.has_value()) {
         const float t = result.value();
-        const glm::vec3 edgePos = this->splineChain.position_on_chain(t);
-        const glm::vec3 diff = pos - edgePos;
-        const float dot1 = dot(diff, this->base.span1);
-        const float dot2 = dot(diff, this->base.span2);
-        if (dot1 < 0.0f || dot2 < 0.0f || dot1 > this->base.span1Squared || dot2 > this->base.span2Squared) {
-            return std::nullopt;
-        }
-
-        // Calculate and return texture coordinates
-        // x and z are the distance to the base spline, decomposed into components
-        // y is currently assumed to be t
-        const float xComp = dot1 / this->base.span1Squared;
-        const float zComp = dot2 / this->base.span2Squared;
-        return glm::vec3(xComp, t, zComp);
+        const glm::vec3 edge = this->splineChain.position_on_transformed_chain(t);
+        const glm::vec3 diff = edge - p;
+        const float xComp = diff.x / this->width;
+        const float yComp = p.y / this->height;
+        const float zComp = diff.z / this->depth;
+        return glm::vec3(xComp, yComp, zComp);
     }
 
     return std::nullopt;
