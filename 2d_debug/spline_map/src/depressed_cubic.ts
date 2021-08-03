@@ -28,7 +28,7 @@ class DepressedCubic {
             this.fac = 2 * sqrt(-this.p / 3);
             this.arccos = acos(3 * this.q / (2 * this.p) * sqrt(-3 / this.p)) / 3;
 
-            this.root = this.second_root();
+            this.root = this.first_root();
         }
     }
 

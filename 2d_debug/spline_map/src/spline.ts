@@ -193,6 +193,80 @@ class Spline {
         return result;
     }
 
+    intersect_spline_plane_transformed(y: number): [boolean, number] {
+        const conversion: vec2 = divide(scale(this.b, -1), scale(add(this.a, vec2(1e-6, 1e-6)), 3));
+        const cubic = new DepressedCubic(
+            this.a.y,
+            this.b.y,
+            this.c.y,
+            this.d.y - y
+        );
+
+        let t = conversion.y + cubic.first_root();
+        if (t < -EPSILON.x || t > 1.0 + EPSILON.x) {
+            t = conversion.y + cubic.second_root();
+            if (t < -EPSILON.x || t > 1.0 + EPSILON.x) {
+                t = conversion.y + cubic.third_root();
+                if (t < -EPSILON.x || t > 1.0 + EPSILON.x) {
+                    return [false, t];
+                }
+            }
+        }
+
+        return [true, t];
+    }
+
+    intersect_spline_infinite_plane(plane: Plane, ctx: CanvasRenderingContext2D): boolean {
+        const transformed_spline = Spline.transform(this, plane.inv_matrix);
+        ctx.save();
+        ctx.strokeStyle = "crimson";
+        transformed_spline.draw(ctx);
+
+        ctx.strokeStyle = "black";
+        ctx.beginPath();
+        ctx.moveTo(-10, 0);
+        ctx.lineTo(10, 0);
+        ctx.stroke();
+        ctx.restore();
+
+        const that = transformed_spline;
+
+        const conversion: vec2 = divide(scale(that.b, -1), scale(add(that.a, vec2(1e-6, 1e-6)), 3));
+
+        const cubic_x = new DepressedCubic(that.a.x, that.b.x, that.c.x, that.d.x);
+        const cubic_y = new DepressedCubic(that.a.y, that.b.y, that.c.y, that.d.y);
+
+        const t1 = add(conversion, vec2(cubic_x.second_root(), cubic_y.second_root()));
+
+        ctx.save();
+        ctx.fillStyle = "blue";
+        that.draw_point_at(ctx, t1.y);
+        ctx.restore();
+
+        console.log("T1", t1);
+
+        return true;
+
+        // this.ts = vec2(2.0, -2.0);
+        // let result = this.calculate_near_far(t1, t2, aabb.min, aabb.max, this.ts);
+
+        // if (!result) {
+        //     const first_t1: vec2 = add(conversion, vec2(cubic_min_x.first_root(), cubic_min_y.first_root()));
+        //     const first_t2: vec2 = add(conversion, vec2(cubic_max_x.first_root(), cubic_max_y.first_root()));
+
+        //     result = this.calculate_near_far(first_t1, first_t2, aabb.min, aabb.max, this.ts);
+
+        //     if (!result) {
+        //         const third_t1: vec2 = add(conversion, vec2(cubic_min_x.third_root(), cubic_min_y.third_root()));
+        //         const third_t2: vec2 = add(conversion, vec2(cubic_max_x.third_root(), cubic_max_y.third_root()));
+
+        //         result = this.calculate_near_far(third_t1, third_t2, aabb.min, aabb.max, this.ts);
+        //     }
+        // }
+
+        // return result;
+    }
+
     /**
      * Calculates the closest to and furthest from 0 intersection points with the aabb.
      * 

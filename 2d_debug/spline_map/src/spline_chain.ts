@@ -4,7 +4,7 @@ import Spline from "./spline.js";
 import { add, mat3, scale, subtract, transform, vec2 } from "./vec2.js";
 
 class SplineChain {
-    private splines: Spline[];
+    splines: Spline[];
     private amount: number;
 
     ts = vec2(0, 0);
@@ -54,6 +54,24 @@ class SplineChain {
         return new SplineChain(splines);
     }
 
+    static from_points_with_tangents(points: vec2[], tangents: vec2[]): SplineChain {
+        if (points.length !== tangents.length) throw "Unequal amount of points and tangents";
+
+        const splines = [];
+        for (let index = 0; index < points.length - 1; index++) {
+            splines.push(
+                Spline.with_tangents(
+                    points[index],
+                    points[index + 1],
+                    tangents[index],
+                    tangents[index + 1]
+                )
+            );
+        }
+
+        return new SplineChain(splines);
+    }
+
     static transform(spline_chain: SplineChain, matrix: mat3): SplineChain {
         return new SplineChain(spline_chain.splines.map(spline => Spline.transform(spline, matrix)));
     }
@@ -83,6 +101,10 @@ class SplineChain {
         }
 
         return intersection;
+    }
+
+    intersect_spline_chain_plane_transformed(y: number): [boolean, number] {
+        return this.splines[0].intersect_spline_plane_transformed(y);
     }
 
     draw_point_at(ctx: CanvasRenderingContext2D, t: number): void {
