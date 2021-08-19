@@ -19,9 +19,12 @@
 #include "spline.hpp"
 #include "better_plane.hpp"
 
+#define MAX_SPLINE_CHAIN_LENGTH 5
+
 class SplineChain {
 public:
-    std::vector<Spline> splines;
+    Spline splines[MAX_SPLINE_CHAIN_LENGTH];
+    size_t length = 0;
 
     SplineChain();
     SplineChain(std::vector<Spline>);
@@ -44,7 +47,7 @@ public:
     SplineChain transform(const glm::mat4x4 &matrix) const {
         std::vector<Spline> transformed_splines;
 
-        for (int i = 0; i < this->splines.size(); i++) {
+        for (int i = 0; i < this->length; i++) {
             transformed_splines.push_back(this->splines[i].transform(matrix));
         }
 

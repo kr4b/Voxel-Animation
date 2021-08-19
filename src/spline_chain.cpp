@@ -2,32 +2,38 @@
 #include <cassert>
 
 SplineChain::SplineChain() {
-    this->splines.push_back(Spline());
+    this->length = 1;
+    this->splines[0] = Spline();
 }
 
-SplineChain::SplineChain(std::vector<Spline> splines): splines(splines) {}
+SplineChain::SplineChain(std::vector<Spline> splines) {
+    assert(splines.size() < MAX_SPLINE_CHAIN_LENGTH);
+
+    std::copy(splines.begin(), splines.end(), this->splines);
+    this->length = splines.size();
+}
 
 void SplineChain::init_vao() {
-    for (Spline& spline : this->splines) {
-        spline.init_vao();
+    for (int i = 0; i < this->length; i++) {
+        this->splines[i].init_vao();
     }
 }
 
 void SplineChain::render() const {
-    for (int i = 0; i < this->splines.size(); i++) {
+    for (int i = 0; i < this->length; i++) {
         this->splines[i].render();
     }
 }
 
 void SplineChain::update_buffers() {
-    for (Spline& spline : this->splines) {
-        spline.update_buffers();
+    for (int i = 0; i < this->length; i++) {
+        this->splines[i].update_buffers();
     }
 }
 
 void SplineChain::clean() {
-    for (Spline& spline : this->splines) {
-        spline.clean();
+    for (int i = 0; i < this->length; i++) {
+        this->splines[i].clean();
     }
 }
 
@@ -82,8 +88,8 @@ SplineChain SplineChain::from_points_with_tangents(std::vector<glm::vec3> points
 
 glm::vec3 SplineChain::position_on_chain(const float t) const {
     const float clamped_t = std::max(0.0f, std::min(t, 1.0f - 1e-4f));
-    const unsigned int index = (unsigned int) floor(clamped_t * float(this->splines.size()));
-    const float t_prime = (clamped_t - float(index) / float(this->splines.size())) * float(this->splines.size());
+    const unsigned int index = (unsigned int) floor(clamped_t * float(this->length));
+    const float t_prime = (clamped_t - float(index) / float(this->length)) * float(this->length);
 
     return this->splines[index].position_on_spline(t_prime);
 }
@@ -91,10 +97,10 @@ glm::vec3 SplineChain::position_on_chain(const float t) const {
 std::vector<float> SplineChain::get_extremes() const {
     std::vector<float> result;
 
-    for (int i = 0; i < this->splines.size(); i++) {
+    for (int i = 0; i < this->length; i++) {
         std::vector<float> temp = this->splines[i].get_extremes();
         for (float t : temp) {
-            result.push_back((t + float(i)) / this->splines.size());
+            result.push_back((t + float(i)) / this->length);
         }
     }
 
@@ -102,10 +108,10 @@ std::vector<float> SplineChain::get_extremes() const {
 }
 
 std::optional<float> SplineChain::intersect_spline_plane(const glm::vec3 p) const {
-    for (int i = 0; i < this->splines.size(); i++) {
+    for (int i = 0; i < this->length; i++) {
         std::optional<float> result = this->splines[i].intersect_spline_plane(p);
         if (result.has_value()) {
-            return (result.value() + i) / this->splines.size();
+            return (result.value() + i) / this->length;
         }
     }
 
@@ -113,10 +119,10 @@ std::optional<float> SplineChain::intersect_spline_plane(const glm::vec3 p) cons
 }
 
 std::optional<float> SplineChain::intersect_spline_plane(const BetterPlane& p) const {
-    for (int i = 0; i < this->splines.size(); i++) {
+    for (int i = 0; i < this->length; i++) {
         std::optional<float> result = this->splines[i].intersect_spline_plane(p);
         if (result.has_value()) {
-            return (result.value() + i) / this->splines.size();
+            return (result.value() + i) / this->length;
         }
     }
 

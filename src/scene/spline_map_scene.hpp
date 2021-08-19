@@ -133,7 +133,7 @@ private:
         SplineUniform splineUniforms[MAX_SPLINES];
         SplineUniform transformedSplineUniforms[MAX_SPLINES];
 
-        for (int i = 0; i < this->splineMap.splineChain.splines.size(); i++) {
+        for (int i = 0; i < this->splineMap.splineChain.length; i++) {
             const Spline &spline = this->splineMap.splineChain.splines[i];
 
             splineUniforms[i] = SplineUniform {
@@ -152,18 +152,18 @@ private:
         }
 
         glm::vec3 yBounds = glm::vec3(
-            this->splineMap.splineChain.splines.front().position_on_spline(0.0f).y,
-            this->splineMap.splineChain.splines.back().position_on_spline(1.0f).y,
+            this->splineMap.splineChain.splines[0].position_on_spline(0.0f).y,
+            this->splineMap.splineChain.splines[this->splineMap.splineChain.length - 1].position_on_spline(1.0f).y,
             0.0f
         );
-        yBounds.z =  float(this->splineMap.splineChain.splines.size()) / (yBounds.y - yBounds.x);
+        yBounds.z =  float(this->splineMap.splineChain.length) / (yBounds.y - yBounds.x);
 
         glm::vec3 transformedYBounds = glm::vec3(
-            this->splineMap.splineChain.splines.front().transformedSpline->position_on_spline(0.0f).y,
-            this->splineMap.splineChain.splines.back().transformedSpline->position_on_spline(1.0f).y,
+            this->splineMap.splineChain.splines[0].transformedSpline->position_on_spline(0.0f).y,
+            this->splineMap.splineChain.splines[this->splineMap.splineChain.length - 1].transformedSpline->position_on_spline(1.0f).y,
             0.0f
         );
-        transformedYBounds.z =  float(this->splineMap.splineChain.splines.size()) / (transformedYBounds.y - transformedYBounds.x);
+        transformedYBounds.z =  float(this->splineMap.splineChain.length) / (transformedYBounds.y - transformedYBounds.x);
 
         return SplineMapUniform {
             AABBUniform {
@@ -191,7 +191,7 @@ private:
                 splineUniforms[1],
                 splineUniforms[2],
                 splineUniforms[3],
-                float(this->splineMap.splineChain.splines.size()),
+                float(this->splineMap.splineChain.length),
                 yBounds
             },
             SplineChainUniform {
@@ -199,7 +199,7 @@ private:
                 transformedSplineUniforms[1],
                 transformedSplineUniforms[2],
                 transformedSplineUniforms[3],
-                float(this->splineMap.splineChain.splines.size()),
+                float(this->splineMap.splineChain.length),
                 transformedYBounds
             },
             yBounds.x - yBounds.y
@@ -227,7 +227,7 @@ private:
         }
 
         if (ImGui::Button("Push")) {
-            if (this->splineMap.splineChain.splines.size() < MAX_SPLINES) {
+            if (this->splineMap.splineChain.length < MAX_SPLINES) {
                 this->middlePoints.push_back(glm::vec2());
                 this->middleTangents.push_back(glm::vec3());
                 splineMapChange = true;
