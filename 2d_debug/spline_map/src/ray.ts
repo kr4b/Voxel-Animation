@@ -86,15 +86,15 @@ class Ray {
 
         let result: [number, number, number] = [20.0, 20.0, 20.0];
         let t = conversion.y + cubic.first_root();
-        if (t >= EPSILON && t <= 1.0 + EPSILON)
+        if (t >= 0.0 && t <= 1.0)
             result[0] = (original_spline.position_on_spline(t).x - this.origin.x) / this.dir.x;
 
         t = conversion.y + cubic.second_root();
-        if (t >= EPSILON && t <= 1.0 + EPSILON)
+        if (t >= 0.0 && t <= 1.0)
             result[1] = (original_spline.position_on_spline(t).x - this.origin.x) / this.dir.x;
 
         t = conversion.y + cubic.third_root();
-        if (t >= EPSILON && t <= 1.0 + EPSILON)
+        if (t >= 0.0 && t <= 1.0)
             result[2] = (original_spline.position_on_spline(t).x - this.origin.x) / this.dir.x;
 
         return result;

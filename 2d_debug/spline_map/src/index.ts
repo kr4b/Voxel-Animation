@@ -42,6 +42,11 @@ const canvasHeight = 400;
 const pixelSizeX = 2.0 / canvasWidth;
 const pixelSizeY = 2.0 / canvasHeight;
 
+const camera_speed = 0.05;
+const keys: { [key: string]: boolean } = {};
+onkeydown = e => keys[e.key] = true;
+onkeyup = e => delete keys[e.key];
+
 onload = () => {
     canvas = <HTMLCanvasElement>document.getElementById("canvas");
     ctx = <CanvasRenderingContext2D>canvas.getContext("2d")
@@ -53,8 +58,8 @@ onload = () => {
         const x = (e.pageX - canvas.offsetLeft) / canvas.width * 2 - 1;
         const y = (e.pageY - canvas.offsetTop) / canvas.height * 2 - 1;
 
-        camera_position = vec2(x, y);
-        camera_rotation = Math.atan2(-y, -x);
+        // camera_position = vec2(x, y);
+        camera_rotation = Math.atan2(y - camera_position.y, x - camera_position.x);
     }
 
     ctx.scale(canvas.width / 2, canvas.height / 2);
@@ -80,6 +85,8 @@ onload = () => {
         [
             vec2(3.0, 0.0),
             vec2(0.0, 0.0)
+            // vec2(2.0, 1.0),
+            // vec2(2.0, 0.0)
         ]
     );
 
@@ -89,6 +96,11 @@ onload = () => {
     setInterval(() => {
         ctx.clearRect(-1, -1, 2, 2);
         transformed_1d.clearRect(0, -1, transformed_1d.canvas.width, 2);
+
+        if (keys['w']) camera_position.y -= camera_speed;
+        if (keys['a']) camera_position.x -= camera_speed;
+        if (keys['s']) camera_position.y += camera_speed;
+        if (keys['d']) camera_position.x += camera_speed;
 
         render_texture(ctx, spline_map);
         spline_map.draw(ctx);

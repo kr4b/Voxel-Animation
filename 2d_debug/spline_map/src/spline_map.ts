@@ -85,14 +85,14 @@ class SplineChainMap {
         const results = [ ...t0, ...t1, tb0, tb1 ];
 
         const tnear = Math.min(...results);
-        const tfar = Math.min(...results.map(t => t === tnear ? 20 : t));
+        const tfar = Math.max(...results.map(t => t === 20 ? -20 : t));
 
         const ts = vec2(
             tnear,
             tfar
         );
 
-        if (tnear > 10 || tfar > 10) {
+        if (tnear > 10 || tfar < -10) {
             return vec2(1.0, 0.0);
         }
 
