@@ -2,6 +2,7 @@
 #include "aabb.hpp"
 #include "spline_map.hpp"
 #include "volume.hpp"
+#include "better_plane.hpp"
 
 #include <glm/common.hpp>
 
@@ -37,20 +38,20 @@ void Ray::init_vao() {
 
     // Vertices
     glBindBuffer(GL_ARRAY_BUFFER, this->buffers[2]);
-    glBufferData(GL_ARRAY_BUFFER, 3 * 1 * sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 3 * 2 * sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
     // Colors
     glBindBuffer(GL_ARRAY_BUFFER, this->buffers[3]);
-    glBufferData(GL_ARRAY_BUFFER, 3 * 1 * sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 3 * 2 * sizeof(GLfloat), nullptr, GL_DYNAMIC_DRAW);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
 }
 
-void Ray::update_buffers(std::optional<std::pair<glm::ivec3, float>> intersection, const glm::ivec3 size) {
+void Ray::update_buffers(glm::vec2 intersection) {
     {
         GLfloat vertices[2 * 3];
         GLfloat colors[2 * 3];
@@ -71,22 +72,23 @@ void Ray::update_buffers(std::optional<std::pair<glm::ivec3, float>> intersectio
         glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * 2 * sizeof(GLfloat), colors);
     }
 
-    this->intersect = intersection.has_value();
-    if (this->intersect) {
-        GLfloat vertices[1 * 3];
-        GLfloat colors[1 * 3];
-        const glm::vec3 color = glm::vec3(intersection.value().first) / glm::vec3(size);
-        const float t = intersection.value().second;
-        const glm::vec3 pos = this->origin + this->dir * t;
-        vertices[0] = pos.x; vertices[1] = pos.y; vertices[2] = pos.z;
-        colors[0] = 1.0f; colors[1] = 1.0f; colors[2] = 1.0f;
+    {
+        GLfloat vertices[2 * 3];
+        GLfloat colors[2 * 3];
+        const glm::vec3 pos1 = this->origin + this->dir * intersection.x;
+        vertices[0] = pos1.x; vertices[1] = pos1.y; vertices[2] = pos1.z;
+        colors[0] = 0.9f; colors[1] = 0.3f; colors[2] = 0.5f;
+
+        const glm::vec3 pos2 = this->origin + this->dir * intersection.y;
+        vertices[3] = pos2.x; vertices[4] = pos2.y; vertices[5] = pos2.z;
+        colors[3] = 0.3f; colors[4] = 0.9f; colors[5] = 0.5f;
 
         glBindVertexArray(this->pointVao);
 
         glBindBuffer(GL_ARRAY_BUFFER, this->buffers[2]);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * 1 * sizeof(GLfloat), vertices);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * 2 * sizeof(GLfloat), vertices);
         glBindBuffer(GL_ARRAY_BUFFER, this->buffers[3]);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * 1 * sizeof(GLfloat), colors);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * 2 * sizeof(GLfloat), colors);
     }
 
     glBindVertexArray(0);
@@ -117,7 +119,7 @@ void Ray::render(bool showRays, bool showIntersections) const {
         glBindVertexArray(this->pointVao);
 
         glPointSize(10.0f);
-        glDrawArrays(GL_POINTS, 0, 1);
+        glDrawArrays(GL_POINTS, 0, 2);
         glPointSize(1.0f);
     }
 
@@ -138,4 +140,93 @@ std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap
         }
     }
     return std::nullopt;
+}
+
+std::optional<float> Ray::intersect_ray_line_segment(const glm::vec3 point1, const glm::vec3 point2) const {
+    const glm::vec3 dpoint = point1 - point2;
+
+    const float dxy = dir.y * dpoint.x - dir.x * dpoint.y;
+    const float dxz = dir.z * dpoint.x - dir.x * dpoint.z;
+    const float dyz = dir.z * dpoint.y - dir.y * dpoint.z;
+
+    if (dxy == 0.0f && dxz == 0.0f && dyz == 0.0f) return std::nullopt;
+
+    float result;
+    if (abs(dxy) > abs(dxz) && abs(dxy) > abs(dyz)) result = (dir.y * (point1.x - origin.x) - dir.x * (point1.y - origin.y)) / dxy;
+    if (abs(dxz) > abs(dyz) && abs(dxz) > abs(dxy)) result = (dir.z * (point1.x - origin.x) - dir.x * (point1.z - origin.z)) / dxz;
+    if (abs(dyz) > abs(dxy) && abs(dyz) > abs(dxz)) result = (dir.z * (point1.y - origin.y) - dir.y * (point1.z - origin.z)) / dyz;
+
+    if (result < 0.0f || result > 1.0f) return std::nullopt;
+
+    const glm::vec3 intersection = point1 * (1.0f - result) + point2 * result;
+    return (intersection.x - origin.x) / dir.x;
+}
+
+glm::vec2 Ray::intersect_ray_spline_map(const SplineMap& splineMap) const {
+    glm::vec2 returnValue(5.0f, -5.0f);
+
+    const glm::vec3 span1 = splineMap.base.span1;
+    const glm::vec3 span2 = splineMap.base.span2;
+
+    const glm::vec3 normSpan1 = glm::normalize(splineMap.base.span1);
+    const glm::vec3 normSpan2 = glm::normalize(splineMap.base.span2);
+
+    // const BetterPlane plane1(origin, glm::vec3(0.0f, dir.y, dir.z), glm::vec3(1.0f, 0.0f, 0.0f));
+    // const BetterPlane plane2(origin, glm::vec3(dir.x, dir.y, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
+    const BetterPlane plane1(origin, glm::normalize(dir * (1.0f - normSpan1)), normSpan1);
+    const BetterPlane plane2(origin, glm::normalize(dir * (1.0f - normSpan2)), normSpan2);
+
+    const std::optional<float> ogSplineT1 = splineMap.splineChain.intersect_spline_plane(plane1);
+    const std::optional<float> opSplineT1 = splineMap.edgeSplines[2].intersect_spline_plane(plane1);
+
+    const std::optional<float> ogSplineT2 = splineMap.splineChain.intersect_spline_plane(plane2);
+    const std::optional<float> opSplineT2 = splineMap.edgeSplines[2].intersect_spline_plane(plane2);
+
+    if (ogSplineT1.has_value()) {
+        const glm::vec3 pos1 = splineMap.splineChain.position_on_chain(ogSplineT1.value());
+        const glm::vec3 pos2 = pos1 + span1;
+
+        const std::optional<float> t = intersect_ray_line_segment(pos1, pos2);
+        if (t.has_value()) {
+            returnValue.x = std::min(returnValue.x, t.value());
+            returnValue.y = std::max(returnValue.y, t.value());
+        }
+    }
+
+    if (opSplineT1.has_value()) {
+        const glm::vec3 pos1 = splineMap.edgeSplines[2].position_on_chain(opSplineT1.value());
+        const glm::vec3 pos2 = pos1 - span1;
+
+        const std::optional<float> t = intersect_ray_line_segment(pos1, pos2);
+        if (t.has_value()) {
+            returnValue.x = std::min(returnValue.x, t.value());
+            returnValue.y = std::max(returnValue.y, t.value());
+        }
+    }
+
+
+    if (ogSplineT2.has_value()) {
+        const glm::vec3 pos1 = splineMap.splineChain.position_on_chain(ogSplineT2.value());
+        const glm::vec3 pos2 = pos1 + span2;
+
+        const std::optional<float> t = intersect_ray_line_segment(pos1, pos2);
+        if (t.has_value()) {
+            returnValue.x = std::min(returnValue.x, t.value());
+            returnValue.y = std::max(returnValue.y, t.value());
+        }
+    }
+
+    if (opSplineT2.has_value()) {
+        const glm::vec3 pos1 = splineMap.edgeSplines[2].position_on_chain(opSplineT2.value());
+        const glm::vec3 pos2 = pos1 - span2;
+
+        const std::optional<float> t = intersect_ray_line_segment(pos1, pos2);
+        if (t.has_value()) {
+            returnValue.x = std::min(returnValue.x, t.value());
+            returnValue.y = std::max(returnValue.y, t.value());
+        }
+    }
+
+    return returnValue;
 }

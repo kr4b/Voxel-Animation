@@ -17,6 +17,7 @@
 #include "math_util.hpp"
 #include "plane.hpp"
 #include "spline.hpp"
+#include "better_plane.hpp"
 
 class SplineChain {
 public:
@@ -38,6 +39,7 @@ public:
 
     std::vector<float> get_extremes() const;
     std::optional<float> intersect_spline_plane(const glm::vec3) const;
+    std::optional<float> intersect_spline_plane(const BetterPlane&) const;
 
     SplineChain transform(const glm::mat4x4 &matrix) const {
         std::vector<Spline> transformed_splines;

@@ -14,6 +14,7 @@ class SplineMap {
 public:
     Plane base;
     SplineChain splineChain;
+    SplineChain edgeSplines[3];
     AABB aabb;
 
     SplineMap(const Plane&, const SplineChain&);
@@ -24,6 +25,5 @@ public:
     void clean();
 
 private:
-    SplineChain edgeSplines[3];
     Plane topBase;
 };

@@ -21,9 +21,12 @@ public:
     std::optional<std::pair<glm::ivec3, float>> walk_spline_map(const SplineMap&, const Volume&, const float, const float);
 
     void init_vao();
-    void update_buffers(std::optional<std::pair<glm::ivec3, float>>, const glm::ivec3);
+    void update_buffers(glm::vec2);
     void render(bool, bool) const;
     void clean();
+
+    glm::vec2 intersect_ray_spline_map(const SplineMap&) const;
+    std::optional<float> Ray::intersect_ray_line_segment(const glm::vec3, const glm::vec3) const;
 
 private:
     GLuint lineVao, pointVao;

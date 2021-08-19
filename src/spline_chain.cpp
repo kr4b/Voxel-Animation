@@ -112,6 +112,17 @@ std::optional<float> SplineChain::intersect_spline_plane(const glm::vec3 p) cons
     return std::nullopt;
 }
 
+std::optional<float> SplineChain::intersect_spline_plane(const BetterPlane& p) const {
+    for (int i = 0; i < this->splines.size(); i++) {
+        std::optional<float> result = this->splines[i].intersect_spline_plane(p);
+        if (result.has_value()) {
+            return (result.value() + i) / this->splines.size();
+        }
+    }
+
+    return std::nullopt;
+}
+
 void SplineChain::with_transform(const Plane& plane) {
     for (Spline& spline : this->splines) {
         spline.with_transform(plane);
