@@ -190,7 +190,7 @@ std::optional<float> Spline::intersect_spline_plane(const glm::vec3 p) const {
 std::optional<float> Spline::intersect_spline_plane(const BetterPlane& p) const {
     const Spline transformedSpline = transform(p.inv_matrix);
     
-    const glm::vec3 conversion = -b / (3.0f * a);
+    const glm::vec3 conversion = -transformedSpline.b / (3.0f * transformedSpline.a);
     DepressedCubic cubic(
         transformedSpline.a.y,
         transformedSpline.b.y,

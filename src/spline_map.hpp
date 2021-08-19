@@ -13,6 +13,7 @@
 class SplineMap {
 public:
     Plane base;
+    Plane topBase;
     SplineChain splineChain;
     SplineChain edgeSplines[3];
     AABB aabb;
@@ -23,7 +24,4 @@ public:
 
     void render();
     void clean();
-
-private:
-    Plane topBase;
 };

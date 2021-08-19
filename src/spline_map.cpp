@@ -26,7 +26,7 @@ const AABB createEncompassingAABB(Plane base, SplineChain splineChain) {
 
 const Plane createTopBase(const Plane& base, const SplineChain& splineChain) {
     const glm::vec3 height = splineChain.position_on_chain(1.0f) - splineChain.position_on_chain(0.0f);
-    return Plane(base.center + height, base.half_size);
+    return Plane(base.center - height, base.half_size);
 }
 
 const SplineChain transformSplineChain(const Plane& base, const SplineChain& splineChain) {
@@ -42,7 +42,7 @@ SplineMap::SplineMap(const Plane& base, const SplineChain& splineChain) :
     base(base),
     splineChain(transformSplineChain(this->base, splineChain)),
     aabb(createEncompassingAABB(this->base, this->splineChain)),
-    topBase(createTopBase(this->base, this->splineChain)) {
+    topBase(createTopBase(this->base, splineChain)) {
 
     this->splineChain.init_vao();
     this->splineChain.update_buffers();

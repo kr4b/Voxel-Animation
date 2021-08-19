@@ -9,8 +9,8 @@ SplineChain::SplineChain() {
 SplineChain::SplineChain(std::vector<Spline> splines) {
     assert(splines.size() < MAX_SPLINE_CHAIN_LENGTH);
 
-    std::copy(splines.begin(), splines.end(), this->splines);
     this->length = splines.size();
+    std::copy(splines.begin(), splines.end(), this->splines);
 }
 
 void SplineChain::init_vao() {

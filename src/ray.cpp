@@ -142,6 +142,28 @@ std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap
     return std::nullopt;
 }
 
+std::optional<float> Ray::intersect_ray_plane(const Plane& plane) const {
+    const float del = glm::dot(plane.normal, dir);
+
+    if (del == 0.0f) return std::nullopt;
+
+    const float result = glm::dot(plane.normal, (plane.center - origin)) / del;
+
+    const glm::vec3 intersection = origin + result * dir;
+    if (
+        intersection.x < plane.min.x ||
+        intersection.y < plane.min.y ||
+        intersection.z < plane.min.z ||
+        intersection.x > plane.max.x ||
+        intersection.y > plane.max.y ||
+        intersection.z > plane.max.z
+    ) {
+        return std::nullopt;
+    }
+
+    return result;
+}
+
 std::optional<float> Ray::intersect_ray_line_segment(const glm::vec3 point1, const glm::vec3 point2) const {
     const glm::vec3 dpoint = point1 - point2;
 
@@ -171,9 +193,6 @@ glm::vec2 Ray::intersect_ray_spline_map(const SplineMap& splineMap) const {
     const glm::vec3 normSpan1 = glm::normalize(splineMap.base.span1);
     const glm::vec3 normSpan2 = glm::normalize(splineMap.base.span2);
 
-    // const BetterPlane plane1(origin, glm::vec3(0.0f, dir.y, dir.z), glm::vec3(1.0f, 0.0f, 0.0f));
-    // const BetterPlane plane2(origin, glm::vec3(dir.x, dir.y, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
     const BetterPlane plane1(origin, glm::normalize(dir * (1.0f - normSpan1)), normSpan1);
     const BetterPlane plane2(origin, glm::normalize(dir * (1.0f - normSpan2)), normSpan2);
 
@@ -182,6 +201,10 @@ glm::vec2 Ray::intersect_ray_spline_map(const SplineMap& splineMap) const {
 
     const std::optional<float> ogSplineT2 = splineMap.splineChain.intersect_spline_plane(plane2);
     const std::optional<float> opSplineT2 = splineMap.edgeSplines[2].intersect_spline_plane(plane2);
+
+    const std::optional<float> ogBaseT = intersect_ray_plane(splineMap.base);
+    const std::optional<float> opBaseT = intersect_ray_plane(splineMap.topBase);
+
 
     if (ogSplineT1.has_value()) {
         const glm::vec3 pos1 = splineMap.splineChain.position_on_chain(ogSplineT1.value());
@@ -226,6 +249,17 @@ glm::vec2 Ray::intersect_ray_spline_map(const SplineMap& splineMap) const {
             returnValue.x = std::min(returnValue.x, t.value());
             returnValue.y = std::max(returnValue.y, t.value());
         }
+    }
+
+    
+    if (ogBaseT.has_value()) {
+        returnValue.x = std::min(returnValue.x, ogBaseT.value());
+        returnValue.y = std::max(returnValue.y, ogBaseT.value());
+    }
+
+    if (opBaseT.has_value()) {
+        returnValue.x = std::min(returnValue.x, opBaseT.value());
+        returnValue.y = std::max(returnValue.y, opBaseT.value());
     }
 
     return returnValue;
