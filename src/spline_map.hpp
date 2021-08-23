@@ -17,6 +17,7 @@ public:
     SplineChain splineChain;
     SplineChain edgeSplines[3];
     AABB aabb;
+    float width, height, depth;
 
     SplineMap(const Plane&, const SplineChain&);
 

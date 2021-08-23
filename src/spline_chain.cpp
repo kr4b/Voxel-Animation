@@ -94,6 +94,14 @@ glm::vec3 SplineChain::position_on_chain(const float t) const {
     return this->splines[index].position_on_spline(t_prime);
 }
 
+glm::vec3 SplineChain::position_on_transformed_chain(const float t) const {
+    const float clamped_t = std::max(0.0f, std::min(t, 1.0f - 1e-4f));
+    const unsigned int index = (unsigned int) floor(clamped_t * float(this->splines.size()));
+    const float t_prime = (clamped_t - float(index) / float(this->splines.size())) * float(this->splines.size());
+
+    return this->splines[index].transformedSpline->position_on_spline(t_prime);
+}
+
 std::vector<float> SplineChain::get_extremes() const {
     std::vector<float> result;
 

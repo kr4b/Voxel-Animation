@@ -62,9 +62,6 @@ struct Plane {
 
     mat4 matrix;
     mat4 inv_matrix;
-
-    float span1_squared;
-    float span2_squared;
 };
 
 struct Ray {
@@ -85,7 +82,9 @@ struct SplineMap {
     SplineChain spline_chain;
     SplineChain transformed_spline_chain;
 
+    float width;
     float height;
+    float depth;
 };
 
 layout( std140, binding = 2 ) uniform USplineMap {
@@ -330,19 +329,13 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords) {
     float t;
 
     if (intersect_spline_chain_plane(spline_map.transformed_spline_chain, p, t)) {
-        const vec3 edge = position_on_spline_chain(spline_map.spline_chain, t);
-        const vec3 diff = pos - edge;
-        const float dot1 = dot(diff, spline_map.base.span1);
-        const float dot2 = dot(diff, spline_map.base.span2);
+        const vec3 edge = position_on_spline_chain(spline_map.transformed_spline_chain, t);
+        const vec3 diff = edge - p.xyz;
+        const float xComp = diff.x / spline_map.width;
+        const float yComp = p.y / spline_map.height;
+        const float zComp = diff.z / spline_map.depth;
 
-        if (dot1 < 0.0 || dot2 < 0.0 || dot1 > spline_map.base.span1_squared || dot2 > spline_map.base.span2_squared) {
-            return false;
-        }
-
-        const float xComp = dot1 / spline_map.base.span1_squared;
-        const float zComp = dot2 / spline_map.base.span2_squared;
-
-        coords = vec3(xComp, p.y / spline_map.height, zComp);
+        coords = vec3(xComp, yComp, zComp);
         return true;
     }
 

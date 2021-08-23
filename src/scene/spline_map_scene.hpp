@@ -59,9 +59,6 @@ struct PlaneUniform
 
     alignas(16) glm::mat4x4 matrix;
     alignas(16) glm::mat4x4 inv_matrix;
-
-    alignas(16) float span1_squared;
-    float span2_squared;
 };
 
 struct SplineMapUniform
@@ -71,7 +68,9 @@ struct SplineMapUniform
     alignas(16) SplineChainUniform spline_chain;
     alignas(16) SplineChainUniform transformed_spline_chain;
 
-    alignas(16) float height;
+    alignas(16) float width;
+    float height;
+    float depth;
 };
 
 class SplineMapScene {
@@ -183,8 +182,6 @@ private:
                 this->splineMap.base.transformedMax,
                 this->splineMap.base.matrix,
                 this->splineMap.base.inv_matrix,
-                this->splineMap.base.span1Squared,
-                this->splineMap.base.span2Squared
             },
             SplineChainUniform {
                 splineUniforms[0],
@@ -202,7 +199,9 @@ private:
                 float(this->splineMap.splineChain.length),
                 transformedYBounds
             },
-            yBounds.x - yBounds.y
+            this->splineMap.width,
+            this->splineMap.height,
+            this->splineMap.depth,
         };
     }
 
