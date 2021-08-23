@@ -44,8 +44,8 @@ SplineMap::SplineMap(const Plane& base, const SplineChain& splineChain) :
     aabb(createEncompassingAABB(this->base, this->splineChain)),
     topBase(createTopBase(this->base, splineChain)) {
 
-    const glm::vec3 start = splineChain.splines.front().position_on_spline(0.0f);
-    const glm::vec3 end = splineChain.splines.back().position_on_spline(1.0f);
+    const glm::vec3 start = splineChain.splines[0].position_on_spline(0.0f);
+    const glm::vec3 end = splineChain.splines[splineChain.length - 1].position_on_spline(1.0f);
     this->width = abs(length(this->base.span1));
     this->height = abs(length(end - start));
     this->depth = abs(length(this->base.span2));

@@ -187,7 +187,7 @@ std::optional<float> Spline::intersect_spline_plane(const glm::vec3 p) const {
     return t;
 }
 
-std::optional<float> Spline::intersect_spline_plane(const BetterPlane& p) const {
+void Spline::intersect_spline_plane(const BetterPlane& p, float ts[3]) const {
     const Spline transformedSpline = transform(p.inv_matrix);
     
     const glm::vec3 conversion = -transformedSpline.b / (3.0f * transformedSpline.a);
@@ -198,18 +198,9 @@ std::optional<float> Spline::intersect_spline_plane(const BetterPlane& p) const 
         transformedSpline.d.y
     );
 
-    float t = conversion.y + cubic.first_root();
-    if (t < 0.0f || t > 1.0f) {
-        t = conversion.y + cubic.second_root();
-        if (t < 0.0f || t > 1.0f) {
-            t = conversion.y + cubic.third_root();
-            if (t < 0.0f || t > 1.0f) {
-                return std::nullopt;
-            }
-        }
-    }
-
-    return t;
+    ts[0] = conversion.y + cubic.first_root();
+    ts[1] = conversion.y + cubic.second_root();
+    ts[2] = conversion.y + cubic.third_root();
 }
 
 glm::vec3 Spline::position_on_spline(float t) const {

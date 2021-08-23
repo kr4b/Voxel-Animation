@@ -41,7 +41,7 @@ public:
 
     std::vector<float> get_extremes() const;
     std::optional<float> intersect_spline_plane(const glm::vec3) const;
-    std::optional<float> intersect_spline_plane(const BetterPlane&) const;
+    void intersect_spline_plane(const BetterPlane&, float[3]) const;
 
     Spline transform(const glm::mat4x4 &matrix) const {
         glm::vec4 ta = matrix * glm::vec4(this->a.x, this->a.y, this->a.z, 0.0f);

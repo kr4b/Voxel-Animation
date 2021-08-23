@@ -184,6 +184,25 @@ std::optional<float> Ray::intersect_ray_line_segment(const glm::vec3 point1, con
     return (intersection.x - origin.x) / dir.x;
 }
 
+void find_ray_spline_intersection(
+    const Ray* ray, const SplineChain& splineChain,
+    const BetterPlane& plane, const float ts[3 * MAX_SPLINE_CHAIN_LENGTH],
+    const glm::vec3& offset, glm::vec2& returnValue)
+{
+    for (int i = 0; i < 3 * splineChain.length; i++) {
+        if (ts[i] < 0.0f || ts[i] > 1.0f) continue;
+
+        const glm::vec3 pos1 = splineChain.position_on_chain(ts[i]);
+        const glm::vec3 pos2 = pos1 + offset;
+
+        const std::optional<float> t = ray->intersect_ray_line_segment(pos1, pos2);
+        if (t.has_value()) {
+            returnValue.x = std::min(returnValue.x, t.value());
+            returnValue.y = std::max(returnValue.y, t.value());
+        }
+    }
+}
+
 glm::vec2 Ray::intersect_ray_spline_map(const SplineMap& splineMap) const {
     glm::vec2 returnValue(5.0f, -5.0f);
 
@@ -196,62 +215,24 @@ glm::vec2 Ray::intersect_ray_spline_map(const SplineMap& splineMap) const {
     const BetterPlane plane1(origin, glm::normalize(dir * (1.0f - normSpan1)), normSpan1);
     const BetterPlane plane2(origin, glm::normalize(dir * (1.0f - normSpan2)), normSpan2);
 
-    const std::optional<float> ogSplineT1 = splineMap.splineChain.intersect_spline_plane(plane1);
-    const std::optional<float> opSplineT1 = splineMap.edgeSplines[2].intersect_spline_plane(plane1);
+    // Up to 3 intersection points per spline, up to n splines per chain
+    float ts[3 * MAX_SPLINE_CHAIN_LENGTH];
 
-    const std::optional<float> ogSplineT2 = splineMap.splineChain.intersect_spline_plane(plane2);
-    const std::optional<float> opSplineT2 = splineMap.edgeSplines[2].intersect_spline_plane(plane2);
+    splineMap.splineChain.intersect_spline_plane(plane1, ts);
+    find_ray_spline_intersection(this, splineMap.splineChain, plane1, ts, span1, returnValue);
+
+    splineMap.edgeSplines[2].intersect_spline_plane(plane1, ts);
+    find_ray_spline_intersection(this, splineMap.edgeSplines[2], plane1, ts, -span1, returnValue);
+
+    splineMap.splineChain.intersect_spline_plane(plane2, ts);
+    find_ray_spline_intersection(this, splineMap.splineChain, plane2, ts, span2, returnValue);
+
+    splineMap.edgeSplines[2].intersect_spline_plane(plane2, ts);
+    find_ray_spline_intersection(this, splineMap.edgeSplines[2], plane2, ts, -span2, returnValue);
 
     const std::optional<float> ogBaseT = intersect_ray_plane(splineMap.base);
     const std::optional<float> opBaseT = intersect_ray_plane(splineMap.topBase);
 
-
-    if (ogSplineT1.has_value()) {
-        const glm::vec3 pos1 = splineMap.splineChain.position_on_chain(ogSplineT1.value());
-        const glm::vec3 pos2 = pos1 + span1;
-
-        const std::optional<float> t = intersect_ray_line_segment(pos1, pos2);
-        if (t.has_value()) {
-            returnValue.x = std::min(returnValue.x, t.value());
-            returnValue.y = std::max(returnValue.y, t.value());
-        }
-    }
-
-    if (opSplineT1.has_value()) {
-        const glm::vec3 pos1 = splineMap.edgeSplines[2].position_on_chain(opSplineT1.value());
-        const glm::vec3 pos2 = pos1 - span1;
-
-        const std::optional<float> t = intersect_ray_line_segment(pos1, pos2);
-        if (t.has_value()) {
-            returnValue.x = std::min(returnValue.x, t.value());
-            returnValue.y = std::max(returnValue.y, t.value());
-        }
-    }
-
-
-    if (ogSplineT2.has_value()) {
-        const glm::vec3 pos1 = splineMap.splineChain.position_on_chain(ogSplineT2.value());
-        const glm::vec3 pos2 = pos1 + span2;
-
-        const std::optional<float> t = intersect_ray_line_segment(pos1, pos2);
-        if (t.has_value()) {
-            returnValue.x = std::min(returnValue.x, t.value());
-            returnValue.y = std::max(returnValue.y, t.value());
-        }
-    }
-
-    if (opSplineT2.has_value()) {
-        const glm::vec3 pos1 = splineMap.edgeSplines[2].position_on_chain(opSplineT2.value());
-        const glm::vec3 pos2 = pos1 - span2;
-
-        const std::optional<float> t = intersect_ray_line_segment(pos1, pos2);
-        if (t.has_value()) {
-            returnValue.x = std::min(returnValue.x, t.value());
-            returnValue.y = std::max(returnValue.y, t.value());
-        }
-    }
-
-    
     if (ogBaseT.has_value()) {
         returnValue.x = std::min(returnValue.x, ogBaseT.value());
         returnValue.y = std::max(returnValue.y, ogBaseT.value());

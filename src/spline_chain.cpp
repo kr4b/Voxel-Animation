@@ -96,8 +96,8 @@ glm::vec3 SplineChain::position_on_chain(const float t) const {
 
 glm::vec3 SplineChain::position_on_transformed_chain(const float t) const {
     const float clamped_t = std::max(0.0f, std::min(t, 1.0f - 1e-4f));
-    const unsigned int index = (unsigned int) floor(clamped_t * float(this->splines.size()));
-    const float t_prime = (clamped_t - float(index) / float(this->splines.size())) * float(this->splines.size());
+    const unsigned int index = (unsigned int) floor(clamped_t * float(this->length));
+    const float t_prime = (clamped_t - float(index) / float(this->length)) * float(this->length);
 
     return this->splines[index].transformedSpline->position_on_spline(t_prime);
 }
@@ -126,15 +126,10 @@ std::optional<float> SplineChain::intersect_spline_plane(const glm::vec3 p) cons
     return std::nullopt;
 }
 
-std::optional<float> SplineChain::intersect_spline_plane(const BetterPlane& p) const {
+void SplineChain::intersect_spline_plane(const BetterPlane& p, float ts[3 * MAX_SPLINE_CHAIN_LENGTH]) const {
     for (int i = 0; i < this->length; i++) {
-        std::optional<float> result = this->splines[i].intersect_spline_plane(p);
-        if (result.has_value()) {
-            return (result.value() + i) / this->length;
-        }
+        this->splines[i].intersect_spline_plane(p, ts + i * 3);
     }
-
-    return std::nullopt;
 }
 
 void SplineChain::with_transform(const Plane& plane) {
