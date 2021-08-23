@@ -25,16 +25,15 @@ public:
         for (const Ray& ray : rays) {
             ray.render(this->showRays, this->showIntersections);
 
-            // Base = <1.0, 0.0, 1.0>
-            BetterPlane plane0(ray.origin + ray.dir * (-ray.origin.x / ray.dir.x), glm::vec3(0.0f, ray.dir.y, ray.dir.z), glm::vec3(1.0f, 0.0f, 0.0f));
-            plane0.init_vao(glm::vec3(0.7f, 0.3f, 0.4f));
-            plane0.render();
-            plane0.clean();
+            // BetterPlane plane0(ray.origin + ray.dir * (-ray.origin.x / ray.dir.x), glm::vec3(0.0f, ray.dir.y, ray.dir.z), glm::vec3(1.0f, 0.0f, 0.0f));
+            // plane0.init_vao(glm::vec3(0.7f, 0.3f, 0.4f));
+            // plane0.render();
+            // plane0.clean();
 
-            BetterPlane plane1(ray.origin + ray.dir * (-ray.origin.z / ray.dir.z), glm::vec3(ray.dir.x, ray.dir.y, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            plane1.init_vao(glm::vec3(0.3f, 0.7f, 0.4f));
-            plane1.render();
-            plane1.clean();
+            // BetterPlane plane1(ray.origin + ray.dir * (-ray.origin.z / ray.dir.z), glm::vec3(ray.dir.x, ray.dir.y, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            // plane1.init_vao(glm::vec3(0.3f, 0.7f, 0.4f));
+            // plane1.render();
+            // plane1.clean();
         }
     }
 
@@ -79,7 +78,6 @@ private:
 
                 Ray ray(cameraWorldPos, direction);
                 ray.init_vao();
-                // ray.update_buffers(ray.walk_spline_map(splineMap, volume, threshold, stepSize), glm::ivec3(volume.width(), volume.height(), volume.depth()));
                 ray.update_buffers(ray.intersect_ray_spline_map(splineMap));
                 rays.push_back(ray);
                 currentPos.x += this->rayGap;

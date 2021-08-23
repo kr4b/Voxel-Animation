@@ -26,8 +26,13 @@ public:
         normal(glm::normalize(glm::cross(span1, span2)))
         {
             if (abs(glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), normal)) == 1.0f) {
-                this->matrix = glm::mat4(1.0f);
-                this->inv_matrix = glm::mat4(1.0f);
+                this->matrix = glm::mat4(
+                    1.0f, 0.0f, 0.0f, 0.0f,
+                    0.0f, 1.0f, 0.0f, 0.0f,
+                    0.0f, 0.0f, 1.0f, 0.0f,
+                    point.x, point.y, point.z, 1.0f
+                );
+                this->inv_matrix = glm::inverse(this->matrix);
             } else {
                 const glm::vec3 rotationAxis = glm::normalize(glm::vec3(normal.z, 0.0f, -normal.x));
                 const float rotationAngle = acos(normal.y);

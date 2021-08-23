@@ -336,8 +336,7 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
     const bool result = intersect_ray_spline_map(ray, spline_map, ts);
 
     if (result) {
-        return true;
-        for (float i = ts.x; i <= ts.y; i += step_size) {
+        for (float i = max(0.0, ts.x); i <= ts.y; i += step_size) {
             const vec3 pos = ray.origin + ray.direction * i;
             vec3 coords;
 
@@ -403,15 +402,15 @@ void find_all_ray_spline_intersection(
     find_ray_spline_intersection(ray, spline_chain, ts[0].x, offset, ret);
     find_ray_spline_intersection(ray, spline_chain, ts[0].y, offset, ret);
     find_ray_spline_intersection(ray, spline_chain, ts[0].z, offset, ret);
-    if (1 < spline_chain.amount) return;
+    if (1 == spline_chain.amount) return;
     find_ray_spline_intersection(ray, spline_chain, ts[1].x, offset, ret);
     find_ray_spline_intersection(ray, spline_chain, ts[1].y, offset, ret);
     find_ray_spline_intersection(ray, spline_chain, ts[1].z, offset, ret);
-    if (2 < spline_chain.amount) return;
+    if (2 == spline_chain.amount) return;
     find_ray_spline_intersection(ray, spline_chain, ts[2].x, offset, ret);
     find_ray_spline_intersection(ray, spline_chain, ts[2].y, offset, ret);
     find_ray_spline_intersection(ray, spline_chain, ts[2].z, offset, ret);
-    if (3 < spline_chain.amount) return;
+    if (3 == spline_chain.amount) return;
     find_ray_spline_intersection(ray, spline_chain, ts[3].x, offset, ret);
     find_ray_spline_intersection(ray, spline_chain, ts[3].y, offset, ret);
     find_ray_spline_intersection(ray, spline_chain, ts[3].z, offset, ret);
@@ -497,20 +496,29 @@ vec3 position_on_spline_chain(in SplineChain spline_chain, in float t) {
 }
 
 bool intersect_transformed_spline_chain_plane(in SplineChain spline_chain, in vec4 p, inout float t) {
-    const int index = int((p.y - spline_chain.y_bounds.x) * spline_chain.y_bounds.z);
-    const bool result = intersect_transformed_spline_plane(spline_chain.splines[index], p, t);
-    t = (t + float(index)) / spline_chain.amount;
+    bool result;
+    result = intersect_transformed_spline_plane(spline_chain.splines[0], p, t);
+    t = t / spline_chain.amount;
+    if (1 == spline_chain.amount || result) return result;
+    result = intersect_transformed_spline_plane(spline_chain.splines[1], p, t);
+    t = (t + 1.0) / spline_chain.amount;
+    if (2 == spline_chain.amount || result) return result;
+    result = intersect_transformed_spline_plane(spline_chain.splines[2], p, t);
+    t = (t + 2.0) / spline_chain.amount;
+    if (3 == spline_chain.amount || result) return result;
+    result = intersect_transformed_spline_plane(spline_chain.splines[3], p, t);
+    t = (t + 3.0) / spline_chain.amount;
 
     return result;
 }
 
 void intersect_spline_chain_plane(in SplineChain spline_chain, in Plane plane, inout vec3 ts[MAX_SPLINES]) {
     intersect_spline_plane(spline_chain.splines[0], plane, ts[0]);
-    if (1 < spline_chain.amount) return;
+    if (1 == spline_chain.amount) return;
     intersect_spline_plane(spline_chain.splines[1], plane, ts[1]);
-    if (2 < spline_chain.amount) return;
+    if (2 == spline_chain.amount) return;
     intersect_spline_plane(spline_chain.splines[2], plane, ts[2]);
-    if (3 < spline_chain.amount) return;
+    if (3 == spline_chain.amount) return;
     intersect_spline_plane(spline_chain.splines[3], plane, ts[3]);
 }
 
@@ -524,10 +532,10 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords) {
         const vec3 edge = position_on_spline_chain(spline_map.transformed_spline_chain, t);
         const vec3 diff = edge - p.xyz;
         const float xComp = diff.x / spline_map.width;
-        const float yComp = p.y / spline_map.height;
+        const float yComp = 1.0 - p.y / spline_map.height;
         const float zComp = diff.z / spline_map.depth;
 
-        coords = vec3(xComp, yComp, zComp);
+        coords = abs(vec3(xComp, yComp, zComp));
         return true;
     }
 
@@ -554,9 +562,7 @@ void main() {
     ivec3 texel;
     float t;
     if (walk_spline_map(ray, uSplineMap.spline_map, textureSize(texVol, 0), texel, t)) {
-        // oColor = texelFetch(texVol, texel, 0).rrr;
-        // oColor = vec3(texel) / vec3(textureSize(texVol, 0));
-        oColor = vec3(1.0);
+        oColor = vec3(texel) / vec3(textureSize(texVol, 0));
     } else {
         discard;
     }

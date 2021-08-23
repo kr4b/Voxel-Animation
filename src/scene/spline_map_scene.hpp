@@ -74,16 +74,16 @@ public:
         volume(std::move(volume)),
         splineMap(
             BetterPlane(
-                glm::vec3(0.0f, 1.0f, 0.0f),
-                glm::vec3(1.0f, 0.0f, 0.0f),
-                glm::vec3(0.0f, 0.0f, 1.0f)
+                glm::vec3(-1.0f, -1.0f, -1.0f),
+                glm::vec3(2.0f, 0.0f, 0.0f),
+                glm::vec3(0.0f, 0.0f, 2.0f)
             ),
             SplineChain::from_points_with_tangents(
                 std::vector<glm::vec3>(this->anchorPoints, this->anchorPoints + 2),
                 std::vector<glm::vec3>(this->anchorTangents, this->anchorTangents + 2)
             )
         ),
-        anchorPoints{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) },
+        anchorPoints{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 2.0f, 0.0f) },
         anchorTangents{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f) },
         tau(0.2f)
     {

@@ -7,7 +7,7 @@
 
 const BetterPlane createTopBase(const BetterPlane& base, const SplineChain& splineChain) {
     const glm::vec3 height = splineChain.position_on_chain(1.0f) - splineChain.position_on_chain(0.0f);
-    return BetterPlane(base.point - height, base.span1, base.span2);
+    return BetterPlane(base.point + height, base.span1, base.span2);
 }
 
 const SplineChain transformSplineChain(const BetterPlane& base, const SplineChain& splineChain) {
