@@ -55,7 +55,7 @@ public:
         return SplineChain(transformed_splines);
     }
 
-    void with_transform(const Plane&);
+    void with_transform(const BetterPlane&);
 
 private:
     GLuint lineVao;

@@ -14,6 +14,7 @@ public:
     const glm::vec3 point;
     const glm::vec3 span1;
     const glm::vec3 span2;
+    const glm::vec3 normal;
 
     glm::mat4 matrix;
     glm::mat4 inv_matrix;
@@ -21,35 +22,40 @@ public:
     BetterPlane(glm::vec3 point, glm::vec3 span1, glm::vec3 span2) :
         point(point),
         span1(span1),
-        span2(span2)
+        span2(span2),
+        normal(glm::normalize(glm::cross(span1, span2)))
         {
-            const glm::vec3 normal = glm::normalize(glm::cross(span1, span2));
-            const glm::vec3 rotationAxis = glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), normal));
-            const float rotationAngle = acos(glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), normal));
+            if (abs(glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), normal)) == 1.0f) {
+                this->matrix = glm::mat4(1.0f);
+                this->inv_matrix = glm::mat4(1.0f);
+            } else {
+                const glm::vec3 rotationAxis = glm::normalize(glm::vec3(normal.z, 0.0f, -normal.x));
+                const float rotationAngle = acos(normal.y);
 
-            const float cosAngle = cos(rotationAngle);
-            const float sinAngle = sin(rotationAngle);
+                const float cosAngle = cos(rotationAngle);
+                const float sinAngle = sin(rotationAngle);
 
-            this->matrix = glm::transpose(glm::mat4(
-                cosAngle + rotationAxis.x * rotationAxis.x * (1.0f - cosAngle),
-                rotationAxis.x * rotationAxis.y * (1.0f - cosAngle) - rotationAxis.z * sinAngle,
-                rotationAxis.x * rotationAxis.z * (1.0f - cosAngle) + rotationAxis.y * sinAngle,
-                point.x,
+                this->matrix = glm::transpose(glm::mat4(
+                    cosAngle + rotationAxis.x * rotationAxis.x * (1.0f - cosAngle),
+                    rotationAxis.x * rotationAxis.y * (1.0f - cosAngle) - rotationAxis.z * sinAngle,
+                    rotationAxis.x * rotationAxis.z * (1.0f - cosAngle) + rotationAxis.y * sinAngle,
+                    point.x,
 
-                rotationAxis.y * rotationAxis.x * (1.0f - cosAngle) + rotationAxis.z * sinAngle,
-                cosAngle + rotationAxis.y * rotationAxis.y * (1.0f - cosAngle),
-                rotationAxis.y * rotationAxis.z * (1.0f - cosAngle) - rotationAxis.x * sinAngle,
-                point.y,
+                    rotationAxis.y * rotationAxis.x * (1.0f - cosAngle) + rotationAxis.z * sinAngle,
+                    cosAngle + rotationAxis.y * rotationAxis.y * (1.0f - cosAngle),
+                    rotationAxis.y * rotationAxis.z * (1.0f - cosAngle) - rotationAxis.x * sinAngle,
+                    point.y,
 
-                rotationAxis.z * rotationAxis.x * (1.0f - cosAngle) - rotationAxis.y * sinAngle,
-                rotationAxis.z * rotationAxis.y * (1.0f - cosAngle) + rotationAxis.x * sinAngle,
-                cosAngle + rotationAxis.z * rotationAxis.z * (1.0f - cosAngle),
-                point.z,
+                    rotationAxis.z * rotationAxis.x * (1.0f - cosAngle) - rotationAxis.y * sinAngle,
+                    rotationAxis.z * rotationAxis.y * (1.0f - cosAngle) + rotationAxis.x * sinAngle,
+                    cosAngle + rotationAxis.z * rotationAxis.z * (1.0f - cosAngle),
+                    point.z,
 
-                0.0f, 0.0f, 0.0f, 1.0f
-            ));
+                    0.0f, 0.0f, 0.0f, 1.0f
+                ));
 
-            this->inv_matrix = glm::inverse(matrix);
+                this->inv_matrix = glm::inverse(matrix);
+            }
         };
 
     BetterPlane transform(const glm::mat4& matrix) const {
@@ -69,11 +75,11 @@ public:
         GLfloat vertices[4 * 3];
         GLfloat colors[4 * 3];
 
-        const float scale = 2.0f;
-        const glm::vec3 v1 = point + (-span1 - span2) * scale;
-        const glm::vec3 v2 = point + ( span1 - span2) * scale;
-        const glm::vec3 v3 = point + ( span1 + span2) * scale;
-        const glm::vec3 v4 = point + (-span1 + span2) * scale;
+        const float scale = 1.0f;
+        const glm::vec3 v1 = point;
+        const glm::vec3 v2 = point + span1 * scale;
+        const glm::vec3 v3 = point + (span1 + span2) * scale;
+        const glm::vec3 v4 = point + span2 * scale;
         vertices[0] = v1.x;
         vertices[1] = v1.y;
         vertices[2] = v1.z;

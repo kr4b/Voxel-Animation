@@ -132,7 +132,7 @@ void SplineChain::intersect_spline_plane(const BetterPlane& p, float ts[3 * MAX_
     }
 }
 
-void SplineChain::with_transform(const Plane& plane) {
+void SplineChain::with_transform(const BetterPlane& plane) {
     for (Spline& spline : this->splines) {
         spline.with_transform(plane);
     }

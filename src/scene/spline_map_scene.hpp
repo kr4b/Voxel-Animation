@@ -23,12 +23,6 @@
 #include "debug_scene.hpp"
 #include "ray_emitter_scene.hpp"
 
-struct AABBUniform
-{
-    alignas(16) glm::vec3 min;
-    alignas(16) glm::vec3 max;
-};
-
 struct SplineUniform
 {
     alignas(16) glm::vec3 a;
@@ -46,26 +40,20 @@ struct SplineChainUniform
 
 struct PlaneUniform
 {
-    alignas(16) glm::vec3 center;
-    alignas(16) glm::vec3 half_size;
-    alignas(16) glm::vec3 size;
-    alignas(16) glm::vec3 normal;
+    alignas(16) glm::vec3 point;
     alignas(16) glm::vec3 span1;
     alignas(16) glm::vec3 span2;
-    alignas(16) glm::vec3 min;
-    alignas(16) glm::vec3 max;
-    alignas(16) glm::vec3 transformed_min;
-    alignas(16) glm::vec3 transformed_max;
+    alignas(16) glm::vec3 normal;
 
-    alignas(16) glm::mat4x4 matrix;
     alignas(16) glm::mat4x4 inv_matrix;
 };
 
 struct SplineMapUniform
 {
-    alignas(16) AABBUniform aabb;
     alignas(16) PlaneUniform base;
+    alignas(16) PlaneUniform opposite_base;
     alignas(16) SplineChainUniform spline_chain;
+    alignas(16) SplineChainUniform opposite_spline_chain;
     alignas(16) SplineChainUniform transformed_spline_chain;
 
     alignas(16) float width;
@@ -85,19 +73,19 @@ public:
         debugShader("assets/debug.vert", "assets/debug.frag"),
         volume(std::move(volume)),
         splineMap(
-            Plane(
+            BetterPlane(
                 glm::vec3(0.0f, 1.0f, 0.0f),
-                glm::vec3(1.0f, 0.0f, 1.0f)
+                glm::vec3(1.0f, 0.0f, 0.0f),
+                glm::vec3(0.0f, 0.0f, 1.0f)
             ),
             SplineChain::from_points_with_tangents(
                 std::vector<glm::vec3>(this->anchorPoints, this->anchorPoints + 2),
                 std::vector<glm::vec3>(this->anchorTangents, this->anchorTangents + 2)
             )
         ),
-        anchorPoints{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 2.0f, 0.0f) },
+        anchorPoints{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f) },
         anchorTangents{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f) },
-        tau(0.2f),
-        wireframeAABB(WireframeAABB(this->splineMap.aabb, glm::vec3(0.90, 0.49, 0.13)))
+        tau(0.2f)
     {
         this->init();
     };
@@ -118,7 +106,6 @@ protected:
 private:
     bool showAxis = true;
     bool showOutline = true;
-    bool showEncompassingAABB = true;
     bool animate = false;
     glm::vec3 anchorPoints[2], anchorTangents[2];
     std::vector<glm::vec2> middlePoints;
@@ -129,7 +116,7 @@ private:
     double time = 0.0;
 
     SplineMapUniform create_uniform() {
-        SplineUniform splineUniforms[MAX_SPLINES];
+        SplineUniform splineUniforms[MAX_SPLINES * 2];
         SplineUniform transformedSplineUniforms[MAX_SPLINES];
 
         for (int i = 0; i < this->splineMap.splineChain.length; i++) {
@@ -140,6 +127,13 @@ private:
                 spline.b,
                 spline.c,
                 spline.d
+            };
+            
+            splineUniforms[i + MAX_SPLINES] = SplineUniform {
+                this->splineMap.edgeSplines[2].splines[i].a,
+                this->splineMap.edgeSplines[2].splines[i].b,
+                this->splineMap.edgeSplines[2].splines[i].c,
+                this->splineMap.edgeSplines[2].splines[i].d
             };
 
             transformedSplineUniforms[i] = SplineUniform {
@@ -165,29 +159,33 @@ private:
         transformedYBounds.z =  float(this->splineMap.splineChain.length) / (transformedYBounds.y - transformedYBounds.x);
 
         return SplineMapUniform {
-            AABBUniform {
-                this->splineMap.aabb.min,
-                this->splineMap.aabb.max
-            },
             PlaneUniform {
-                this->splineMap.base.center,
-                this->splineMap.base.half_size,
-                this->splineMap.base.size,
-                this->splineMap.base.normal,
+                this->splineMap.base.point,
                 this->splineMap.base.span1,
                 this->splineMap.base.span2,
-                this->splineMap.base.min,
-                this->splineMap.base.max,
-                this->splineMap.base.transformedMin,
-                this->splineMap.base.transformedMax,
-                this->splineMap.base.matrix,
+                this->splineMap.base.normal,
                 this->splineMap.base.inv_matrix,
+            },
+            PlaneUniform {
+                this->splineMap.topBase.point,
+                this->splineMap.topBase.span1,
+                this->splineMap.topBase.span2,
+                this->splineMap.topBase.normal,
+                this->splineMap.topBase.inv_matrix,
             },
             SplineChainUniform {
                 splineUniforms[0],
                 splineUniforms[1],
                 splineUniforms[2],
                 splineUniforms[3],
+                float(this->splineMap.splineChain.length),
+                yBounds
+            },
+            SplineChainUniform {
+                splineUniforms[4],
+                splineUniforms[5],
+                splineUniforms[6],
+                splineUniforms[7],
                 float(this->splineMap.splineChain.length),
                 yBounds
             },
@@ -210,7 +208,6 @@ private:
         ImGui::Begin("Debug");
         ImGui::Checkbox("Show Axis", &this->showAxis);
         ImGui::Checkbox("Show Outline", &this->showOutline);
-        ImGui::Checkbox("Show Encompassing AABB", &this->showEncompassingAABB);
         ImGui::PushID("Points");
         ImGui::Separator();
         ImGui::Text("Points:");
@@ -285,8 +282,6 @@ private:
         std::memmove(&this->splineMap, &splineMap, sizeof(SplineMap));
         const SplineMapUniform uniform = create_uniform();
         glNamedBufferSubData(this->splineMapUniform, 0, sizeof(SplineMapUniform), &uniform);
-
-        get_encompassing_aabb().update(this->splineMap.aabb);
     }
 
 public:
@@ -317,7 +312,6 @@ public:
             get_setup().debug(get_debug_shader());
             if (this->showAxis) get_axis().render(get_setup());
             if (this->showOutline) get_spline_map().render();
-            if (this->showEncompassingAABB) get_encompassing_aabb().render(get_setup());
             get_ray_emitter().render();
         }
         get_setup().end_render();
@@ -332,7 +326,6 @@ public:
     inline virtual SplineMap&       get_spline_map()        { return splineMap;     };
     inline virtual Axis&            get_axis()              { return axis;          };
     inline virtual RayEmitter&      get_ray_emitter()       { return rayEmitter;    };
-    inline virtual WireframeAABB&   get_encompassing_aabb() { return wireframeAABB; };
 
 protected:
     GLuint     splineMapUniform;
@@ -344,5 +337,4 @@ protected:
     SplineMap  splineMap;
     Axis       axis;
     RayEmitter rayEmitter;
-    WireframeAABB wireframeAABB;
 };

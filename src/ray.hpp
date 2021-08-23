@@ -7,7 +7,7 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
-#include "plane.hpp"
+#include "better_plane.hpp"
 
 class AABB;
 class SplineMap;
@@ -28,7 +28,7 @@ public:
     void clean();
 
     glm::vec2 intersect_ray_spline_map(const SplineMap&) const;
-    std::optional<float> intersect_ray_plane(const Plane&) const;
+    std::optional<float> intersect_ray_plane(const BetterPlane&) const;
     std::optional<float> intersect_ray_line_segment(const glm::vec3, const glm::vec3) const;
 
 private:

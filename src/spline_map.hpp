@@ -8,18 +8,17 @@
 
 #include "aabb.hpp"
 #include "spline_chain.hpp"
-#include "plane.hpp"
+#include "better_plane.hpp"
 
 class SplineMap {
 public:
-    Plane base;
-    Plane topBase;
+    BetterPlane base;
+    BetterPlane topBase;
     SplineChain splineChain;
     SplineChain edgeSplines[3];
-    AABB aabb;
     float width, height, depth;
 
-    SplineMap(const Plane&, const SplineChain&);
+    SplineMap(const BetterPlane&, const SplineChain&);
 
     std::optional<glm::vec3> texture_coords(const glm::vec3) const;
 

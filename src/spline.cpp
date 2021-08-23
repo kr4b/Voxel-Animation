@@ -159,7 +159,7 @@ std::vector<float> Spline::get_extremes() const {
     return values;
 }
 
-void Spline::with_transform(const Plane& plane) {
+void Spline::with_transform(const BetterPlane& plane) {
     this->transformedSpline = new Spline;
     *this->transformedSpline = this->transform(plane.inv_matrix);
 }

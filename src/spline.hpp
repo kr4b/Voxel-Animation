@@ -57,7 +57,7 @@ public:
         );
     }
 
-    void with_transform(const Plane&);
+    void with_transform(const BetterPlane&);
 
 private:
     GLuint lineVao;

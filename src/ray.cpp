@@ -127,7 +127,7 @@ void Ray::render(bool showRays, bool showIntersections) const {
 }
 
 std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap& splineMap, const Volume& volume, const float threshold, const float stepSize) {
-    const glm::vec2 ts = this->intersect_ray_aabb(splineMap.aabb);
+    const glm::vec2 ts = this->intersect_ray_spline_map(splineMap);
     const float len = glm::length(this->dir);
 
     for (float t = ts.x; t <= ts.y; t += stepSize / len) {
@@ -142,26 +142,28 @@ std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap
     return std::nullopt;
 }
 
-std::optional<float> Ray::intersect_ray_plane(const Plane& plane) const {
+std::optional<float> Ray::intersect_ray_plane(const BetterPlane& plane) const {
     const float del = glm::dot(plane.normal, dir);
 
     if (del == 0.0f) return std::nullopt;
 
-    const float result = glm::dot(plane.normal, (plane.center - origin)) / del;
+    const float result = glm::dot(plane.normal, (plane.point - origin)) / del;
 
     const glm::vec3 intersection = origin + result * dir;
+    const glm::vec3 min = plane.point;
+    const glm::vec3 max = plane.point + plane.span1 + plane.span2;
     if (
-        intersection.x < plane.min.x ||
-        intersection.y < plane.min.y ||
-        intersection.z < plane.min.z ||
-        intersection.x > plane.max.x ||
-        intersection.y > plane.max.y ||
-        intersection.z > plane.max.z
+        intersection.x >= min.x &&
+        intersection.y >= min.y &&
+        intersection.z >= min.z &&
+        intersection.x <= max.x &&
+        intersection.y <= max.y &&
+        intersection.z <= max.z
     ) {
-        return std::nullopt;
+        return result;
     }
 
-    return result;
+    return std::nullopt;
 }
 
 std::optional<float> Ray::intersect_ray_line_segment(const glm::vec3 point1, const glm::vec3 point2) const {
@@ -209,11 +211,8 @@ glm::vec2 Ray::intersect_ray_spline_map(const SplineMap& splineMap) const {
     const glm::vec3 span1 = splineMap.base.span1;
     const glm::vec3 span2 = splineMap.base.span2;
 
-    const glm::vec3 normSpan1 = glm::normalize(splineMap.base.span1);
-    const glm::vec3 normSpan2 = glm::normalize(splineMap.base.span2);
-
-    const BetterPlane plane1(origin, glm::normalize(dir * (1.0f - normSpan1)), normSpan1);
-    const BetterPlane plane2(origin, glm::normalize(dir * (1.0f - normSpan2)), normSpan2);
+    const BetterPlane plane1(origin, glm::normalize(dir * (1.0f - span1)), span1);
+    const BetterPlane plane2(origin, glm::normalize(dir * (1.0f - span2)), span2);
 
     // Up to 3 intersection points per spline, up to n splines per chain
     float ts[3 * MAX_SPLINE_CHAIN_LENGTH];
