@@ -127,8 +127,12 @@ std::optional<float> SplineChain::intersect_spline_plane(const glm::vec3 p) cons
 }
 
 void SplineChain::intersect_spline_plane(const BetterPlane& p, float ts[3 * MAX_SPLINE_CHAIN_LENGTH]) const {
+    glm::vec3 _ts;
     for (int i = 0; i < this->length; i++) {
-        this->splines[i].intersect_spline_plane(p, ts + i * 3);
+        this->splines[i].intersect_spline_plane(p, _ts);
+        ts[i * 3 + 0] = (_ts.x + i) / this->length;
+        ts[i * 3 + 1] = (_ts.y + i) / this->length;
+        ts[i * 3 + 2] = (_ts.z + i) / this->length;
     }
 }
 

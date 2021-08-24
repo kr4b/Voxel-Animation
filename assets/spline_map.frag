@@ -141,7 +141,7 @@ Plane plane_constructor(in vec3 point, in vec3 span1, in vec3 span2);
 Ray ray_constructor(in vec3 origin, in vec3 direction);
 bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in float step_size, inout ivec3 texel, inout float t);
 bool intersect_ray_line_segment(in Ray ray, in vec3 point1, in vec3 point2, inout float t);
-void find_ray_spline_intersection(in Ray ray, in SplineChain spline_chain, in float t, in vec3 offset, inout vec2 ret);
+void find_ray_spline_intersection(in Ray ray, in Spline spline, in float t, in vec3 offset, inout vec2 ret);
 void find_all_ray_spline_intersection(in Ray ray, in SplineChain spline_chain, in vec3 ts[MAX_SPLINES], in vec3 offset, inout vec2 ret);
 bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts);
 bool intersect_ray_plane(in Ray ray, in Plane plane, inout float t);
@@ -377,11 +377,11 @@ bool intersect_ray_line_segment(in Ray ray, in vec3 point1, in vec3 point2, inou
 }
 
 void find_ray_spline_intersection(
-    in Ray ray, in SplineChain spline_chain, in float t,
+    in Ray ray, in Spline spline, in float t,
     in vec3 offset, inout vec2 ret)
 {
     if (t >= 0.0 - EPSILON && t <= 1.0 + EPSILON) {
-        const vec3 pos1 = position_on_spline_chain(spline_chain, t);
+        const vec3 pos1 = position_on_spline(spline, t);
         const vec3 pos2 = pos1 + offset;
 
         float _t;
@@ -399,21 +399,21 @@ void find_all_ray_spline_intersection(
     vec3 pos1, pos2;
     float t;
 
-    find_ray_spline_intersection(ray, spline_chain, ts[0].x, offset, ret);
-    find_ray_spline_intersection(ray, spline_chain, ts[0].y, offset, ret);
-    find_ray_spline_intersection(ray, spline_chain, ts[0].z, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[0], ts[0].x, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[0], ts[0].y, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[0], ts[0].z, offset, ret);
     if (1 == spline_chain.amount) return;
-    find_ray_spline_intersection(ray, spline_chain, ts[1].x, offset, ret);
-    find_ray_spline_intersection(ray, spline_chain, ts[1].y, offset, ret);
-    find_ray_spline_intersection(ray, spline_chain, ts[1].z, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[1], ts[1].x, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[1], ts[1].y, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[1], ts[1].z, offset, ret);
     if (2 == spline_chain.amount) return;
-    find_ray_spline_intersection(ray, spline_chain, ts[2].x, offset, ret);
-    find_ray_spline_intersection(ray, spline_chain, ts[2].y, offset, ret);
-    find_ray_spline_intersection(ray, spline_chain, ts[2].z, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[2], ts[2].x, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[2], ts[2].y, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[2], ts[2].z, offset, ret);
     if (3 == spline_chain.amount) return;
-    find_ray_spline_intersection(ray, spline_chain, ts[3].x, offset, ret);
-    find_ray_spline_intersection(ray, spline_chain, ts[3].y, offset, ret);
-    find_ray_spline_intersection(ray, spline_chain, ts[3].z, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[3], ts[3].x, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[3], ts[3].y, offset, ret);
+    find_ray_spline_intersection(ray, spline_chain.splines[3], ts[3].z, offset, ret);
 }
 
 bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts) {

@@ -16,8 +16,8 @@ const SplineChain transformSplineChain(const BetterPlane& base, const SplineChai
 
 SplineMap::SplineMap(const BetterPlane& base, const SplineChain& splineChain) :
     base(base),
-    splineChain(transformSplineChain(this->base, splineChain)),
-    topBase(createTopBase(this->base, splineChain)) {
+    splineChain(transformSplineChain(base, splineChain)),
+    topBase(createTopBase(base, splineChain)) {
 
     const glm::vec3 start = splineChain.splines[0].position_on_spline(0.0f);
     const glm::vec3 end = splineChain.splines[splineChain.length - 1].position_on_spline(1.0f);

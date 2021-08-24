@@ -6,6 +6,8 @@
 
 #include <glm/common.hpp>
 
+const float EPSILON = 1e-3f;
+
 Ray::Ray(const glm::vec3 origin, const glm::vec3 dir) : origin(origin), dir(dir) {
 }
 
@@ -150,15 +152,15 @@ std::optional<float> Ray::intersect_ray_plane(const BetterPlane& plane) const {
     const float result = glm::dot(plane.normal, (plane.point - origin)) / del;
 
     const glm::vec3 intersection = origin + result * dir;
-    const glm::vec3 min = plane.point;
-    const glm::vec3 max = plane.point + plane.span1 + plane.span2;
+    const glm::vec3 pmin = plane.point;
+    const glm::vec3 pmax = plane.point + plane.span1 + plane.span2;
     if (
-        intersection.x >= min.x &&
-        intersection.y >= min.y &&
-        intersection.z >= min.z &&
-        intersection.x <= max.x &&
-        intersection.y <= max.y &&
-        intersection.z <= max.z
+        intersection.x >= pmin.x - EPSILON &&
+        intersection.y >= pmin.y - EPSILON &&
+        intersection.z >= pmin.z - EPSILON &&
+        intersection.x <= pmax.x + EPSILON &&
+        intersection.y <= pmax.y + EPSILON &&
+        intersection.z <= pmax.z + EPSILON
     ) {
         return result;
     }
@@ -192,7 +194,7 @@ void find_ray_spline_intersection(
     const glm::vec3& offset, glm::vec2& returnValue)
 {
     for (int i = 0; i < 3 * splineChain.length; i++) {
-        if (ts[i] < 0.0f || ts[i] > 1.0f) continue;
+        if (ts[i] < (float(i / 3) / splineChain.length) || ts[i] > (float(i / 3 + 1) / splineChain.length)) continue;
 
         const glm::vec3 pos1 = splineChain.position_on_chain(ts[i]);
         const glm::vec3 pos2 = pos1 + offset;
