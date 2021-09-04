@@ -189,14 +189,14 @@ std::optional<float> Ray::intersect_ray_line_segment(const glm::vec3 point1, con
 }
 
 void find_ray_spline_intersection(
-    const Ray* ray, const SplineChain& splineChain,
-    const BetterPlane& plane, const float ts[3 * MAX_SPLINE_CHAIN_LENGTH],
+    const Ray* ray, const Spline& spline,
+    const BetterPlane& plane, const glm::vec3 ts,
     const glm::vec3& offset, glm::vec2& returnValue)
 {
-    for (int i = 0; i < 3 * splineChain.length; i++) {
-        if (ts[i] < (float(i / 3) / splineChain.length) || ts[i] > (float(i / 3 + 1) / splineChain.length)) continue;
+    for (int i = 0; i < 3; i++) {
+        if (ts[i] < 0.0f || ts[i] > 1.0f) continue;
 
-        const glm::vec3 pos1 = splineChain.position_on_chain(ts[i]);
+        const glm::vec3 pos1 = spline.position_on_spline(ts[i]);
         const glm::vec3 pos2 = pos1 + offset;
 
         const std::optional<float> t = ray->intersect_ray_line_segment(pos1, pos2);
@@ -216,17 +216,16 @@ glm::vec2 Ray::intersect_ray_spline_map(const SplineMap& splineMap) const {
     const BetterPlane plane1(origin, glm::normalize(dir * (1.0f - span1)), span1);
     const BetterPlane plane2(origin, glm::normalize(dir * (1.0f - span2)), span2);
 
-    // Up to 3 intersection points per spline, up to n splines per chain
-    float ts[3 * MAX_SPLINE_CHAIN_LENGTH];
+    glm::vec3 ts;
 
-    splineMap.splineChain.intersect_spline_plane(plane1, ts);
-    find_ray_spline_intersection(this, splineMap.splineChain, plane1, ts, span1, returnValue);
+    splineMap.spline.intersect_spline_plane(plane1, ts);
+    find_ray_spline_intersection(this, splineMap.spline, plane1, ts, span1, returnValue);
 
     splineMap.edgeSplines[2].intersect_spline_plane(plane1, ts);
     find_ray_spline_intersection(this, splineMap.edgeSplines[2], plane1, ts, -span1, returnValue);
 
-    splineMap.splineChain.intersect_spline_plane(plane2, ts);
-    find_ray_spline_intersection(this, splineMap.splineChain, plane2, ts, span2, returnValue);
+    splineMap.spline.intersect_spline_plane(plane2, ts);
+    find_ray_spline_intersection(this, splineMap.spline, plane2, ts, span2, returnValue);
 
     splineMap.edgeSplines[2].intersect_spline_plane(plane2, ts);
     find_ray_spline_intersection(this, splineMap.edgeSplines[2], plane2, ts, -span2, returnValue);

@@ -15,7 +15,6 @@
 #include "setup.hpp"
 #include "shader.hpp"
 #include "spline.hpp"
-#include "spline_chain.hpp"
 #include "spline_map.hpp"
 #include "state.hpp"
 #include "volume.hpp"
@@ -29,12 +28,6 @@ struct SplineUniform
     alignas(16) glm::vec3 b;
     alignas(16) glm::vec3 c;
     alignas(16) glm::vec3 d;
-};
-
-struct SplineChainUniform
-{
-    alignas(16) SplineUniform splines[MAX_SPLINES];
-    alignas(16) float amount;
     alignas(16) glm::vec3 y_bounds;
 };
 
@@ -52,9 +45,9 @@ struct SplineMapUniform
 {
     alignas(16) PlaneUniform base;
     alignas(16) PlaneUniform opposite_base;
-    alignas(16) SplineChainUniform spline_chain;
-    alignas(16) SplineChainUniform opposite_spline_chain;
-    alignas(16) SplineChainUniform transformed_spline_chain;
+    alignas(16) SplineUniform spline;
+    alignas(16) SplineUniform opposite_spline;
+    alignas(16) SplineUniform transformed_spline;
 
     alignas(16) float width;
     float height;
@@ -72,20 +65,18 @@ public:
         shader("assets/simple_vol.vert", "assets/spline_map.frag"),
         debugShader("assets/debug.vert", "assets/debug.frag"),
         volume(std::move(volume)),
+        tangents { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f) },
+        offset(0.0f, 2.0f, 0.0f),
         splineMap(
             BetterPlane(
                 glm::vec3(-1.0f, -1.0f, -1.0f),
                 glm::vec3(2.0f, 0.0f, 0.0f),
                 glm::vec3(0.0f, 0.0f, 2.0f)
             ),
-            SplineChain::from_points_with_tangents(
-                std::vector<glm::vec3>(this->anchorPoints, this->anchorPoints + 2),
-                std::vector<glm::vec3>(this->anchorTangents, this->anchorTangents + 2)
+            Spline::with_tangents(
+                glm::vec3(0.0f), offset, tangents[0], tangents[1]
             )
-        ),
-        anchorPoints{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 2.0f, 0.0f) },
-        anchorTangents{ glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f) },
-        tau(0.2f)
+        )
     {
         this->init();
     };
@@ -107,56 +98,26 @@ private:
     bool showAxis = true;
     bool showOutline = true;
     bool animate = false;
-    glm::vec3 anchorPoints[2], anchorTangents[2];
-    std::vector<glm::vec2> middlePoints;
-    std::vector<glm::vec3> middleTangents;
-    float tau;
+    glm::vec3 tangents[2];
+    glm::vec3 offset;
     float threshold = 0.25f;
     float stepSize = 0.025f;
     double time = 0.0;
 
     SplineMapUniform create_uniform() {
-        SplineUniform splineUniforms[MAX_SPLINES * 2];
-        SplineUniform transformedSplineUniforms[MAX_SPLINES];
-
-        for (int i = 0; i < this->splineMap.splineChain.length; i++) {
-            const Spline &spline = this->splineMap.splineChain.splines[i];
-
-            splineUniforms[i] = SplineUniform {
-                spline.a,
-                spline.b,
-                spline.c,
-                spline.d
-            };
-            
-            splineUniforms[i + MAX_SPLINES] = SplineUniform {
-                this->splineMap.edgeSplines[2].splines[i].a,
-                this->splineMap.edgeSplines[2].splines[i].b,
-                this->splineMap.edgeSplines[2].splines[i].c,
-                this->splineMap.edgeSplines[2].splines[i].d
-            };
-
-            transformedSplineUniforms[i] = SplineUniform {
-                spline.transformedSpline->a,
-                spline.transformedSpline->b,
-                spline.transformedSpline->c,
-                spline.transformedSpline->d
-            };
-        }
-
         glm::vec3 yBounds = glm::vec3(
-            this->splineMap.splineChain.splines[0].position_on_spline(0.0f).y,
-            this->splineMap.splineChain.splines[this->splineMap.splineChain.length - 1].position_on_spline(1.0f).y,
+            this->splineMap.spline.position_on_spline(0.0f).y,
+            this->splineMap.spline.position_on_spline(1.0f).y,
             0.0f
         );
-        yBounds.z =  float(this->splineMap.splineChain.length) / (yBounds.y - yBounds.x);
+        yBounds.z =  1.0f / (yBounds.y - yBounds.x);
 
         glm::vec3 transformedYBounds = glm::vec3(
-            this->splineMap.splineChain.splines[0].transformedSpline->position_on_spline(0.0f).y,
-            this->splineMap.splineChain.splines[this->splineMap.splineChain.length - 1].transformedSpline->position_on_spline(1.0f).y,
+            this->splineMap.spline.transformedSpline->position_on_spline(0.0f).y,
+            this->splineMap.spline.transformedSpline->position_on_spline(1.0f).y,
             0.0f
         );
-        transformedYBounds.z =  float(this->splineMap.splineChain.length) / (transformedYBounds.y - transformedYBounds.x);
+        transformedYBounds.z = 1.0f / (transformedYBounds.y - transformedYBounds.x);
 
         return SplineMapUniform {
             PlaneUniform {
@@ -173,28 +134,25 @@ private:
                 this->splineMap.topBase.normal,
                 this->splineMap.topBase.inv_matrix,
             },
-            SplineChainUniform {
-                splineUniforms[0],
-                splineUniforms[1],
-                splineUniforms[2],
-                splineUniforms[3],
-                float(this->splineMap.splineChain.length),
+            SplineUniform {
+                this->splineMap.spline.a,
+                this->splineMap.spline.b,
+                this->splineMap.spline.c,
+                this->splineMap.spline.d,
                 yBounds
             },
-            SplineChainUniform {
-                splineUniforms[4],
-                splineUniforms[5],
-                splineUniforms[6],
-                splineUniforms[7],
-                float(this->splineMap.splineChain.length),
+            SplineUniform {
+                this->splineMap.edgeSplines[2].a,
+                this->splineMap.edgeSplines[2].b,
+                this->splineMap.edgeSplines[2].c,
+                this->splineMap.edgeSplines[2].d,
                 yBounds
             },
-            SplineChainUniform {
-                transformedSplineUniforms[0],
-                transformedSplineUniforms[1],
-                transformedSplineUniforms[2],
-                transformedSplineUniforms[3],
-                float(this->splineMap.splineChain.length),
+            SplineUniform {
+                this->splineMap.spline.transformedSpline->a,
+                this->splineMap.spline.transformedSpline->b,
+                this->splineMap.spline.transformedSpline->c,
+                this->splineMap.spline.transformedSpline->d,
                 transformedYBounds
             },
             this->splineMap.width,
@@ -212,47 +170,19 @@ private:
         ImGui::Separator();
         ImGui::Text("Points:");
 
-        ImGui::Text("Last Point:");
-        splineMapChange |= ImGui::DragFloat3("xyz", glm::value_ptr(this->anchorPoints[1]));
-
-        for (int i = 0; i < this->middlePoints.size(); i++) {
-            ImGui::PushID(i);
-            splineMapChange |= ImGui::DragFloat2("pos", glm::value_ptr(this->middlePoints[i]));
-            splineMapChange |= ImGui::DragFloat3("tan", glm::value_ptr(this->middleTangents[i]));
-            ImGui::PopID();
-        }
-
-        if (ImGui::Button("Push")) {
-            if (this->splineMap.splineChain.length < MAX_SPLINES) {
-                this->middlePoints.push_back(glm::vec2());
-                this->middleTangents.push_back(glm::vec3());
-                splineMapChange = true;
-            }
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Pop")) {
-            if (this->middlePoints.size() > 0) {
-                this->middlePoints.pop_back();
-                this->middleTangents.pop_back();
-                splineMapChange = true;
-            }
-        }
         ImGui::Separator();
         ImGui::PopID();
         ImGui::PushID("Tangent0");
         ImGui::Text("Tangent 0:");
-        splineMapChange |= ImGui::DragFloat("x", &this->anchorTangents[0].x);
-        splineMapChange |= ImGui::DragFloat("y", &this->anchorTangents[0].y);
-        splineMapChange |= ImGui::DragFloat("z", &this->anchorTangents[0].z);
+        splineMapChange |= ImGui::DragFloat("x", &this->tangents[0].x);
+        splineMapChange |= ImGui::DragFloat("y", &this->tangents[0].y);
+        splineMapChange |= ImGui::DragFloat("z", &this->tangents[0].z);
         ImGui::PopID();
         ImGui::PushID("Tangent1");
         ImGui::Text("Tangent 1:");
-        splineMapChange |= ImGui::DragFloat("x", &this->anchorTangents[1].x);
-        splineMapChange |= ImGui::DragFloat("y", &this->anchorTangents[1].y);
-        splineMapChange |= ImGui::DragFloat("z", &this->anchorTangents[1].z);
-        ImGui::PopID();
-        ImGui::PushID("Tau");
-        splineMapChange |= ImGui::DragFloat("Tau", &this->tau, 0.1f, 0.0f, 1.0f);
+        splineMapChange |= ImGui::DragFloat("x", &this->tangents[1].x);
+        splineMapChange |= ImGui::DragFloat("y", &this->tangents[1].y);
+        splineMapChange |= ImGui::DragFloat("z", &this->tangents[1].z);
         ImGui::PopID();
         ImGui::Checkbox("Animate", &this->animate);
         ImGui::End();
@@ -263,22 +193,9 @@ private:
     }
 
     void update_spline_map() {
-        std::vector<glm::vec3> points;
-        std::vector<glm::vec3> tangents;
-
-        const float deltaY = (anchorPoints[1].y - anchorPoints[0].y) / float(middlePoints.size() + 1);
-        points.push_back(anchorPoints[0]);
-        tangents.push_back(anchorTangents[0]);
-        for (int i = 0; i < middlePoints.size(); i++) {
-            points.push_back(glm::vec3(middlePoints[i].x, anchorPoints[0].y + deltaY * float(i + 1), middlePoints[i].y));
-            tangents.push_back(middleTangents[i]);
-        }
-        points.push_back(anchorPoints[1]);
-        tangents.push_back(anchorTangents[1]);
-
+        const Spline spline= Spline::with_tangents(glm::vec3(0.0f), this->offset, this->tangents[0], this->tangents[1]);
         this->splineMap.clean();
-        const SplineChain splineChain = SplineChain::from_points_with_tangents(points, tangents);
-        SplineMap splineMap = SplineMap(this->splineMap.base, splineChain);
+        SplineMap splineMap = SplineMap(this->splineMap.base, spline);
         std::memmove(&this->splineMap, &splineMap, sizeof(SplineMap));
         const SplineMapUniform uniform = create_uniform();
         glNamedBufferSubData(this->splineMapUniform, 0, sizeof(SplineMapUniform), &uniform);
@@ -290,8 +207,8 @@ public:
 
         if (this->animate) {
             this->time += get_window().get_delta_time() * 0.001;
-            this->anchorTangents[0] = glm::vec3(float(sin(this->time)) * 3.0f, 0.0f, 0.0f);
-            this->anchorTangents[1] = glm::vec3(float(cos(this->time)) * 3.0f, 0.0f, 0.0f);
+            this->tangents[0] = glm::vec3(float(sin(this->time)) * 3.0f, 0.0f, 0.0f);
+            this->tangents[1] = glm::vec3(float(cos(this->time)) * 3.0f, 0.0f, 0.0f);
             update_spline_map();
         }
         if (get_state().debugMode) {

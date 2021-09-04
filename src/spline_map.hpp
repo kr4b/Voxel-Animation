@@ -7,18 +7,18 @@
 #include <glm/mat4x4.hpp>
 
 #include "aabb.hpp"
-#include "spline_chain.hpp"
+#include "spline.hpp"
 #include "better_plane.hpp"
 
 class SplineMap {
 public:
     BetterPlane base;
     BetterPlane topBase;
-    SplineChain splineChain;
-    SplineChain edgeSplines[3];
+    Spline spline;
+    Spline edgeSplines[3];
     float width, height, depth;
 
-    SplineMap(const BetterPlane&, const SplineChain&);
+    SplineMap(const BetterPlane&, const Spline&);
 
     std::optional<glm::vec3> texture_coords(const glm::vec3) const;
 

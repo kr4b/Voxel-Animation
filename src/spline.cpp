@@ -51,10 +51,6 @@ Spline::~Spline() {
 }
 
 Spline Spline::with_tangents(const glm::vec3 P1, const glm::vec3 P2, const glm::vec3 tangent1, const glm::vec3 tangent2) {
-    // float tmp = P2.y;
-    // P2.y = P2.z;
-    // P2.z = tmp - 0.5f;
-
     const glm::vec3 P0 = tangent1;
     const glm::vec3 P3 = tangent2;
 
