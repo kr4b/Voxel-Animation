@@ -1,35 +1,33 @@
 import { AABB } from "./aabb.js";
-import DepressedCubic from "./depressed_cubic.js";
 import { Plane } from "./plane.js";
-import { Ray } from "./ray.js";
-import SplineChain from "./spline_chain.js";
-import { add, dist, divide, dot, length, mat3, max, min, multiply, scale, subtract, transform, vec2 } from "./vec2.js";
+import Spline from "./spline.js";
+import { add, dist, dot, length, mat3, max, min, subtract, transform, vec2 } from "./vec2.js";
 
-class SplineChainMap {
+class SplineMap {
     aabb: AABB;
     base: Plane;
     bottom_base: Plane;
-    spline: SplineChain;
-    furthest_spline: SplineChain;
+    spline: Spline;
+    furthest_spline: Spline;
 
     // Not the encompassing AABB
     width: number;
     height: number;
 
-    constructor(base: Plane, spline: SplineChain) {
+    constructor(base: Plane, spline: Spline) {
         this.base = base;
-        this.spline = SplineChain.transform(SplineChain.transform(spline, this.base.matrix), mat3(1, 0, -this.base.half_size.x, 0, 1, -this.base.half_size.y, 0, 0, 1));
-        this.furthest_spline = SplineChain.transform(this.spline, mat3(1, 0, this.base.size.x, 0, 1, this.base.size.y, 0, 0, 1));
+        this.spline = Spline.transform(Spline.transform(spline, this.base.matrix), mat3(1, 0, -this.base.half_size.x, 0, 1, -this.base.half_size.y, 0, 0, 1));
+        this.furthest_spline = Spline.transform(this.spline, mat3(1, 0, this.base.size.x, 0, 1, this.base.size.y, 0, 0, 1));
 
         // Create the encompassing AABB
-        const extremes = Array.from(this.spline.get_extremes().filter(t => t >= 0 && t <= 1)).map(t => this.spline.position_on_chain(t));
+        const extremes = Array.from(this.spline.get_extremes().filter(t => t >= 0 && t <= 1)).map(t => this.spline.position_on_spline(t));
         this.aabb = new AABB(
             min(...extremes),
             add(this.base.size, max(...extremes)),
         );
 
         this.width = length(this.base.size);
-        this.height = dist(this.spline.position_on_chain(1), this.spline.position_on_chain(0));
+        this.height = dist(this.spline.position_on_spline(1), this.spline.position_on_spline(0));
         this.bottom_base = Plane.transform(this.base, mat3(1, 0, 0, 0, 1, this.height, 0, 0, 1));
     }
 
@@ -45,7 +43,7 @@ class SplineChainMap {
 
         ctx.globalAlpha = 0.4;
         ctx.strokeStyle = "aquamarine"
-        SplineChain.transform(this.spline, mat3(1, 0, this.base.size.x, 0, 1, this.base.size.y, 0, 0, 1)).draw(ctx);
+        Spline.transform(this.spline, mat3(1, 0, this.base.size.x, 0, 1, this.base.size.y, 0, 0, 1)).draw(ctx);
 
         ctx.strokeStyle = "slategray"
         Plane.transform(this.base, mat3(1, 0, this.base.normal.x * this.height, 0, 1, this.base.normal.y * this.height, 0, 0, 1)).draw(ctx);
@@ -68,36 +66,7 @@ class SplineChainMap {
         // ctx.stroke();
     }
 
-    // TODO: Use more efficient way of getting the intersection points
-    intersect_ray_alt(ray: Ray): vec2 {
-        const plane = new Plane(ray.origin, ray.dir);
-
-        const transformed0 = SplineChain.transform(this.spline, plane.inv_matrix);
-        const transformed1 = SplineChain.transform(this.furthest_spline, plane.inv_matrix);
-
-        // Should calculate the correct index like in the shader, but there is no y_bounds...
-        const t0 = ray.intersect_ray_spline(transformed0.splines[0], this.spline.splines[0]);
-        const t1 = ray.intersect_ray_spline(transformed1.splines[0], this.furthest_spline.splines[0]);
-
-        const tb0 = ray.intersect_ray_plane(this.base);
-        const tb1 = ray.intersect_ray_plane(this.bottom_base);
-
-        const results = [ ...t0, ...t1, tb0, tb1 ];
-
-        const tnear = Math.min(...results);
-        const tfar = Math.max(...results.map(t => t === 20 ? -20 : t));
-
-        const ts = vec2(
-            tnear,
-            tfar
-        );
-
-        if (tnear > 10 || tfar < -10) {
-            return vec2(1.0, 0.0);
-        }
-
-        return ts;
-    }
+    // TODO: U
 
     /// Calculate texture coords for a given position in world space
     texture_coords(pos: vec2): vec2 | null {
@@ -106,12 +75,14 @@ class SplineChainMap {
         const plane = new Plane(pos, this.base.size);
         // Get plane spline intersection
         // TODO: This check can probably be skipped when using an infinite plane
-        if (!this.spline.intersect_spline_plane(plane)) {
+
+        const [t1, t2, t3] = this.spline.intersect_spline_plane(plane);
+        const t = t1 < 0.0 || t1 > 1.0 ? (t2 < 0.0 || t2 > 1.0 ? (t3 < 0.0 || t3 > 1.0 ? -1: t3) : t2) : t1;
+        if (t < 0.0 || t > 1.0) {
             return null;
         }
-        const t = this.spline.ts.x;
         // Determine whether the point is in the plane
-        const edgePos1 = this.spline.position_on_chain(t);
+        const edgePos1 = this.spline.position_on_spline(t);
         const diff1 = subtract(edgePos1, pos);
         const edgePos2 = add(edgePos1, this.base.size);
         const diff2 = subtract(edgePos2, pos);
@@ -128,4 +99,4 @@ class SplineChainMap {
     }
 }
 
-export default SplineChainMap;
+export default SplineMap;

@@ -51,11 +51,60 @@ class Ray {
         return vec2(near, far);
     }
 
+    find_ray_spline_intersection(spline: Spline, t: number, ret: vec2) {
+        if (t >= 0.0 && t <= 1.0) {
+            const pos = spline.position_on_spline(t);
+            const _t = (pos.x - this.origin.x) / this.dir.x;
+            if (_t >= 0.0) {
+                ret.x = Math.min(ret.x, _t);
+                ret.y = Math.max(ret.y, _t);
+            }
+        }
+    }
+
+    intersect_ray_spline_map(splineMap: SplineMap, ts: vec2): boolean {
+        ts.x = 10.0, ts.y = -10.0;
+
+        const plane1 = new Plane(this.origin, this.dir);
+        let its1, its2, its3;
+
+        [its1, its2, its3] = splineMap.spline.intersect_spline_plane(plane1);
+        this.find_ray_spline_intersection(splineMap.spline, its1, ts);
+        this.find_ray_spline_intersection(splineMap.spline, its2, ts);
+        this.find_ray_spline_intersection(splineMap.spline, its3, ts);
+
+        [its1, its2, its3] = splineMap.furthest_spline.intersect_spline_plane(plane1);
+        this.find_ray_spline_intersection(splineMap.furthest_spline, its1, ts);
+        this.find_ray_spline_intersection(splineMap.furthest_spline, its2, ts);
+        this.find_ray_spline_intersection(splineMap.furthest_spline, its3, ts);
+
+        {
+            let { empty, value } = this.intersect_ray_plane(splineMap.base);
+            if (!empty && typeof value === "number" && value > 0.0) {
+                ts.x = Math.min(ts.x, value);
+                ts.y = Math.max(ts.y, value);
+            }
+        }
+
+        {
+            let { empty, value } = this.intersect_ray_plane(splineMap.bottom_base);
+            if (!empty && typeof value === "number" && value > 0.0) {
+                ts.x = Math.min(ts.x, value);
+                ts.y = Math.max(ts.y, value);
+            }
+        }
+
+        return ts.x < ts.y;
+    }
+
     /// Walks the ray through the given spline map
     walk_spline_map(spline_map: SplineMap, step: number, pixels: number[][], size: number, ctx: CanvasRenderingContext2D): [vec2, number] | null {
-        const { x: t1, y: t2 } = spline_map.intersect_ray_alt(this);
+        let ts: vec2 = vec2(0.0, 0.0);
+        const result = this.intersect_ray_spline_map(spline_map, ts);
 
-        for (let t = t1; t <= t2; t += step) {
+        if (!result) return null;
+
+        for (let t = Math.max(0.0, ts.x); t <= ts.y; t += step) {
             const pos = add(this.origin, scale(this.dir, t));
             const texCoords = spline_map.texture_coords(pos);
             if (texCoords === null) continue;
@@ -100,18 +149,22 @@ class Ray {
         return result;
     }
 
-    // TODO: Replace with better algorithm at some point
-    intersect_ray_plane(plane: Plane): number {
-        const aabb = new AABB(vec2(plane.min.x, plane.min.y - 1e-3), vec2(plane.max.x, plane.max.y + 1e-3));
-        const intermediate = this.intersect_ray_aabb(aabb);
-        const result = intermediate.x + (intermediate.y - intermediate.x) * 0.5;
-        const pos = add(this.origin, scale(this.dir, result));
-        if (pos.x < aabb.min.x || pos.x > aabb.max.x ||
-            pos.y < aabb.min.y || pos.y > aabb.max.y) {
-            return 20;
-        }
+    intersect_ray_plane(plane: Plane): { empty: boolean, value?: number } {
+        const point1 = plane.min;
+        const point2 = plane.max;
+        const dpoint = subtract(point1, point2);
 
-        return result;
+        const dxy = this.dir.y * dpoint.x - this.dir.x * dpoint.y;
+        if (dxy == 0.0) return { empty: true };
+
+        let result = (this.dir.y * (point1.x - this.origin.x) - this.dir.x * (point1.y - this.origin.y)) / dxy;
+        if (result < 0.0 || result > 1.0) return { empty: true };
+
+        const intersection = add(scale(point1, 1.0 - result), scale(point2, result));
+        return {
+            empty: false,
+            value: (intersection.x - this.origin.x) / this.dir.x,
+        };
     }
 }
 

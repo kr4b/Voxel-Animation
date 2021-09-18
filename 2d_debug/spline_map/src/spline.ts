@@ -182,15 +182,22 @@ class Spline {
      * @param plane the plane to intersect
      * @returns true if it intersected, false otherwise
      */
-    intersect_spline_plane(plane: Plane): boolean {
-        const transformed_min = transform(plane.min, plane.inv_matrix);
-        const transformed_max = transform(plane.max, plane.inv_matrix);
-        const transformed_spline = Spline.transform(this, plane.inv_matrix);
+    intersect_spline_plane(plane: Plane): [number, number, number] {
+        const transformedSpline = Spline.transform(this, plane.inv_matrix);
 
-        const result = transformed_spline.intersect_spline_aabb(new AABB(transformed_min, transformed_max));
-        this.ts = transformed_spline.ts;
+        const conversion = -transformedSpline.b.y / (3.0 * transformedSpline.a.y);
+        const cubic = new DepressedCubic(
+            transformedSpline.a.y,
+            transformedSpline.b.y,
+            transformedSpline.c.y,
+            transformedSpline.d.y
+        );
 
-        return result;
+        return [
+            conversion + cubic.first_root(),
+            conversion + cubic.second_root(),
+            conversion + cubic.third_root()
+        ];
     }
 
     intersect_spline_plane_transformed(y: number): [boolean, number] {

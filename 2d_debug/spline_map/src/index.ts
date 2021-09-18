@@ -1,8 +1,8 @@
 import { Plane } from "./plane.js";
 import { Ray } from "./ray.js";
-import SplineChain from "./spline_chain.js";
+import Spline from "./spline.js";
 import SplineMap from "./spline_map.js";
-import { add, norm, scale, vec2 } from "./vec2.js";
+import { norm, scale, vec2 } from "./vec2.js";
 
 let canvas: HTMLCanvasElement;
 let ctx: CanvasRenderingContext2D;
@@ -76,21 +76,9 @@ onload = () => {
     // const base: Plane = new Plane(vec2(0.1, -0.2), scale(norm(vec2(0.5, 0.3)), aabbMax.x - aabbMin.x));
 
     // const spline = Spline.with_control_points(aabbMin, vec2(aabbMin.x - 0.1, aabbMax.y), vec2(-15.0, -3.0), vec2(12.0, 0.0));
-    // const spline = Spline.with_control_points(vec2(0, 0), vec2(0, 1), vec2(-15.0, -3.0), vec2(20.0, -10.0));
-    const spline_chain = SplineChain.from_points_with_tangents(
-        [
-            vec2(0, 0),
-            vec2(0.0, 0.5),
-        ],
-        [
-            vec2(3.0, 0.0),
-            vec2(0.0, 0.0)
-            // vec2(2.0, 1.0),
-            // vec2(2.0, 0.0)
-        ]
-    );
+    const spline = Spline.with_control_points(vec2(0, 0), vec2(0, 0.5), vec2(-10.0, 0.0), vec2(10.0, 0.0));
 
-    const spline_map = new SplineMap(base, spline_chain);
+    const spline_map = new SplineMap(base, spline);
 
     let t = 0;
     setInterval(() => {
@@ -103,7 +91,7 @@ onload = () => {
         if (keys['d']) camera_position.x += camera_speed;
 
         render_texture(ctx, spline_map);
-        spline_map.draw(ctx);
+        // spline_map.draw(ctx);
 
         const increment = 0.05;
         const pixel_width = 400 / (halfFieldOfView * 2 / increment);
@@ -143,7 +131,7 @@ function render_texture(ctx: CanvasRenderingContext2D, spline_map: SplineMap) {
         const t = y / 100;
 
         // Determine x offset
-        const splinePos = spline.position_on_chain(t);
+        const splinePos = spline.position_on_spline(t);
         const pixelY = Math.floor(t * size);
 
         // Draw the slice for each pixel
