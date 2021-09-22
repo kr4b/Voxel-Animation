@@ -3,11 +3,13 @@
 // Copied from the TI1806 final project.
 
 #include <vector>
+#include <optional>
 
 #include <cassert>
 #include <cstddef>
 
 #include <glad/glad.h>
+#include <glm/vec3.hpp>
 
 struct FLDInfo {
     size_t ndims;
@@ -63,6 +65,7 @@ class Volume
         float& operator() (std::size_t aI, std::size_t aJ, std::size_t aK);
         const float& operator() (std::size_t aI, std::size_t aJ, std::size_t aK) const;
         void initialize();
+        void create_distance_field(float threshold);
 
     public:
         GLsizei width() const;
@@ -79,8 +82,9 @@ class Volume
 
     private:
         std::vector<float> mData;
+        std::vector<uint8_t> mDistanceField;
         GLsizei mWidth, mHeight, mDepth;
-        GLuint texture;
+        GLuint dataTexture, distanceTexture;
 };
 
 /* Use this method to load a Volume from a file. We've included two example
@@ -96,6 +100,7 @@ Volume load_cube();
 inline
 Volume::Volume( GLsizei aWidth, GLsizei aHeight, GLsizei aDepth )
     : mData(aWidth * aHeight * aDepth)
+    , mDistanceField(aWidth * aHeight * aDepth)
     , mWidth(aWidth)
     , mHeight(aHeight)
     , mDepth(aDepth)
@@ -104,6 +109,7 @@ Volume::Volume( GLsizei aWidth, GLsizei aHeight, GLsizei aDepth )
 inline
 Volume::Volume(GLsizei aWidth, GLsizei aHeight, GLsizei aDepth, GLsizei vecLen)
     : mData(aWidth * aHeight * aDepth * vecLen)
+    , mDistanceField(aWidth * aHeight * aDepth * vecLen)
     , mWidth(aWidth)
     , mHeight(aHeight)
     , mDepth(aDepth)
@@ -152,5 +158,6 @@ std::size_t Volume::to_linear_index(std::size_t aI, std::size_t aJ, std::size_t 
 }
 
 inline void Volume::bind() const {
-    glBindTextureUnit(0, this->texture);
+    glBindTextureUnit(0, this->dataTexture);
+    glBindTextureUnit(1, this->distanceTexture);
 }

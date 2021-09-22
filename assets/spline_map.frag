@@ -25,9 +25,11 @@ layout( std140, binding = 1 ) uniform UCamera {
 } uCamera;
 
 layout( binding = 0 ) uniform sampler3D texVol;
+layout( binding = 1 ) uniform usampler3D distanceField;
 
 uniform float step_size;
 uniform float threshold;
+uniform uint max_distance;
 
 /// Structs
 struct Spline {
@@ -322,9 +324,10 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
             if (texture_coords(spline_map, pos, coords)) {
                 texel = ivec3(coords * size);
                 const float color = texelFetch(texVol, texel, 0).r;
+                const uint dist = texelFetch(distanceField, texel, 0).r;
 
-                if (color > threshold) {
-                    t = i;
+                if (dist <= max_distance) {
+                    t = float(dist) / 255.0;
                     return true;
                 }
             }
@@ -476,6 +479,7 @@ void main() {
     ivec3 texel;
     float t;
     if (walk_spline_map(ray, uSplineMap.spline_map, textureSize(texVol, 0), texel, t)) {
+        // oColor = vec3(t);
         oColor = vec3(texel) / vec3(textureSize(texVol, 0));
     } else {
         discard;

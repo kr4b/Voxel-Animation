@@ -78,6 +78,7 @@ public:
             )
         )
     {
+        this->volume.create_distance_field(this->threshold);
         this->init();
     };
 
@@ -102,6 +103,7 @@ private:
     glm::vec3 offset;
     float threshold = 0.25f;
     float stepSize = 0.025f;
+    int maxDistance = 100;
     double time = 0.0;
 
     SplineMapUniform create_uniform() {
@@ -185,6 +187,7 @@ private:
         splineMapChange |= ImGui::DragFloat("z", &this->tangents[1].z);
         ImGui::PopID();
         ImGui::Checkbox("Animate", &this->animate);
+        ImGui::SliderInt("Distance", &this->maxDistance, 0, 255);
         ImGui::End();
 
         if (splineMapChange) {
@@ -222,6 +225,7 @@ public:
         glBindBufferBase(GL_UNIFORM_BUFFER, 2, splineMapUniform);
         get_shader().uniformFloat("threshold", this->threshold);
         get_shader().uniformFloat("step_size", this->stepSize);
+        get_shader().uniformUInt("max_distance", this->maxDistance);
         get_volume().bind();
         get_setup().start_render(get_shader());
         if (get_state().debugMode) {

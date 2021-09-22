@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
+#include <stack>
 
 #include "miniz.h"
 
@@ -347,15 +348,77 @@ Volume load_cube() {
 }
 
 void Volume::initialize() {
-    glCreateTextures(GL_TEXTURE_3D, 1, &this->texture);
-    glBindTextureUnit(0, this->texture);
+    glCreateTextures(GL_TEXTURE_3D, 1, &this->dataTexture);
+    glBindTextureUnit(0, this->dataTexture);
 
-    // Comment this for blurry voxels
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureStorage3D(this->dataTexture, 1, GL_R32F, this->width(), this->height(), this->depth());
+    glTextureSubImage3D(
+        this->dataTexture, 0, 0, 0, 0, this->width(), this->height(), this->depth(), GL_RED, GL_FLOAT, this->data());
 
-    glTextureStorage3D(this->texture, 1, GL_R32F, this->width(), this->height(), this->depth());
-    glTextureSubImage3D(this->texture, 0, 0, 0, 0, this->width(), this->height(), this->depth(), GL_RED, GL_FLOAT, this->data());
+    glCreateTextures(GL_TEXTURE_3D, 1, &this->distanceTexture);
+    glBindTextureUnit(1, this->distanceTexture);
+
+    glTextureStorage3D(this->distanceTexture, 1, GL_R8UI, this->width(), this->height(), this->depth());
+}
+
+void Volume::create_distance_field(float threshold) {
+    std::stack<glm::vec3> layer, oldLayer;
+
+    for (int z = 0; z < this->depth(); z++) {
+        for (int y = 0; y < this->mHeight; y++) {
+            for (int x = 0; x < this->width(); x++) {
+                const int index = z * this->width() * this->mHeight + y * this->width() + x;
+                if (this->mData[index] >= threshold) {
+                    this->mDistanceField[index] = 0;
+                    oldLayer.push(glm::vec3(x, y, z));
+                    continue;
+                } else {
+                    this->mDistanceField[index] = 255;
+                }
+            }
+        }
+    }
+
+    int distance = 0;
+    while (distance < 255) {
+        const glm::vec3 voxel = oldLayer.top();
+        for (int i = -1; i <= 1; i += 2) {
+            const int x = voxel.x + i;
+            const int y = voxel.y + i;
+            const int z = voxel.z + i;
+            if (x >= 0 && x < this->width()) {
+                const int index = voxel.z * this->width() * this->mHeight + voxel.y * this->width() + x;
+                if (this->mDistanceField[index] == 255) {
+                    this->mDistanceField[index] = distance;
+                    layer.push(glm::vec3(x, voxel.y, voxel.z));
+                }
+            }
+            if (y >= 0 && y < this->mHeight) {
+                const int index = voxel.z * this->width() * this->mHeight + y * this->width() + voxel.x;
+                if (this->mDistanceField[index] == 255) {
+                    this->mDistanceField[index] = distance;
+                    layer.push(glm::vec3(voxel.x, y, voxel.z));
+                }
+            }
+            if (z >= 0 && z < this->depth()) {
+                const int index = z * this->width() * this->mHeight + voxel.y * this->width() + voxel.x;
+                if (this->mDistanceField[index] == 255) {
+                    this->mDistanceField[index] = distance;
+                    layer.push(glm::vec3(voxel.x, voxel.y, z));
+                }
+            }
+        }
+
+        oldLayer.pop();
+        if (oldLayer.empty()) {
+            if (layer.empty()) break;
+            oldLayer.swap(layer);
+            distance += 1;
+        }
+    }
+
+    glBindTextureUnit(1, this->distanceTexture);
+    glTextureSubImage3D(
+        this->distanceTexture, 0, 0, 0, 0,
+        this->width(), this->height(), this->depth(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, this->mDistanceField.data());
 }

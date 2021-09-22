@@ -23,6 +23,10 @@ public:
     glUniform1f(glGetUniformLocation(this->program, name), value);
   }
 
+  inline void uniformUInt(const char* name, uint8_t value) const {
+    glUniform1ui(glGetUniformLocation(this->program, name), value);
+  }
+
 private:
   GLuint program;
 };
