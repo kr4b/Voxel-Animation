@@ -362,7 +362,16 @@ void Volume::initialize() {
 }
 
 void Volume::create_distance_field(float threshold) {
-    std::stack<glm::vec3> layer, oldLayer;
+    struct Unit {
+        glm::vec3 voxel;
+        glm::vec3 distance;
+
+        int get_distance() const {
+            return sqrtf(distance.x * distance.x + distance.y * distance.y + distance.z * distance.z);
+        }
+    };
+
+    std::stack<Unit> layer, oldLayer;
 
     for (int z = 0; z < this->depth(); z++) {
         for (int y = 0; y < this->mHeight; y++) {
@@ -370,7 +379,7 @@ void Volume::create_distance_field(float threshold) {
                 const int index = z * this->width() * this->mHeight + y * this->width() + x;
                 if (this->mData[index] >= threshold) {
                     this->mDistanceField[index] = 0;
-                    oldLayer.push(glm::vec3(x, y, z));
+                    oldLayer.push(Unit { glm::vec3(x, y, z), glm::vec3(0, 0, 0) });
                     continue;
                 } else {
                     this->mDistanceField[index] = 255;
@@ -381,30 +390,42 @@ void Volume::create_distance_field(float threshold) {
 
     int distance = 0;
     while (distance < 255) {
-        const glm::vec3 voxel = oldLayer.top();
+        const Unit unit = oldLayer.top();
         for (int i = -1; i <= 1; i += 2) {
-            const int x = voxel.x + i;
-            const int y = voxel.y + i;
-            const int z = voxel.z + i;
+            const int x = unit.voxel.x + i;
+            const int y = unit.voxel.y + i;
+            const int z = unit.voxel.z + i;
             if (x >= 0 && x < this->width()) {
-                const int index = voxel.z * this->width() * this->mHeight + voxel.y * this->width() + x;
+                const int index = unit.voxel.z * this->width() * this->mHeight + unit.voxel.y * this->width() + x;
                 if (this->mDistanceField[index] == 255) {
-                    this->mDistanceField[index] = distance;
-                    layer.push(glm::vec3(x, voxel.y, voxel.z));
+                    const Unit newUnit = {
+                        glm::vec3(x, unit.voxel.y, unit.voxel.z),
+                        unit.distance + glm::vec3(1, 0, 0),
+                    };
+                    this->mDistanceField[index] = newUnit.get_distance();
+                    layer.push(newUnit);
                 }
             }
             if (y >= 0 && y < this->mHeight) {
-                const int index = voxel.z * this->width() * this->mHeight + y * this->width() + voxel.x;
+                const int index = unit.voxel.z * this->width() * this->mHeight + y * this->width() + unit.voxel.x;
                 if (this->mDistanceField[index] == 255) {
-                    this->mDistanceField[index] = distance;
-                    layer.push(glm::vec3(voxel.x, y, voxel.z));
+                    const Unit newUnit = {
+                        glm::vec3(unit.voxel.x, y, unit.voxel.z),
+                        unit.distance + glm::vec3(0, 1, 0),
+                    };
+                    this->mDistanceField[index] = newUnit.get_distance();
+                    layer.push(newUnit);
                 }
             }
             if (z >= 0 && z < this->depth()) {
-                const int index = z * this->width() * this->mHeight + voxel.y * this->width() + voxel.x;
+                const int index = z * this->width() * this->mHeight + unit.voxel.y * this->width() + unit.voxel.x;
                 if (this->mDistanceField[index] == 255) {
-                    this->mDistanceField[index] = distance;
-                    layer.push(glm::vec3(voxel.x, voxel.y, z));
+                    const Unit newUnit = {
+                        glm::vec3(unit.voxel.x, unit.voxel.y, z),
+                        unit.distance + glm::vec3(0, 0, 1),
+                    };
+                    this->mDistanceField[index] = newUnit.get_distance();
+                    layer.push(newUnit);
                 }
             }
         }
