@@ -358,7 +358,7 @@ void Volume::initialize() {
     glCreateTextures(GL_TEXTURE_3D, 1, &this->distanceTexture);
     glBindTextureUnit(1, this->distanceTexture);
 
-    glTextureStorage3D(this->distanceTexture, 1, GL_R8UI, this->width(), this->height(), this->depth());
+    glTextureStorage3D(this->distanceTexture, 1, GL_R32F, this->width(), this->height(), this->depth());
 }
 
 void Volume::create_distance_field(float threshold) {
@@ -366,7 +366,7 @@ void Volume::create_distance_field(float threshold) {
         glm::vec3 voxel;
         glm::vec3 distance;
 
-        int get_distance() const {
+        float get_distance() const {
             return sqrtf(distance.x * distance.x + distance.y * distance.y + distance.z * distance.z);
         }
     };
@@ -441,5 +441,5 @@ void Volume::create_distance_field(float threshold) {
     glBindTextureUnit(1, this->distanceTexture);
     glTextureSubImage3D(
         this->distanceTexture, 0, 0, 0, 0,
-        this->width(), this->height(), this->depth(), GL_RED_INTEGER, GL_UNSIGNED_BYTE, this->mDistanceField.data());
+        this->width(), this->height(), this->depth(), GL_RED, GL_FLOAT, this->mDistanceField.data());
 }

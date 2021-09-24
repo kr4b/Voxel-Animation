@@ -82,7 +82,7 @@ class Volume
 
     private:
         std::vector<float> mData;
-        std::vector<uint8_t> mDistanceField;
+        std::vector<float> mDistanceField;
         GLsizei mWidth, mHeight, mDepth;
         GLuint dataTexture, distanceTexture;
 };
