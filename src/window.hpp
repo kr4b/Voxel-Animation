@@ -21,7 +21,7 @@ public:
 
 private:
   GLFWwindow* window;
-  std::chrono::steady_clock::time_point prevUpdate, prevFrame;
+  std::chrono::system_clock::time_point prevUpdate, prevFrame;
   double deltaTime;
   int frames;
 };

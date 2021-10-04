@@ -1,8 +1,9 @@
 #pragma once
 
-#include <glm/vec3.hpp>
+#define _USE_MATH_DEFINES
+#include <cmath>
 
-const double M_PI = 3.14159265;
+#include <glm/vec3.hpp>
 
 inline glm::vec3 step(glm::vec3 edge, glm::vec3 x) {
 	return glm::vec3(

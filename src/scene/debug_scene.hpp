@@ -1,7 +1,7 @@
 #pragma once
 
-#include "aabb.hpp"
-#include "setup.hpp"
+#include "../aabb.hpp"
+#include "../setup.hpp"
 
 #include <glm/vec3.hpp>
 

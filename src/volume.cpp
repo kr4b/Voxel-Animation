@@ -1,5 +1,7 @@
 #include "volume.hpp"
 
+#include <cassert>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 
@@ -274,7 +276,7 @@ catch(std::exception const& eError) {
 }
 
 Volume load_fld_volume(char const* fileName, FLDInfo info) {
-    assert(info.ndims, 3, "Must have 3 dimensions");
+    assert(info.ndims == 3 && "Must have 3 dimensions");
     Volume volume(info.dims[0], info.dims[1], info.dims[2], info.vecLen);
     std::ifstream file(fileName, std::ios::in | std::ios::binary);
 

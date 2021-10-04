@@ -11,14 +11,14 @@
 
 #include <deque>
 
-#include "plane.hpp"
-#include "setup.hpp"
-#include "shader.hpp"
-#include "spline.hpp"
-#include "spline_map.hpp"
-#include "state.hpp"
-#include "volume.hpp"
-#include "window.hpp"
+#include "../plane.hpp"
+#include "../setup.hpp"
+#include "../shader.hpp"
+#include "../spline.hpp"
+#include "../spline_map.hpp"
+#include "../state.hpp"
+#include "../volume.hpp"
+#include "../window.hpp"
 #include "debug_scene.hpp"
 #include "ray_emitter_scene.hpp"
 

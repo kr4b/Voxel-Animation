@@ -8,11 +8,11 @@
 #include <glm/vec4.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "ray.hpp"
-#include "state.hpp"
-#include "spline_map.hpp"
-#include "volume.hpp"
-#include "better_plane.hpp"
+#include "../ray.hpp"
+#include "../state.hpp"
+#include "../spline_map.hpp"
+#include "../volume.hpp"
+#include "../better_plane.hpp"
 
 class RayEmitter {
 public:

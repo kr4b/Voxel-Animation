@@ -1,5 +1,7 @@
 #pragma once
+
 #include <algorithm>
+#include <cmath>
 
 #include "math_util.hpp"
 
