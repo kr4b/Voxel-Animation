@@ -71,9 +71,14 @@ struct SplineMap {
     Spline opposite_spline;
     Spline transformed_spline;
 
+    vec2 deform_min;
+    vec2 deform_max;
+    vec3 reference_point;
+
     float width;
     float height;
     float depth;
+    float scale;
 };
 
 layout( std140, binding = 2 ) uniform USplineMap {
@@ -153,7 +158,7 @@ bool intersect_ray_plane(in Ray ray, in Plane plane, inout float t);
 //         |_|                                      |_|     //
 //                                                          //
 //////////////////////////////////////////////////////////////
-bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords);
+bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out vec3 raw_coords);
 
 // Function Implementations
 // Spline
@@ -319,16 +324,29 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
     if (result) {
         for (float i = max(0.0, ts.x); i <= ts.y; i += step_size) {
             const vec3 pos = ray.origin + ray.direction * i;
-            vec3 coords;
+            vec3 coords, raw_coords;
 
-            if (texture_coords(spline_map, pos, coords)) {
+            if (texture_coords(spline_map, pos, coords, raw_coords)) {
                 texel = ivec3(coords * size);
                 const float color = texelFetch(texVol, texel, 0).r;
-                const float dist = texelFetch(distanceField, texel, 0).r;
 
-                if (dist <= max_distance) {
+                if (color > threshold) {
                     t = i;
                     return true;
+                } else {
+                    const float dist = texelFetch(distanceField, texel, 0).r;
+                    const vec2 deform = abs(raw_coords - spline_map.reference_point).xz;
+                    const float max_deform = max(
+                        max(
+                            spline_map.deform_min.x - deform.x,
+                            spline_map.deform_min.y - deform.y
+                        ),
+                        max(
+                            spline_map.deform_max.x - deform.x,
+                            spline_map.deform_max.y - deform.y
+                        )
+                    );
+                    i += max((dist - 1.0) * spline_map.scale, 0.0);
                 }
             }
         }
@@ -441,7 +459,7 @@ bool intersect_ray_plane(in Ray ray, in Plane plane, inout float t) {
 }
 
 // SplineMap
-bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords) {
+bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out vec3 raw_coords) {
     const vec4 p = spline_map.base.inv_matrix * vec4(pos, 1.0);
     float t;
 
@@ -452,6 +470,7 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, inout vec3 coords) {
         const float yComp = 1.0 - p.y / spline_map.height;
         const float zComp = diff.z / spline_map.depth;
 
+        raw_coords = edge;
         coords = abs(vec3(xComp, yComp, zComp));
         return true;
     }

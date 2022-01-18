@@ -49,9 +49,14 @@ struct SplineMapUniform
     alignas(16) SplineUniform opposite_spline;
     alignas(16) SplineUniform transformed_spline;
 
-    alignas(16) float width;
+    glm::vec2 deform_min;
+    glm::vec2 deform_max;
+    alignas(16) glm::vec3 reference_point;
+
+    float width;
     float height;
     float depth;
+    float scale;
 };
 
 class SplineMapScene {
@@ -103,7 +108,6 @@ private:
     glm::vec3 offset;
     float threshold = 0.25f;
     float stepSize = 0.025f;
-    int maxDistance = 100;
     double time = 0.0;
 
     SplineMapUniform create_uniform() {
@@ -120,6 +124,29 @@ private:
             0.0f
         );
         transformedYBounds.z = 1.0f / (transformedYBounds.y - transformedYBounds.x);
+
+        std::vector<float> extremes = this->splineMap.spline.get_extremes();
+        glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
+        glm::vec3 max = glm::vec3(-std::numeric_limits<float>::max());
+        for (const float t : extremes) {
+            if (t >= 0.0f && t <= 1.0f) {
+                const glm::vec3 pos = this->splineMap.spline.position_on_spline(t);
+                min = glm::min(min, pos);
+                max = glm::max(max, pos);
+            }
+        }
+
+        const glm::vec3 vertex = this->splineMap.spline.transformedSpline->position_on_spline(0.0f);
+        glm::vec2 deformMin(vertex.x - min.x, vertex.z - min.z);
+        glm::vec2 deformMax(max.x - vertex.x, max.z - vertex.z);
+
+        const float scale = glm::min(
+            glm::min(
+                this->splineMap.width / this->volume.width(),
+                this->splineMap.height / this->volume.height()
+            ),
+            this->splineMap.depth / this->volume.depth()
+        );
 
         return SplineMapUniform {
             PlaneUniform {
@@ -157,9 +184,13 @@ private:
                 this->splineMap.spline.transformedSpline->d,
                 transformedYBounds
             },
+            deformMin,
+            deformMax,
+            vertex,
             this->splineMap.width,
             this->splineMap.height,
             this->splineMap.depth,
+            scale,
         };
     }
 
@@ -187,7 +218,6 @@ private:
         splineMapChange |= ImGui::DragFloat("z", &this->tangents[1].z);
         ImGui::PopID();
         ImGui::Checkbox("Animate", &this->animate);
-        ImGui::SliderInt("Distance", &this->maxDistance, 0, 255);
         ImGui::End();
 
         if (splineMapChange) {
@@ -225,7 +255,6 @@ public:
         glBindBufferBase(GL_UNIFORM_BUFFER, 2, splineMapUniform);
         get_shader().uniformFloat("threshold", this->threshold);
         get_shader().uniformFloat("step_size", this->stepSize);
-        get_shader().uniformUInt("max_distance", this->maxDistance);
         get_volume().bind();
         get_setup().start_render(get_shader());
         if (get_state().debugMode) {
