@@ -1,7 +1,5 @@
 #include "depressed_cubic.hpp"
 
-#include <cmath>
-
 DepressedCubic::DepressedCubic(float a, float b, float c, float d) {
 	this->p = (3.0f * a * c - b * b) / (3.0f * a * a);
 	this->q = (2.0f * b * b * b - 9.0f * a * b * c + 27.0f * a * a * d) / (27.0f * a * a * a);
