@@ -328,7 +328,7 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
             vec3 coords, raw_coords;
 
             if (texture_coords(spline_map, pos, coords, raw_coords)) {
-                texel = ivec3(coords * size);
+                texel = ivec3(clamp(coords, 0.0, 1.0 - 1e-4) * size);
                 const float color = texelFetch(texVol, texel, 0).r;
 
                 if (color > threshold) {
@@ -471,6 +471,11 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out v
     if (intersect_transformed_spline_plane(spline_map.transformed_spline, p, t)) {
         const vec3 edge = position_on_spline(spline_map.transformed_spline, t);
         const vec3 diff = edge - p.xyz;
+
+        if (diff.x > 0.0 || diff.z > 0.0) {
+            return false;
+        }
+
         const float xComp = diff.x / spline_map.width;
         const float yComp = 1.0 - p.y / spline_map.height;
         const float zComp = diff.z / spline_map.depth;
