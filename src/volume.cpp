@@ -363,6 +363,8 @@ void Volume::initialize() {
     glTextureStorage3D(this->distanceTexture, 1, GL_R32F, this->width(), this->height(), this->depth());
 }
 
+/// Create distance field by starting at non-empty voxels (0 distance)
+/// Then iteratively go outwards by 1 voxel until all values in the distance field are filled correctly
 void Volume::create_distance_field(float threshold) {
     struct Unit {
         glm::vec3 voxel;
@@ -373,70 +375,65 @@ void Volume::create_distance_field(float threshold) {
         }
     };
 
-    std::stack<Unit> layer, oldLayer;
+    std::stack<Unit> stack, oldStack;
+    const float maxDistance =
+        sqrtf(this->depth() * this->depth() + this->height() * this->height() + this->width() * this->width()) + 1;
 
+    // Initialize non-empty voxels as 0, all other voxels to the maximum distance
+    // For each non-empty voxel a new unit is added to the initial stack
     for (int z = 0; z < this->depth(); z++) {
         for (int y = 0; y < this->mHeight; y++) {
             for (int x = 0; x < this->width(); x++) {
-                const int index = z * this->width() * this->mHeight + y * this->width() + x;
+                const int index = z * this->width() * this->height() + y * this->width() + x;
                 if (this->mData[index] >= threshold) {
                     this->mDistanceField[index] = 0;
-                    oldLayer.push(Unit { glm::vec3(x, y, z), glm::vec3(0, 0, 0) });
+                    oldStack.push(Unit { glm::vec3(x, y, z), glm::vec3(0, 0, 0) });
                     continue;
                 } else {
-                    this->mDistanceField[index] = 255;
+                    this->mDistanceField[index] = maxDistance;
                 }
             }
         }
     }
 
-    int distance = 0;
-    while (distance < 255) {
-        const Unit unit = oldLayer.top();
+    // Try to add the unit to the new stack if its distance is less than the current distance
+    const auto tryAdd = [this](std::stack<Unit>& stack, int x, int y, int z, glm::vec3 distance) {
+        const int index = z * this->width() * this->height() + y * this->width() + x;
+        const Unit newUnit = {
+            glm::vec3(x, y, z),
+            distance,
+        };
+        const float newDistance = newUnit.get_distance();
+        if (this->mDistanceField[index] > newDistance) {
+            this->mDistanceField[index] = newDistance;
+            stack.push(newUnit);
+        }
+    };
+
+    // Iteratively go over each element in the stack, trying to add new units going outwards by 1 voxel to the new stack
+    // When the old stack is empty, replace it with the new stack
+    // Do this until no new units are added to the new stack
+    while (true) {
+        const Unit unit = oldStack.top();
         for (int i = -1; i <= 1; i += 2) {
             const int x = unit.voxel.x + i;
             const int y = unit.voxel.y + i;
             const int z = unit.voxel.z + i;
             if (x >= 0 && x < this->width()) {
-                const int index = unit.voxel.z * this->width() * this->mHeight + unit.voxel.y * this->width() + x;
-                if (this->mDistanceField[index] == 255) {
-                    const Unit newUnit = {
-                        glm::vec3(x, unit.voxel.y, unit.voxel.z),
-                        unit.distance + glm::vec3(1, 0, 0),
-                    };
-                    this->mDistanceField[index] = newUnit.get_distance();
-                    layer.push(newUnit);
-                }
+                tryAdd(stack, x, unit.voxel.y, unit.voxel.z, unit.distance + glm::vec3(1, 0, 0));
             }
             if (y >= 0 && y < this->mHeight) {
-                const int index = unit.voxel.z * this->width() * this->mHeight + y * this->width() + unit.voxel.x;
-                if (this->mDistanceField[index] == 255) {
-                    const Unit newUnit = {
-                        glm::vec3(unit.voxel.x, y, unit.voxel.z),
-                        unit.distance + glm::vec3(0, 1, 0),
-                    };
-                    this->mDistanceField[index] = newUnit.get_distance();
-                    layer.push(newUnit);
-                }
+                tryAdd(stack, unit.voxel.x, y, unit.voxel.z, unit.distance + glm::vec3(0, 1, 0));
             }
             if (z >= 0 && z < this->depth()) {
-                const int index = z * this->width() * this->mHeight + unit.voxel.y * this->width() + unit.voxel.x;
-                if (this->mDistanceField[index] == 255) {
-                    const Unit newUnit = {
-                        glm::vec3(unit.voxel.x, unit.voxel.y, z),
-                        unit.distance + glm::vec3(0, 0, 1),
-                    };
-                    this->mDistanceField[index] = newUnit.get_distance();
-                    layer.push(newUnit);
-                }
+                tryAdd(stack, unit.voxel.x, unit.voxel.y, z, unit.distance + glm::vec3(0, 0, 1));
             }
         }
 
-        oldLayer.pop();
-        if (oldLayer.empty()) {
-            if (layer.empty()) break;
-            oldLayer.swap(layer);
-            distance += 1;
+        oldStack.pop();
+        if (oldStack.empty()) {
+            if (stack.empty()) break;
+            oldStack.swap(stack);
         }
     }
 

@@ -322,7 +322,8 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
     const bool result = intersect_ray_spline_map(ray, spline_map, ts);
 
     if (result) {
-        for (float i = max(0.0, ts.x); i <= ts.y; i += step_size) {
+        float i = max(0.0, ts.x);
+        while (i <= ts.y) {
             const vec3 pos = ray.origin + ray.direction * i;
             vec3 coords, raw_coords;
 
@@ -333,21 +334,25 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
                 if (color > threshold) {
                     t = i;
                     return true;
-                } else {
-                    const float dist = texelFetch(distanceField, texel, 0).r;
-                    const vec2 deform = abs(raw_coords - spline_map.reference_point).xz;
-                    const float max_deform = max(
-                        max(
-                            spline_map.deform_min.x - deform.x,
-                            spline_map.deform_min.y - deform.y
-                        ),
-                        max(
-                            spline_map.deform_max.x - deform.x,
-                            spline_map.deform_max.y - deform.y
-                        )
-                    );
-                    i += max((dist - 1.0) * spline_map.scale, 0.0);
                 }
+
+                // Determine the distance in the distance field and maximum deformation correction
+                const float dist = texelFetch(distanceField, texel, 0).r;
+                const vec2 deform = abs(raw_coords - spline_map.reference_point).xz;
+                const float max_deform = max(
+                    max(
+                        spline_map.deform_min.x - deform.x,
+                        spline_map.deform_min.y - deform.y
+                    ),
+                    max(
+                        spline_map.deform_max.x - deform.x,
+                        spline_map.deform_max.y - deform.y
+                    )
+                );
+                // Skip the determined distance, corrected with the maximum deformation
+                i += max((dist - 1.0) * spline_map.scale - max_deform, step_size);
+            } else {
+                i += step_size;
             }
         }
     }
