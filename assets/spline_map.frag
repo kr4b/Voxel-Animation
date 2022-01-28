@@ -470,18 +470,14 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out v
 
     if (intersect_transformed_spline_plane(spline_map.transformed_spline, p, t)) {
         const vec3 edge = position_on_spline(spline_map.transformed_spline, t);
-        const vec3 diff = edge - p.xyz;
-
-        if (diff.x > 0.0 || diff.z > 0.0) {
-            return false;
-        }
+        const vec3 diff = p.xyz - edge;
 
         const float xComp = diff.x / spline_map.width;
         const float yComp = 1.0 - p.y / spline_map.height;
         const float zComp = diff.z / spline_map.depth;
 
         raw_coords = edge;
-        coords = abs(vec3(xComp, yComp, zComp));
+        coords = vec3(xComp, yComp, zComp);
         return true;
     }
 

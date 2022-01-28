@@ -130,7 +130,7 @@ private:
         glm::vec3 max = glm::vec3(-std::numeric_limits<float>::max());
         for (const float t : extremes) {
             if (t >= 0.0f && t <= 1.0f) {
-                const glm::vec3 pos = this->splineMap.spline.position_on_spline(t);
+                const glm::vec3 pos = this->splineMap.spline.transformedSpline->position_on_spline(t);
                 min = glm::min(min, pos);
                 max = glm::max(max, pos);
             }
