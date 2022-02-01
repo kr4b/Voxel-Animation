@@ -336,24 +336,22 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
                     return true;
                 }
 
-                // Determine the distance in the distance field and maximum deformation correction
+                // Determine the distance in the distance field and apply deformation correction
+                // Deformation correction is determined by the deformation difference between pos and pos + dist
                 const float dist = texelFetch(distanceField, texel, 0).r;
-                const vec2 deform = abs(raw_coords - spline_map.reference_point).xz;
-                const float max_deform = max(
-                    max(
-                        spline_map.deform_min.x - deform.x,
-                        spline_map.deform_min.y - deform.y
-                    ),
-                    max(
-                        spline_map.deform_max.x - deform.x,
-                        spline_map.deform_max.y - deform.y
-                    )
-                );
-                // Skip the determined distance, corrected with the maximum deformation
-                i += max((dist - 1.0) * spline_map.scale - max_deform, step_size);
-            } else {
-                i += step_size;
+                vec3 new_coords, new_raw_coords;
+                if (texture_coords(spline_map, pos + dist * spline_map.scale * ray.direction, new_coords, new_raw_coords)) {
+                    const vec3 dist_vector = new_coords - coords;
+                    // Difference in deformation (xz-plane)
+                    const vec3 deform = (new_raw_coords - raw_coords) * sign(vec3(dist_vector.x, 0, dist_vector.z));
+                    const vec3 new_dist_vector = abs(dist_vector) + deform;
+                    const float new_dist = length(new_dist_vector);
+                    i += max(new_dist, step_size);
+                    continue;
+                }
             }
+
+            i += step_size;
         }
     }
 

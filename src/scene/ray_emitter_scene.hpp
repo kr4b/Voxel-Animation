@@ -46,7 +46,7 @@ public:
 
 private:
     std::vector<Ray> rays;
-    bool showRays = true;
+    bool showRays = false;
     bool showIntersections = true;
     bool refreshRays = false;
     int rayCount = 1;
