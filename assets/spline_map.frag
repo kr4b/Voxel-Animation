@@ -341,13 +341,19 @@ bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout i
                 const float dist = texelFetch(distanceField, texel, 0).r;
                 vec3 new_coords, new_raw_coords;
                 if (texture_coords(spline_map, pos + dist * spline_map.scale * ray.direction, new_coords, new_raw_coords)) {
-                    const vec3 dist_vector = new_coords - coords;
+                    const vec3 dist_vec = new_coords - coords;
+
                     // Difference in deformation (xz-plane)
-                    const vec3 deform = (new_raw_coords - raw_coords) * sign(vec3(dist_vector.x, 0, dist_vector.z));
-                    const vec3 new_dist_vector = abs(dist_vector) + deform;
-                    const float new_dist = length(new_dist_vector);
-                    i += max(new_dist, step_size);
-                    continue;
+                    const vec3 deform = (new_raw_coords - raw_coords) * sign(vec3(dist_vec.x, 0, dist_vec.z));
+                    const vec3 new_dist_vec = abs(dist_vec) + deform;
+
+                    // Dubious mathematics to ensure negative distance is substracted in the length calculation
+                    const vec3 new_dist_vec_squared = new_dist_vec * new_dist_vec * sign(new_dist_vec);
+                    const float new_dist_squared = dot(new_dist_vec_squared, vec3(1.0));
+                    if (new_dist_squared > 0) {
+                        i += max(sqrt(new_dist_squared), step_size);
+                        continue;
+                    }
                 }
             }
 
