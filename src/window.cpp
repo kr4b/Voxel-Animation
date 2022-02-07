@@ -56,7 +56,7 @@ Window::~Window() {
   glfwTerminate();
 }
 
-bool Window::update(State* state) {
+bool Window::update(State* state, int& frames) {
   glfwSetWindowUserPointer(this->window, (void*) state);
 
   this->frames += 1;
@@ -72,10 +72,12 @@ bool Window::update(State* state) {
       sizeof(newTitle),
       "%s%s - %d FPS",
       windowDefaults.name,
-      state && state->debugMode ? " - Debug" : "", frames
+      state && state->debugMode ? " - Debug" : "", this->frames
     );
     glfwSetWindowTitle(this->window, newTitle);
     this->prevUpdate = now;
+
+    frames = this->frames;
     this->frames = 0;
   }
 

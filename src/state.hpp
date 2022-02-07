@@ -27,6 +27,13 @@ struct State {
 
   static constexpr float scrollMult = 0.1f;
   static constexpr float motionRotMult = 0.00006f;
+
+  bool skip = false;
+  double averageFps = -1.0;
+  int scenarioCount = -1;
+
+  void startBenchmark();
+  void nextScenario(int frames);
 };
 
 namespace state {

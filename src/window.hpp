@@ -13,7 +13,7 @@ public:
   Window(const int width, const int height);
   ~Window();
 
-  bool update(State* state);
+  bool update(State* state, int& frames);
 
   std::pair<int, int> get_size() const;
 
