@@ -78,6 +78,16 @@ public:
     {};
 };
 
+class Bunny : public SplineMapScene {
+public:
+    Bunny(Window &window, Setup& setup) :
+    SplineMapScene(
+        window,
+        setup,
+        load_mhd_volume("assets/bunny.mhd"))
+    {};
+};
+
 namespace scenes {
     enum Scene {
         Cube,
@@ -88,6 +98,7 @@ namespace scenes {
         Stent,
         Tomato,
         Tooth,
+        Bunny
     };
 
     static const char* const names[] = {
@@ -99,6 +110,7 @@ namespace scenes {
         "stent",
         "tomato",
         "tooth",
+        "bunny",
     };
 
     static const int len = sizeof(names) / sizeof(names[0]);
@@ -126,6 +138,9 @@ static SplineMapScene* create_scene(scenes::Scene scene, Window& window, Setup& 
             break;
         case scenes::Tooth:
             return new Tooth(window, setup);
+            break;
+        case scenes::Bunny:
+            return new Bunny(window, setup);
             break;
         case scenes::Cube:
         default:

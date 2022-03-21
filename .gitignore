@@ -2,7 +2,8 @@
 .vscode
 .gitattributes
 _build_
-assets/backpack_small.*
+assets/*.mhd
+assets/*.raw
 bin/
 lib/
 assets/**/*.fld
