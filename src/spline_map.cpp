@@ -5,16 +5,16 @@
 
 #include "spline_map.hpp"
 
-const BetterPlane createTopBase(const BetterPlane& base, const Spline& spline) {
+const Plane createTopBase(const Plane& base, const Spline& spline) {
     const glm::vec3 height = spline.position_on_spline(1.0f) - spline.position_on_spline(0.0f);
-    return BetterPlane(base.point + height, base.span1, base.span2);
+    return Plane(base.point + height, base.span1, base.span2);
 }
 
-const Spline transformSpline(const BetterPlane& base, const Spline& spline) {
+const Spline transformSpline(const Plane& base, const Spline& spline) {
     return spline.transform(base.matrix);
 }
 
-SplineMap::SplineMap(const BetterPlane& base, const Spline& spline) :
+SplineMap::SplineMap(const Plane& base, const Spline& spline) :
     base(base),
     spline(transformSpline(base, spline)),
     topBase(createTopBase(base, spline)) {
@@ -22,7 +22,7 @@ SplineMap::SplineMap(const BetterPlane& base, const Spline& spline) :
     const glm::vec3 start = spline.position_on_spline(0.0f);
     const glm::vec3 end = spline.position_on_spline(1.0f);
     this->width = abs(length(this->base.span1));
-    this->height = abs(length(end - start));
+    this->height = abs(end.y - start.y);
     this->depth = abs(length(this->base.span2));
 
     this->spline.init_vao();

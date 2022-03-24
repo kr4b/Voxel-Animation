@@ -155,7 +155,7 @@ std::vector<float> Spline::get_extremes() const {
     return values;
 }
 
-void Spline::with_transform(const BetterPlane& plane) {
+void Spline::with_transform(const Plane& plane) {
     this->transformedSpline = new Spline;
     *this->transformedSpline = this->transform(plane.inv_matrix);
 }
@@ -183,7 +183,7 @@ std::optional<float> Spline::intersect_spline_plane(const glm::vec3 p) const {
     return t;
 }
 
-void Spline::intersect_spline_plane(const BetterPlane& p, glm::vec3& ts) const {
+void Spline::intersect_spline_plane(const Plane& p, glm::vec3& ts) const {
     const Spline transformedSpline = transform(p.inv_matrix);
     
     const glm::vec3 conversion = -this->b / (3.0f * this->a);

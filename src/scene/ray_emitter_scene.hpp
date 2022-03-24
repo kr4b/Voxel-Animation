@@ -12,7 +12,7 @@
 #include "../state.hpp"
 #include "../spline_map.hpp"
 #include "../volume.hpp"
-#include "../better_plane.hpp"
+#include "../plane.hpp"
 
 class RayEmitter {
 public:
@@ -25,12 +25,12 @@ public:
         for (const Ray& ray : rays) {
             ray.render(this->showRays, this->showIntersections);
 
-            // BetterPlane plane0(ray.origin + ray.dir * (-ray.origin.x / ray.dir.x), glm::vec3(0.0f, ray.dir.y, ray.dir.z), glm::vec3(1.0f, 0.0f, 0.0f));
+            // Plane plane0(ray.origin + ray.dir * (-ray.origin.x / ray.dir.x), glm::vec3(0.0f, ray.dir.y, ray.dir.z), glm::vec3(1.0f, 0.0f, 0.0f));
             // plane0.init_vao(glm::vec3(0.7f, 0.3f, 0.4f));
             // plane0.render();
             // plane0.clean();
 
-            // BetterPlane plane1(ray.origin + ray.dir * (-ray.origin.z / ray.dir.z), glm::vec3(ray.dir.x, ray.dir.y, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            // Plane plane1(ray.origin + ray.dir * (-ray.origin.z / ray.dir.z), glm::vec3(ray.dir.x, ray.dir.y, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             // plane1.init_vao(glm::vec3(0.3f, 0.7f, 0.4f));
             // plane1.render();
             // plane1.clean();
@@ -52,6 +52,7 @@ private:
     int rayCount = 1;
     float rayGap = 0.05f;
 
+    // Uniformly emit rays from the eye
     void emit_rays(const Setup& setup, State& state, const SplineMap& splineMap, const Volume& volume, float threshold, float stepSize) {
         if (!state.refreshRayEmitter && !this->refreshRays) {
             return;

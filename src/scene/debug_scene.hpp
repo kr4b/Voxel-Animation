@@ -60,8 +60,9 @@ protected:
             aabb.max.x, aabb.max.y, aabb.max.z, // 7   X  Y  Z
         };
 
+        // Line indices
         const unsigned int indices_length = 2 * 12;
-        const unsigned int  indices[indices_length] = {
+        const unsigned int indices[indices_length] = {
             0, 1,
             0, 4,
             0, 2,

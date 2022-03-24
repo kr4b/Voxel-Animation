@@ -15,7 +15,6 @@
 
 #include "math_util.hpp"
 #include "plane.hpp"
-#include "better_plane.hpp"
 
 class Spline {
 public:
@@ -41,7 +40,7 @@ public:
 
     std::vector<float> get_extremes() const;
     std::optional<float> intersect_spline_plane(const glm::vec3) const;
-    void intersect_spline_plane(const BetterPlane&, glm::vec3&) const;
+    void intersect_spline_plane(const Plane&, glm::vec3&) const;
 
     Spline transform(const glm::mat4x4 &matrix) const {
         glm::vec4 ta = matrix * glm::vec4(this->a.x, this->a.y, this->a.z, 0.0f);
@@ -57,7 +56,7 @@ public:
         );
     }
 
-    void with_transform(const BetterPlane&);
+    void with_transform(const Plane&);
 
 private:
     GLuint lineVao;

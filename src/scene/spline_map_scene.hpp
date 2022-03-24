@@ -11,7 +11,6 @@
 
 #include <deque>
 
-#include "../plane.hpp"
 #include "../setup.hpp"
 #include "../shader.hpp"
 #include "../spline.hpp"
@@ -71,9 +70,9 @@ public:
         debugShader("assets/debug.vert", "assets/debug.frag"),
         volume(std::move(volume)),
         tangents { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f) },
-        offset(0.0f, 2.0f, 0.0f),
+        offset(0.0f, 2.0f, 2.0f),
         splineMap(
-            BetterPlane(
+            Plane(
                 glm::vec3(-1.0f, -1.0f, -1.0f),
                 glm::vec3(2.0f, 0.0f, 0.0f),
                 glm::vec3(0.0f, 0.0f, 2.0f)
@@ -238,12 +237,14 @@ public:
     void update() {
         get_setup().update(get_window(), get_state());
 
+        // Smoothly animate spline tangents
         if (this->animate) {
             this->time += get_window().get_delta_time() * 0.001;
             this->tangents[0] = glm::vec3(float(sin(this->time)) * 3.0f, 0.0f, 0.0f);
             this->tangents[1] = glm::vec3(float(cos(this->time)) * 3.0f, 0.0f, 0.0f);
             update_spline_map();
         }
+
         if (get_state().debugMode) {
             get_ray_emitter().update(get_setup(), get_state(), get_spline_map(), get_volume(), &this->threshold, &this->stepSize);
             show_ui();

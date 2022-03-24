@@ -2,7 +2,6 @@
 #include "aabb.hpp"
 #include "spline_map.hpp"
 #include "volume.hpp"
-#include "better_plane.hpp"
 
 #include <glm/common.hpp>
 
@@ -144,7 +143,7 @@ std::optional<std::pair<glm::ivec3, float>> Ray::walk_spline_map(const SplineMap
     return std::nullopt;
 }
 
-std::optional<float> Ray::intersect_ray_plane(const BetterPlane& plane) const {
+std::optional<float> Ray::intersect_ray_plane(const Plane& plane) const {
     const float del = glm::dot(plane.normal, dir);
 
     if (del == 0.0f) return std::nullopt;
@@ -190,7 +189,7 @@ std::optional<float> Ray::intersect_ray_line_segment(const glm::vec3 point1, con
 
 void find_ray_spline_intersection(
     const Ray* ray, const Spline& spline,
-    const BetterPlane& plane, const glm::vec3 ts,
+    const Plane& plane, const glm::vec3 ts,
     const glm::vec3& offset, glm::vec2& returnValue)
 {
     for (int i = 0; i < 3; i++) {
@@ -213,8 +212,8 @@ glm::vec2 Ray::intersect_ray_spline_map(const SplineMap& splineMap) const {
     const glm::vec3 span1 = splineMap.base.span1;
     const glm::vec3 span2 = splineMap.base.span2;
 
-    const BetterPlane plane1(origin, glm::normalize(dir * (1.0f - span1)), span1);
-    const BetterPlane plane2(origin, glm::normalize(dir * (1.0f - span2)), span2);
+    const Plane plane1(origin, glm::normalize(dir * (1.0f - span1)), span1);
+    const Plane plane2(origin, glm::normalize(dir * (1.0f - span2)), span2);
 
     glm::vec3 ts;
 
