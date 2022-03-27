@@ -19,6 +19,7 @@ public:
 
     SplineMap(const Plane&, const Spline&);
 
+    // Transform given coordinate in shell space of the spline map to the coordinate in texture space
     std::optional<glm::vec3> texture_coords(const glm::vec3) const;
 
     void render();

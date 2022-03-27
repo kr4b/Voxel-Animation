@@ -44,6 +44,7 @@ int main() {
     while (window.update(state, frames)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Initialize scene
         if (scenePointers[index] == NULL) {
             scenePointers[index] = create_scene((scenes::Scene) index, window, setup);
         }
@@ -53,6 +54,7 @@ int main() {
         scenePointers[index]->update();
         scenePointers[index]->render();
 
+        // Scene selection
         ImGui::Begin("Scene");
         ImGui::ListBox("Scenes", &index, scenes::names, scenes::len);
         ImGui::End();

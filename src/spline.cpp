@@ -76,33 +76,31 @@ Spline Spline::with_control_points(const glm::vec3 P1, const glm::vec3 P2, const
 }
 
 void Spline::update_buffers() {
-    {
-        const float stepSize = 1.0f / (float)detail;
+    const float stepSize = 1.0f / (float)detail;
 
-        GLfloat vertices[detail * 3];
-        GLfloat colors[detail * 3];
+    GLfloat vertices[detail * 3];
+    GLfloat colors[detail * 3];
 
-        float t = 0;
-        for (int i = 0; i < detail; i++, t += stepSize) {
-            const glm::vec3 point = this->position_on_spline(t);
-            vertices[i * 3 + 0] = point.x;
-            vertices[i * 3 + 1] = point.y;
-            vertices[i * 3 + 2] = point.z;
+    float t = 0;
+    for (int i = 0; i < detail; i++, t += stepSize) {
+        const glm::vec3 point = this->position_on_spline(t);
+        vertices[i * 3 + 0] = point.x;
+        vertices[i * 3 + 1] = point.y;
+        vertices[i * 3 + 2] = point.z;
 
-            colors[i * 3 + 0] = 1.0f;
-            colors[i * 3 + 1] = 1.0f;
-            colors[i * 3 + 2] = 1.0f;
-        }
-
-        glBindVertexArray(this->lineVao);
-
-        glBindBuffer(GL_ARRAY_BUFFER, this->buffers[0]);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * detail * sizeof(GLfloat), vertices);
-        glBindBuffer(GL_ARRAY_BUFFER, this->buffers[1]);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * detail * sizeof(GLfloat), colors);
-
-        glBindVertexArray(0);
+        colors[i * 3 + 0] = 1.0f;
+        colors[i * 3 + 1] = 1.0f;
+        colors[i * 3 + 2] = 1.0f;
     }
+
+    glBindVertexArray(this->lineVao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, this->buffers[0]);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * detail * sizeof(GLfloat), vertices);
+    glBindBuffer(GL_ARRAY_BUFFER, this->buffers[1]);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 3 * detail * sizeof(GLfloat), colors);
+
+    glBindVertexArray(0);
 }
 
 void Spline::render() const {
@@ -154,6 +152,21 @@ std::vector<float> Spline::get_extremes() const {
 
     return values;
 }
+
+Spline Spline::transform(const glm::mat4x4 &matrix) const {
+    glm::vec4 ta = matrix * glm::vec4(this->a.x, this->a.y, this->a.z, 0.0f);
+    glm::vec4 tb = matrix * glm::vec4(this->b.x, this->b.y, this->b.z, 0.0f);
+    glm::vec4 tc = matrix * glm::vec4(this->c.x, this->c.y, this->c.z, 0.0f);
+    glm::vec4 td = matrix * glm::vec4(this->d.x, this->d.y, this->d.z, 1.0f);
+
+    return Spline(
+        glm::vec3(ta.x, ta.y, ta.z),
+        glm::vec3(tb.x, tb.y, tb.z),
+        glm::vec3(tc.x, tc.y, tc.z),
+        glm::vec3(td.x, td.y, td.z)
+    );
+}
+
 
 void Spline::with_transform(const Plane& plane) {
     this->transformedSpline = new Spline;

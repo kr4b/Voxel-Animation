@@ -9,6 +9,7 @@
 
 #include "defaults.hpp"
 
+// State for mostly keeping track of camera transformation
 struct State {
   glm::quat cameraRot = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
   glm::vec3 cameraOff = glm::vec3(0.0f, 0.0f, -6.0f);

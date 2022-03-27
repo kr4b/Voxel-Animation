@@ -5,8 +5,7 @@
 
 #include "setup.hpp"
 
-struct CameraUniform
-{
+struct CameraUniform {
     alignas(16) glm::mat4 inverseProjCamera;
     alignas(16) glm::vec3 cameraWorldPos;
     alignas(16) glm::vec2 reciprocalWindowSize;

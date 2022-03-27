@@ -8,6 +8,7 @@
 
 #include <glm/vec3.hpp>
 
+// Step function based on GLSL step
 inline glm::vec3 step(glm::vec3 edge, glm::vec3 x) {
 	return glm::vec3(
 		x.x >= edge.x ? 1.0f : 0.0f,

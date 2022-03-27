@@ -9,6 +9,7 @@ DepressedCubic::DepressedCubic(float a, float b, float c, float d) {
     this->calculate_default_root();
 }
 
+// https://en.wikipedia.org/wiki/Cubic_equation#Cardano's_formula
 float DepressedCubic::single_root() {
 	if (discriminant > 0.0f) {
 		const float D = sqrtf(q * q / 4.0f + p * p * p / 27.0f);
@@ -18,6 +19,19 @@ float DepressedCubic::single_root() {
 		root = sign(C0) * powf(abs(C0), 1.0f / 3.0f) + sign(C1) * powf(abs(C1), 1.0f / 3.0f);
 	}
 	return root;
+}
+
+// https://en.wikipedia.org/wiki/Cubic_equation#Trigonometric_solution_for_three_real_roots
+void DepressedCubic::calculate_default_root() {
+	if (discriminant > 0.0f) {
+		root = single_root();
+	}
+	else {
+		fac = 2.0f * sqrtf(-p / 3.0f);
+		arccos = acosf(3.0f * q / (2.0f * p) * sqrtf(-3.0f / p)) / 3.0f;
+
+		root = second_root();
+	}
 }
 
 float DepressedCubic::first_root() {

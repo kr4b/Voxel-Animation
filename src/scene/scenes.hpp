@@ -14,7 +14,7 @@ public:
     SplineMapScene(
         window,
         setup,
-        load_fld_volume("assets/pig8.fld", FLDInfo { 3, { 256, 256, 180 }, 1, 1}))
+        load_fld_volume("assets/pig8.fld"))
     {};
 };
 
@@ -24,7 +24,7 @@ public:
     SplineMapScene(
         window,
         setup,
-        load_fld_volume("assets/bonsai.fld", FLDInfo { 3, { 256, 256, 182 }, 1, 1}))
+        load_fld_volume("assets/bonsai.fld"))
     {};
 };
 
@@ -34,7 +34,7 @@ public:
     SplineMapScene(
         window,
         setup,
-        load_fld_volume("assets/carp8.fld", FLDInfo { 3, { 128, 128, 256 }, 1, 1}))
+        load_fld_volume("assets/carp8.fld"))
     {};
 };
 
@@ -44,7 +44,7 @@ public:
     SplineMapScene(
         window,
         setup,
-        load_fld_volume("assets/orange.fld", FLDInfo { 3, { 256, 256, 163 }, 1, 1}))
+        load_fld_volume("assets/orange.fld"))
     {};
 };
 
@@ -54,7 +54,7 @@ public:
     SplineMapScene(
         window,
         setup,
-        load_fld_volume("assets/stent8.fld", FLDInfo { 3, { 256, 256, 365 }, 1, 1}))
+        load_fld_volume("assets/stent8.fld"))
     {};
 };
 
@@ -64,7 +64,7 @@ public:
     SplineMapScene(
         window,
         setup,
-        load_fld_volume("assets/tomato.fld", FLDInfo { 3, { 256, 256, 163 }, 1, 1 }))
+        load_fld_volume("assets/tomato.fld"))
     {};
 };
 
@@ -74,7 +74,7 @@ public:
     SplineMapScene(
         window,
         setup,
-        load_fld_volume("assets/tooth.fld", FLDInfo { 3, { 256, 256, 161 }, 1, 2 }))
+        load_fld_volume("assets/tooth.fld"))
     {};
 };
 

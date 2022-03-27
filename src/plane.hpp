@@ -9,7 +9,7 @@
 
 class Ray;
 
-// Plane described by one vertex and 2 spanning vectors
+// Plane described by one (corner) vertex and 2 spanning vectors
 class Plane {
 public:
     const glm::vec3 point;
@@ -25,45 +25,48 @@ public:
         span1(span1),
         span2(span2),
         normal(glm::normalize(glm::cross(span1, span2)))
-        {
-            if (abs(glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), normal)) == 1.0f) {
-                this->matrix = glm::mat4(
-                    1.0f, 0.0f, 0.0f, 0.0f,
-                    0.0f, 1.0f, 0.0f, 0.0f,
-                    0.0f, 0.0f, 1.0f, 0.0f,
-                    point.x, point.y, point.z, 1.0f
-                );
-                this->inv_matrix = glm::inverse(this->matrix);
-            } else {
-                const glm::vec3 rotationAxis = glm::normalize(glm::vec3(normal.z, 0.0f, -normal.x));
-                const float rotationAngle = acos(normal.y);
+    {
+        // Axis aligned plane
+        if (abs(glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), normal)) == 1.0f) {
+            this->matrix = glm::mat4(
+                1.0f, 0.0f, 0.0f, 0.0f,
+                0.0f, 1.0f, 0.0f, 0.0f,
+                0.0f, 0.0f, 1.0f, 0.0f,
+                point.x, point.y, point.z, 1.0f
+            );
+        // Non-axis aligned plane
+        // TODO: Verify whether this is the bottleneck in the base transformation
+        } else {
+            const glm::vec3 rotationAxis = glm::normalize(glm::vec3(normal.z, 0.0f, -normal.x));
+            const float rotationAngle = acos(normal.y);
 
-                const float cosAngle = cos(rotationAngle);
-                const float sinAngle = sin(rotationAngle);
+            const float cosAngle = cos(rotationAngle);
+            const float sinAngle = sin(rotationAngle);
 
-                this->matrix = glm::transpose(glm::mat4(
-                    cosAngle + rotationAxis.x * rotationAxis.x * (1.0f - cosAngle),
-                    rotationAxis.x * rotationAxis.y * (1.0f - cosAngle) - rotationAxis.z * sinAngle,
-                    rotationAxis.x * rotationAxis.z * (1.0f - cosAngle) + rotationAxis.y * sinAngle,
-                    point.x,
+            this->matrix = glm::transpose(glm::mat4(
+                cosAngle + rotationAxis.x * rotationAxis.x * (1.0f - cosAngle),
+                rotationAxis.x * rotationAxis.y * (1.0f - cosAngle) - rotationAxis.z * sinAngle,
+                rotationAxis.x * rotationAxis.z * (1.0f - cosAngle) + rotationAxis.y * sinAngle,
+                point.x,
 
-                    rotationAxis.y * rotationAxis.x * (1.0f - cosAngle) + rotationAxis.z * sinAngle,
-                    cosAngle + rotationAxis.y * rotationAxis.y * (1.0f - cosAngle),
-                    rotationAxis.y * rotationAxis.z * (1.0f - cosAngle) - rotationAxis.x * sinAngle,
-                    point.y,
+                rotationAxis.y * rotationAxis.x * (1.0f - cosAngle) + rotationAxis.z * sinAngle,
+                cosAngle + rotationAxis.y * rotationAxis.y * (1.0f - cosAngle),
+                rotationAxis.y * rotationAxis.z * (1.0f - cosAngle) - rotationAxis.x * sinAngle,
+                point.y,
 
-                    rotationAxis.z * rotationAxis.x * (1.0f - cosAngle) - rotationAxis.y * sinAngle,
-                    rotationAxis.z * rotationAxis.y * (1.0f - cosAngle) + rotationAxis.x * sinAngle,
-                    cosAngle + rotationAxis.z * rotationAxis.z * (1.0f - cosAngle),
-                    point.z,
+                rotationAxis.z * rotationAxis.x * (1.0f - cosAngle) - rotationAxis.y * sinAngle,
+                rotationAxis.z * rotationAxis.y * (1.0f - cosAngle) + rotationAxis.x * sinAngle,
+                cosAngle + rotationAxis.z * rotationAxis.z * (1.0f - cosAngle),
+                point.z,
 
-                    0.0f, 0.0f, 0.0f, 1.0f
-                ));
+                0.0f, 0.0f, 0.0f, 1.0f
+            ));
 
-                this->inv_matrix = glm::inverse(matrix);
-            }
-        };
+        }
+        this->inv_matrix = glm::inverse(this->matrix);
+    }
 
+    // Transform this plane with the given matrix
     Plane transform(const glm::mat4& matrix) const {
         return Plane(
             glm::vec3(matrix * glm::vec4(this->point, 1.0f)),

@@ -16,6 +16,8 @@
 #include "math_util.hpp"
 #include "plane.hpp"
 
+// Cubic Hermite spline where a, b, c, d describe the constants in front of t^3, t^2, t^1, t^0 respectively
+// https://en.wikipedia.org/wiki/Cubic_Hermite_spline
 class Spline {
 public:
     glm::vec3 a, b, c, d;
@@ -30,7 +32,9 @@ public:
     void update_buffers();
     void clean();
 
+    // Create spline with given starting and ending points and two tangents
     static Spline with_tangents(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
+    // Create spline with given starting and ending points and two control points
     static Spline with_control_points(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3, const float);
     static Spline with_control_points(const glm::vec3, const glm::vec3, const glm::vec3, const glm::vec3);
 
@@ -42,20 +46,7 @@ public:
     std::optional<float> intersect_spline_plane(const glm::vec3) const;
     void intersect_spline_plane(const Plane&, glm::vec3&) const;
 
-    Spline transform(const glm::mat4x4 &matrix) const {
-        glm::vec4 ta = matrix * glm::vec4(this->a.x, this->a.y, this->a.z, 0.0f);
-        glm::vec4 tb = matrix * glm::vec4(this->b.x, this->b.y, this->b.z, 0.0f);
-        glm::vec4 tc = matrix * glm::vec4(this->c.x, this->c.y, this->c.z, 0.0f);
-        glm::vec4 td = matrix * glm::vec4(this->d.x, this->d.y, this->d.z, 1.0f);
-
-        return Spline(
-            glm::vec3(ta.x, ta.y, ta.z),
-            glm::vec3(tb.x, tb.y, tb.z),
-            glm::vec3(tc.x, tc.y, tc.z),
-            glm::vec3(td.x, td.y, td.z)
-        );
-    }
-
+    Spline transform(const glm::mat4x4&) const;
     void with_transform(const Plane&);
 
 private:
