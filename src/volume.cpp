@@ -275,10 +275,45 @@ catch(std::exception const& eError) {
     return Volume(0, 0, 0);
 }
 
-Volume load_fld_volume(char const* fileName, FLDInfo info) {
+Volume load_fld_volume(char const* fileName) {
+    FLDInfo info;
+    std::ifstream file(fileName, std::ios::in | std::ios::binary);
+
+    std::string line = "";
+
+    while (!file.eof()) {
+        char byte = file.get();
+        if (byte == 12) {
+            byte = file.get();
+            if (byte == 12) break;
+        } else if (byte == '\n') {
+            int index, value;
+            char data[16] = "";
+
+            if (std::sscanf(line.c_str(), "ndim = %d", &value) == 1) {
+                info.ndims = value;
+            } else if (std::sscanf(line.c_str(), "veclen = %d", &value) == 1) {
+                info.vecLen = value;
+            } else if (std::sscanf(line.c_str(), "dim%d = %d", &index, &value) == 2) {
+                info.dims[index - 1] = value;
+            } else if (std::sscanf(line.c_str(), "data = %16s", &data) == 1) {
+                if (std::strcmp("byte", data) == 0) {
+                    info.bytes = 1;
+                } else if (std::strcmp("short", data) == 0) {
+                    info.bytes = 2;
+                } else if (std::strcmp("int", data) == 0) {
+                    info.bytes = 4;
+                }
+            }
+
+            line = "";
+        } else {
+            line += byte;
+        }
+    }
+
     assert(info.ndims == 3 && "Must have 3 dimensions");
     Volume volume(info.dims[0], info.dims[1], info.dims[2], info.vecLen);
-    std::ifstream file(fileName, std::ios::in | std::ios::binary);
 
     size_t x = 0;
     size_t y = 0;
@@ -291,19 +326,12 @@ Volume load_fld_volume(char const* fileName, FLDInfo info) {
     float maxv = std::numeric_limits<float>::min();
 
     while (!file.eof()) {
-        char byte = file.get();
-        if (byte == 12) {
-            byte = file.get();
-            if (byte == 12) break;
-        }
-    }
-
-    while (!file.eof()) {
         unsigned char byte = file.get();
         data = (data << 8) + (unsigned int) byte;
         if (++dataSize == info.bytes) {
-            float value = float(data);
-            volume.data()[(z * info.dims[0] * info.dims[1] + y * info.dims[0] + x) * info.vecLen + vecIndex] = value;
+            const float value = float(data);
+            const size_t index = (z * info.dims[0] * info.dims[1] + y * info.dims[0] + x) * info.vecLen + vecIndex;
+            volume.data()[index] = value;
             if (value > maxv) maxv = value;
             if (value < minv) minv = value;
             data = 0;

@@ -13,7 +13,7 @@
 
 struct FLDInfo {
     size_t ndims;
-    std::vector<size_t> dims;
+    size_t dims[3];
     size_t vecLen;
     size_t bytes;
 };
@@ -47,8 +47,7 @@ struct FLDInfo {
  * The total number of elements in the volume is given by
  * `total_element_count()`, which is equal to `width()*height()*depth()`.
  */
-class Volume
-{
+class Volume {
     public:
         Volume(GLsizei aWidth, GLsizei aHeight, GLsizei aDepth);
         Volume(GLsizei aWidth, GLsizei aHeight, GLsizei aDepth, GLsizei vecLen);
@@ -87,13 +86,14 @@ class Volume
         GLuint dataTexture, distanceTexture;
 };
 
-/* Use this method to load a Volume from a file. We've included two example
- * volumes in the `data/` subdirectory.
- */
+// Load mhd volume from .mhd file
+// Make sure the corresponding .raw data file is available
 Volume load_mhd_volume(char const* aFileName);
 
-Volume load_fld_volume(char const* fileName, FLDInfo info);
+// Load fld volume from .fld file
+Volume load_fld_volume(char const* fileName);
 
+// Load debug cube
 Volume load_cube();
 
 // Implementation:
