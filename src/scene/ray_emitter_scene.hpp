@@ -16,7 +16,7 @@
 
 class RayEmitter {
 public:
-    void update(const Setup& setup, State& state, SplineMap& splineMap, const Volume& volume, float* threshold, float* stepSize) {
+    void update(const Setup& setup, State& state, SplineMap& splineMap, Volume& volume, float* threshold, float* stepSize) {
         this->show_ui(threshold, stepSize);
         this->emit_rays(setup, state, splineMap, volume, *threshold, *stepSize);
     }
@@ -49,15 +49,22 @@ private:
     bool showRays = false;
     bool showIntersections = true;
     bool refreshRays = false;
+    bool thresholdChange = false;
+    bool thresholdActive = false;
     int rayCount = 1;
     float rayGap = 0.05f;
 
     // Uniformly emit rays from the eye
-    void emit_rays(const Setup& setup, State& state, const SplineMap& splineMap, const Volume& volume, float threshold, float stepSize) {
+    void emit_rays(const Setup& setup, State& state, const SplineMap& splineMap, Volume& volume, float threshold, float stepSize) {
         if (!state.refreshRayEmitter && !this->refreshRays) {
             return;
         }
+
         this->clean();
+        if (this->thresholdChange) {
+            volume.create_distance_field(threshold);
+            this->thresholdChange = false;
+        }
 
         const glm::mat4 view = glm::translate(glm::mat4(1.0f), state.lastCameraOff) * glm::toMat4(state.lastCameraRot);
         const size_t raysSqrt = this->rayCount * 2 - 1;
@@ -95,8 +102,15 @@ private:
         ImGui::Checkbox("Show Intersections", &this->showIntersections);
         this->refreshRays |= ImGui::SliderFloat("Gap", &this->rayGap, 0.01f, 0.1f);
         this->refreshRays |= ImGui::SliderInt("Rays", &this->rayCount, 1, 100);
-        this->refreshRays |= ImGui::SliderFloat("Threshold", threshold, 0.0f, 1.0f);
+        bool thresholdActive = ImGui::SliderFloat("Threshold", threshold, 0.0f, 1.0f);
         this->refreshRays |= ImGui::SliderFloat("Step size", stepSize, 1e-3f, 1.0f);
         ImGui::End();
+
+        if (this->thresholdActive && ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+            this->refreshRays = true;
+            this->thresholdChange = true;
+            this->thresholdActive = false;
+        }
+        this->thresholdActive |= thresholdActive;
     }
 };
