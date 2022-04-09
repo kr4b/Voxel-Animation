@@ -18,17 +18,22 @@ SplineMap::SplineMap(const Plane& base, const Spline& spline) :
     spline(transformSpline(base, spline)),
     topBase(createTopBase(base, this->spline)) {
 
+    // Initialize spline
     this->spline.init_vao();
     this->spline.update_buffers();
     this->spline.with_transform(this->base);
 
+    // Calculated axis aligned spline starting and ending points
     const glm::vec3 start = this->spline.transformedSpline->position_on_spline(0.0f);
     const glm::vec3 end = this->spline.transformedSpline->position_on_spline(1.0f);
 
+    // Calculate width, height and depth
+    // Where the width and depth are of each base and the height is the distance between the bases
     this->width = abs(length(this->base.span1));
     this->height = abs(end.y - start.y);
     this->depth = abs(length(this->base.span2));
 
+    // Init some other stuff
     this->topBase.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
     this->base.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
 

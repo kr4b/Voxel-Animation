@@ -37,7 +37,6 @@ struct Spline {
     vec3 b; // t^2
     vec3 c; // t^1
     vec3 d; // t^0
-    vec3 y_bounds;
 };
 
 struct Cubic {
@@ -70,10 +69,6 @@ struct SplineMap {
     Spline spline;
     Spline opposite_spline;
     Spline transformed_spline;
-
-    vec2 deform_min;
-    vec2 deform_max;
-    vec3 reference_point;
 
     float width;
     float height;

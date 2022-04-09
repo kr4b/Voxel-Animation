@@ -27,7 +27,6 @@ struct SplineUniform
     alignas(16) glm::vec3 b;
     alignas(16) glm::vec3 c;
     alignas(16) glm::vec3 d;
-    alignas(16) glm::vec3 y_bounds;
 };
 
 struct PlaneUniform
@@ -47,10 +46,6 @@ struct SplineMapUniform
     alignas(16) SplineUniform spline;
     alignas(16) SplineUniform opposite_spline;
     alignas(16) SplineUniform transformed_spline;
-
-    glm::vec2 deform_min;
-    glm::vec2 deform_max;
-    alignas(16) glm::vec3 reference_point;
 
     float width;
     float height;
@@ -104,26 +99,14 @@ private:
     bool showOutline = true;
     bool animate = false;
     glm::vec3 tangents[2];
+    // Offset of top base
     glm::vec3 offset;
     float threshold = 0.25f;
     float stepSize = 0.025f;
     double time = 0.0;
 
     SplineMapUniform create_uniform() {
-        glm::vec3 yBounds = glm::vec3(
-            this->splineMap.spline.position_on_spline(0.0f).y,
-            this->splineMap.spline.position_on_spline(1.0f).y,
-            0.0f
-        );
-        yBounds.z =  1.0f / (yBounds.y - yBounds.x);
-
-        glm::vec3 transformedYBounds = glm::vec3(
-            this->splineMap.spline.transformedSpline->position_on_spline(0.0f).y,
-            this->splineMap.spline.transformedSpline->position_on_spline(1.0f).y,
-            0.0f
-        );
-        transformedYBounds.z = 1.0f / (transformedYBounds.y - transformedYBounds.x);
-
+        // Find spline extremes
         std::vector<float> extremes = this->splineMap.spline.get_extremes();
         glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
         glm::vec3 max = glm::vec3(-std::numeric_limits<float>::max());
@@ -135,10 +118,7 @@ private:
             }
         }
 
-        const glm::vec3 vertex = this->splineMap.spline.transformedSpline->position_on_spline(0.0f);
-        glm::vec2 deformMin(vertex.x - min.x, vertex.z - min.z);
-        glm::vec2 deformMax(max.x - vertex.x, max.z - vertex.z);
-
+        // Get minimum scale
         const float scale = glm::min(
             glm::min(
                 this->splineMap.width / this->volume.width(),
@@ -166,26 +146,20 @@ private:
                 this->splineMap.spline.a,
                 this->splineMap.spline.b,
                 this->splineMap.spline.c,
-                this->splineMap.spline.d,
-                yBounds
+                this->splineMap.spline.d
             },
             SplineUniform {
                 this->splineMap.edgeSplines[2].a,
                 this->splineMap.edgeSplines[2].b,
                 this->splineMap.edgeSplines[2].c,
-                this->splineMap.edgeSplines[2].d,
-                yBounds
+                this->splineMap.edgeSplines[2].d
             },
             SplineUniform {
                 this->splineMap.spline.transformedSpline->a,
                 this->splineMap.spline.transformedSpline->b,
                 this->splineMap.spline.transformedSpline->c,
-                this->splineMap.spline.transformedSpline->d,
-                transformedYBounds
+                this->splineMap.spline.transformedSpline->d
             },
-            deformMin,
-            deformMax,
-            vertex,
             this->splineMap.width,
             this->splineMap.height,
             this->splineMap.depth,
