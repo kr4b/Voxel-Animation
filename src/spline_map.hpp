@@ -12,8 +12,8 @@
 class SplineMap {
 public:
     Plane base;
-    Plane topBase;
     Spline spline;
+    Plane topBase;
     Spline edgeSplines[3];
     float width, height, depth;
 

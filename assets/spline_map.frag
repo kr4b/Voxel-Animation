@@ -160,6 +160,16 @@ bool intersect_ray_plane(in Ray ray, in Plane plane, inout float t);
 //////////////////////////////////////////////////////////////
 bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out vec3 raw_coords);
 
+///////////////////////////////////////
+//  _   _  _    _  _  _  _           //
+// | | | || |_ (_)| |(_)| |_  _   _  //
+// | | | || __|| || || || __|| | | | //
+// | |_| || |_ | || || || |_ | |_| | //
+//  \___/  \__||_||_||_| \__| \__, | //
+//                            |___/  //
+///////////////////////////////////////
+void get_origin_direction(in vec2 fragCoord, out vec3 origin, out vec3 direction);
+
 // Function Implementations
 // Spline
 vec3 position_on_spline(in Spline spline, in float t) {
@@ -407,8 +417,9 @@ bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts
     const vec3 span1 = spline_map.base.span1;
     const vec3 span2 = spline_map.base.span2;
 
-    const Plane plane1 = plane_constructor(ray.origin, normalize(ray.direction * (1.0 - span1)), span1);
-    const Plane plane2 = plane_constructor(ray.origin, normalize(ray.direction * (1.0 - span2)), span2);
+    // Project ray on planes orthogonal to spanning vectors of the base
+    const Plane plane1 = plane_constructor(ray.origin, normalize(ray.direction - dot(ray.direction, span1) * span1), span1);
+    const Plane plane2 = plane_constructor(ray.origin, normalize(ray.direction - dot(ray.direction, span2) * span2), span2);
 
     vec3 intermediate_ts;
 
@@ -454,16 +465,16 @@ bool intersect_ray_plane(in Ray ray, in Plane plane, inout float t) {
     t = dot(plane.normal, (plane.point - ray.origin)) / del;
 
     const vec3 intersection = ray.origin + t * ray.direction;
-    const vec3 pmin = plane.point;
-    const vec3 pmax = plane.point + plane.span1 + plane.span2;
+    const vec3 projection = intersection - plane.point;
+    const float scalar1 = dot(projection, plane.span1);
+    const float scalar2 = dot(projection, plane.span2);
+    // TODO: Pre-compute?
+    const float length1 = dot(plane.span1, plane.span1);
+    const float length2 = dot(plane.span2, plane.span2);
 
     return (
-        intersection.x >= pmin.x - EPSILON &&
-        intersection.y >= pmin.y - EPSILON &&
-        intersection.z >= pmin.z - EPSILON &&
-        intersection.x <= pmax.x + EPSILON &&
-        intersection.y <= pmax.y + EPSILON &&
-        intersection.z <= pmax.z + EPSILON
+        scalar1 > 0 && scalar1 < length1 &&
+        scalar2 > 0 && scalar2 < length2
     );
 }
 

@@ -7,9 +7,12 @@
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 
+#include "math_util.hpp"
+
 class Ray;
 
 // Plane described by one (corner) vertex and 2 spanning vectors
+// TODO: Split up in cpp + hpp
 class Plane {
 public:
     const glm::vec3 point;
@@ -24,7 +27,7 @@ public:
         point(point),
         span1(span1),
         span2(span2),
-        normal(glm::normalize(glm::cross(span1, span2)))
+        normal(construct_normal(span1, span2))
     {
         // Axis aligned plane
         if (abs(glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), normal)) == 1.0f) {
@@ -35,10 +38,9 @@ public:
                 point.x, point.y, point.z, 1.0f
             );
         // Non-axis aligned plane
-        // TODO: Verify whether this is the bottleneck in the base transformation
         } else {
-            const glm::vec3 rotationAxis = glm::normalize(glm::vec3(normal.z, 0.0f, -normal.x));
-            const float rotationAngle = acos(normal.y);
+            const glm::vec3 rotationAxis = glm::normalize(glm::vec3(this->normal.z, 0.0f, -this->normal.x));
+            const float rotationAngle = acos(this->normal.y);
 
             const float cosAngle = cos(rotationAngle);
             const float sinAngle = sin(rotationAngle);
@@ -61,7 +63,6 @@ public:
 
                 0.0f, 0.0f, 0.0f, 1.0f
             ));
-
         }
         this->inv_matrix = glm::inverse(this->matrix);
     }
@@ -148,4 +149,10 @@ public:
 private:
     GLuint vao;
     GLuint buffers[2];
+
+    // Construct normal that always points up, maybe the up vector could be given as a parameter
+    const glm::vec3 construct_normal(glm::vec3 span1, glm::vec3 span2) {
+        const glm::vec3 normal = glm::normalize(glm::cross(span1, span2));
+        return normal * float(sign(normal.y));
+    }
 };
