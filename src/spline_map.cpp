@@ -18,16 +18,17 @@ SplineMap::SplineMap(const Plane& base, const Spline& spline) :
     spline(transformSpline(base, spline)),
     topBase(createTopBase(base, this->spline)) {
 
-    const glm::vec3 start = this->spline.position_on_spline(0.0f);
-    const glm::vec3 end = this->spline.position_on_spline(1.0f);
-    this->width = abs(length(this->base.span1));
-    // TODO: Fix this for offset top base
-    this->height = length(end - start);
-    this->depth = abs(length(this->base.span2));
-
     this->spline.init_vao();
     this->spline.update_buffers();
     this->spline.with_transform(this->base);
+
+    const glm::vec3 start = this->spline.transformedSpline->position_on_spline(0.0f);
+    const glm::vec3 end = this->spline.transformedSpline->position_on_spline(1.0f);
+
+    this->width = abs(length(this->base.span1));
+    this->height = abs(end.y - start.y);
+    this->depth = abs(length(this->base.span2));
+
     this->topBase.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
     this->base.init_vao(glm::vec3(0.0f, 0.2f, 0.3f));
 
