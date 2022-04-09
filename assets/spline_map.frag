@@ -29,7 +29,6 @@ layout( binding = 1 ) uniform sampler3D distanceField;
 
 uniform float step_size;
 uniform float threshold;
-uniform uint max_distance;
 
 /// Structs
 struct Spline {
@@ -92,9 +91,17 @@ layout( std140, binding = 2 ) uniform USplineMap {
 //         |_|                        //
 //                                    //
 ////////////////////////////////////////
+
+// Get position on the spline for t
 vec3 position_on_spline(in Spline spline, in float t);
-bool intersect_transformed_spline_plane(in Spline spline, in vec4 p, inout float t);
+
+// Intersect axis aligned spline with offset xz-axis plane
+bool intersect_transformed_spline_plane(in Spline spline, in vec4 offset, inout float t);
+
+// Intersect spline with arbitrary plane
 void intersect_spline_plane(in Spline spline, in Plane plane, inout vec3 ts);
+
+// Transform spline with transformation matrix
 Spline transform_spline(in Spline spline, in mat4 matrix);
 
 ////////////////////////////////////
@@ -106,7 +113,13 @@ Spline transform_spline(in Spline spline, in mat4 matrix);
 //  \_____|\__,_||_.__/ |_| \___| //
 //                                //
 ////////////////////////////////////
+
+// Construct cubic equation
 Cubic cubic_constructor(in float a, in float b, in float c, in float d);
+
+// Calculate roots
+// https://en.wikipedia.org/wiki/Cubic_equation#Cardano's_formula
+// https://en.wikipedia.org/wiki/Cubic_equation#Trigonometric_solution_for_three_real_roots
 float calculate_default_root(inout Cubic cubic);
 float single_real_root(inout Cubic cubic);
 float first_root(inout Cubic cubic);
@@ -122,6 +135,8 @@ float third_root(inout Cubic cubic);
 //  |_|     |_| \__,_||_| |_| \___| //
 //                                  //
 //////////////////////////////////////
+
+// Construct plane
 Plane plane_constructor(in vec3 point, in vec3 span1, in vec3 span2);
 
 ///////////////////////////
@@ -135,12 +150,25 @@ Plane plane_constructor(in vec3 point, in vec3 span1, in vec3 span2);
 //                |___/  //
 //                       //
 ///////////////////////////
+
+// Construct ray
 Ray ray_constructor(in vec3 origin, in vec3 direction);
-bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, in float step_size, inout ivec3 texel, inout float t);
+
+// Construct a ray from the fragment coordinates
+Ray get_frag_ray(in vec2 frag_coord, out vec3 origin, out vec3 direction);
+
+// Intersect of ray with line
+// Note that it is assumed that the ray intersects the line
 bool intersect_ray_line_segment(in Ray ray, in vec3 point1, in vec3 point2, inout float t);
+
+// Intersect ray with surface spanned by the spline and an offset
 void find_ray_spline_intersection(in Ray ray, in Spline spline, in float t, in vec3 offset, inout vec2 ret);
-bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts);
+
+// Intersect ray with finite plane
 bool intersect_ray_plane(in Ray ray, in Plane plane, inout float t);
+
+// Intersect ray with spline map
+bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts);
 
 //////////////////////////////////////////////////////////////
 //   _____         _  _               __  __                //
@@ -153,17 +181,12 @@ bool intersect_ray_plane(in Ray ray, in Plane plane, inout float t);
 //         |_|                                      |_|     //
 //                                                          //
 //////////////////////////////////////////////////////////////
+
+// Convert world coordinate to texture coordinate
 bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out vec3 raw_coords);
 
-///////////////////////////////////////
-//  _   _  _    _  _  _  _           //
-// | | | || |_ (_)| |(_)| |_  _   _  //
-// | | | || __|| || || || __|| | | | //
-// | |_| || |_ | || || || |_ | |_| | //
-//  \___/  \__||_||_||_| \__| \__, | //
-//                            |___/  //
-///////////////////////////////////////
-void get_origin_direction(in vec2 fragCoord, out vec3 origin, out vec3 direction);
+// Walk/march ray over spline map
+bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, in float step_size, inout ivec3 texel, inout float t);
 
 // Function Implementations
 // Spline
@@ -171,15 +194,16 @@ vec3 position_on_spline(in Spline spline, in float t) {
     return spline.a * t * t * t + spline.b * t * t + spline.c * t + spline.d;
 }
 
-bool intersect_transformed_spline_plane(in Spline spline, in vec4 p, inout float t) {
+bool intersect_transformed_spline_plane(in Spline spline, in float offset, inout float t) {
     const vec3 conversion = -spline.b / (3.0 * spline.a);
     Cubic cubic = cubic_constructor(
         spline.a.y,
         spline.b.y,
         spline.c.y,
-        spline.d.y - p.y
+        spline.d.y - offset
     );
 
+    // Try all roots
     t = conversion.y + first_root(cubic);
     if (t < 0.0 || t > 1.0) {
         t = conversion.y + second_root(cubic);
@@ -205,6 +229,7 @@ void intersect_spline_plane(in Spline spline, in Plane plane, inout vec3 ts) {
         transformed_spline.d.y
     );
 
+    // Return all roots
     ts.x = conversion + first_root(cubic);
     ts.y = conversion + second_root(cubic);
     ts.z = conversion + third_root(cubic);
@@ -213,6 +238,7 @@ void intersect_spline_plane(in Spline spline, in Plane plane, inout vec3 ts) {
 Spline transform_spline(in Spline spline, in mat4 matrix) {
     Spline transformed;
 
+    // Transform all spline constants to transform the spline
     transformed.a = (matrix * vec4(spline.a, 0.0)).xyz;
     transformed.b = (matrix * vec4(spline.b, 0.0)).xyz;
     transformed.c = (matrix * vec4(spline.c, 0.0)).xyz;
@@ -322,7 +348,17 @@ Ray ray_constructor(in vec3 origin, in vec3 direction) {
     return ray;
 }
 
-bool walk_spline_map(in Ray ray, in SplineMap spline_map, in ivec3 size, inout ivec3 texel, inout float t) {
+Ray get_frag_ray(in vec2 frag_coord, out vec3 origin, out vec3 direction) {
+	const vec4 hray = vec4(frag_coord * 2.0 - vec2(1.0), 1.0, 1.0);
+	const vec4 wray = uCamera.inverseProjCamera * hray;
+
+	origin = uCamera.cameraWorldPos;
+	direction = normalize( wray.xyz / wray.w - origin );
+
+    return ray_constructor(origin, direction);
+}
+
+bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout ivec3 texel, inout float t) {
     vec2 ts;
     const bool result = intersect_ray_spline_map(ray, spline_map, ts);
 
@@ -390,10 +426,7 @@ bool intersect_ray_line_segment(in Ray ray, in vec3 point1, in vec3 point2, inou
     return true;
 }
 
-void find_ray_spline_intersection(
-    in Ray ray, in Spline spline, in float t,
-    in vec3 offset, inout vec2 ret)
-{
+void find_ray_spline_intersection(in Ray ray, in Spline spline, in float t, in vec3 offset, inout vec2 ret) {
     if (t >= 0.0 - EPSILON && t <= 1.0 + EPSILON) {
         const vec3 pos1 = position_on_spline(spline, t);
         const vec3 pos2 = pos1 + offset;
@@ -404,6 +437,29 @@ void find_ray_spline_intersection(
             ret.y = max(ret.y, _t);
         }
     }
+}
+
+bool intersect_ray_plane(in Ray ray, in Plane plane, inout float t) {
+    const float del = dot(plane.normal, ray.direction);
+
+    if (del == 0.0) return false; // Could also be an infinite amount of intersections
+    
+    // Find intersection of ray with plane
+    t = dot(plane.normal, (plane.point - ray.origin)) / del;
+
+    const vec3 intersection = ray.origin + t * ray.direction;
+    const vec3 projection = intersection - plane.point;
+    const float scalar1 = dot(projection, plane.span1);
+    const float scalar2 = dot(projection, plane.span2);
+    // TODO: Pre-compute?
+    const float length1 = dot(plane.span1, plane.span1);
+    const float length2 = dot(plane.span2, plane.span2);
+
+    // Check if point is inside bounds of the plane/rectangle
+    return (
+        scalar1 > 0 && scalar1 < length1 &&
+        scalar2 > 0 && scalar2 < length2
+    );
 }
 
 bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts) {
@@ -418,6 +474,7 @@ bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts
 
     vec3 intermediate_ts;
 
+    // Try ray intersections for all sides of the spline map
     intersect_spline_plane(spline_map.spline, plane1, intermediate_ts);
     find_ray_spline_intersection(ray, spline_map.spline, intermediate_ts.x, span1, ts);
     find_ray_spline_intersection(ray, spline_map.spline, intermediate_ts.y, span1, ts);
@@ -452,33 +509,13 @@ bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts
     return ts.x < ts.y;
 }
 
-bool intersect_ray_plane(in Ray ray, in Plane plane, inout float t) {
-    const float del = dot(plane.normal, ray.direction);
-
-    if (del == 0.0) return false; // Could also be an infinite amount of intersections
-    
-    t = dot(plane.normal, (plane.point - ray.origin)) / del;
-
-    const vec3 intersection = ray.origin + t * ray.direction;
-    const vec3 projection = intersection - plane.point;
-    const float scalar1 = dot(projection, plane.span1);
-    const float scalar2 = dot(projection, plane.span2);
-    // TODO: Pre-compute?
-    const float length1 = dot(plane.span1, plane.span1);
-    const float length2 = dot(plane.span2, plane.span2);
-
-    return (
-        scalar1 > 0 && scalar1 < length1 &&
-        scalar2 > 0 && scalar2 < length2
-    );
-}
-
 // SplineMap
 bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out vec3 raw_coords) {
     const vec4 p = spline_map.base.inv_matrix * vec4(pos, 1.0);
     float t;
 
-    if (intersect_transformed_spline_plane(spline_map.transformed_spline, p, t)) {
+    // Interpolate coordinates on base translated to spline intersection point
+    if (intersect_transformed_spline_plane(spline_map.transformed_spline, p.y, t)) {
         const vec3 edge = position_on_spline(spline_map.transformed_spline, t);
         const vec3 diff = p.xyz - edge;
 
@@ -494,26 +531,16 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out v
     return false;
 }
 
-void get_origin_direction(in vec2 fragCoord, out vec3 origin, out vec3 direction) {
-	const vec4 hray = vec4(fragCoord * 2.0 - vec2(1.0), 1.0, 1.0);
-	const vec4 wray = uCamera.inverseProjCamera * hray;
-
-	origin = uCamera.cameraWorldPos;
-	direction = normalize( wray.xyz / wray.w - origin );
-}
-
 void main() {
     oColor = vec3(0.0);
 
     vec3 origin;
     vec3 direction;
-    get_origin_direction(gl_FragCoord.xy * uCamera.reciprocalWindowSize, origin, direction);
-
-    Ray ray = ray_constructor(origin, direction);
+    Ray ray = get_frag_ray(gl_FragCoord.xy * uCamera.reciprocalWindowSize, origin, direction);
 
     ivec3 texel;
     float t;
-    if (walk_spline_map(ray, uSplineMap.spline_map, textureSize(texVol, 0), texel, t)) {
+    if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t)) {
         oColor = vec3(texel) / vec3(textureSize(texVol, 0));
     } else {
         discard;
