@@ -57,7 +57,7 @@ void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
     case GLFW_KEY_ESCAPE:
       glfwSetWindowShouldClose(win, GLFW_TRUE);
       break;
-    // Space => create new debug spline
+    // Space => create new debug rays
     case GLFW_KEY_SPACE:
       state->refreshRayEmitter = true;
       state->lastCameraRot = state->cameraRot;
@@ -70,7 +70,7 @@ void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
       state->debugMode = !state->debugMode;
       break;
     }
-    // Backspace => return to camera transformation when spline was created
+    // Backspace => return to camera transformation when debug rays were created
     case GLFW_KEY_BACKSPACE:
       state->cameraRot = state->lastCameraRot;
       state->cameraOff = state->lastCameraOff;
