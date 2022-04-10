@@ -96,7 +96,7 @@ layout( std140, binding = 2 ) uniform USplineMap {
 vec3 position_on_spline(in Spline spline, in float t);
 
 // Intersect axis aligned spline with offset xz-axis plane
-bool intersect_transformed_spline_plane(in Spline spline, in vec4 offset, inout float t);
+bool intersect_transformed_spline_plane(in Spline spline, in float offset, inout float t);
 
 // Intersect spline with arbitrary plane
 void intersect_spline_plane(in Spline spline, in Plane plane, inout vec3 ts);
@@ -161,7 +161,7 @@ Ray get_frag_ray(in vec2 frag_coord, out vec3 origin, out vec3 direction);
 // Note that it is assumed that the ray intersects the line
 bool intersect_ray_line_segment(in Ray ray, in vec3 point1, in vec3 point2, inout float t);
 
-// Intersect ray with surface spanned by the spline and an offset
+// Intersect ray with surface between two equal splines displaced from each other by an offset
 void find_ray_spline_intersection(in Ray ray, in Spline spline, in float t, in vec3 offset, inout vec2 ret);
 
 // Intersect ray with finite plane
