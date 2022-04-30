@@ -188,6 +188,19 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out v
 // Walk/march ray over spline map
 bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, in float step_size, inout ivec3 texel, inout float t);
 
+//////////////////////////////////////////////////////////////////////////////
+//  __  __  _                  _  _                                         //
+// |  \/  |(_)                | || |                                        //
+// | \  / | _  ___   ___  ___ | || |  __ _  _ __    ___   ___   _   _  ___  //
+// | |\/| || |/ __| / __|/ _ \| || | / _` || '_ \  / _ \ / _ \ | | | |/ __| //
+// | |  | || |\__ \| (__|  __/| || || (_| || | | ||  __/| (_) || |_| |\__ \ //
+// |_|  |_||_||___/ \___|\___||_||_| \__,_||_| |_| \___| \___/  \__,_||___/ //
+//                                                                          //
+//////////////////////////////////////////////////////////////////////////////
+
+// Generate gradient normal for given texel
+vec3 gradient_normal(in ivec3 texel);
+
 // Function Implementations
 // Spline
 vec3 position_on_spline(in Spline spline, in float t) {
@@ -372,6 +385,7 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout i
                 texel = ivec3(clamp(coords, 0.0, 1.0 - 1e-4) * size);
                 const float color = texelFetch(texVol, texel, 0).r;
 
+                // Intersection
                 if (color > threshold) {
                     t = i;
                     return true;
@@ -531,6 +545,30 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out v
     return false;
 }
 
+// Misc
+bool has_voxel(in ivec3 texel, in ivec3 offset) {
+    const float color = texelFetch(texVol, texel + offset, 0).r;
+    return color > threshold;
+}
+
+vec3 gradient_normal(in ivec3 texel) {
+    vec3 normal = vec3(0.0);
+
+    for (int i = -1; i <= 1; i += 2) {
+        if (!has_voxel(texel, ivec3(i, 0, 0))) {
+            normal += vec3(-i, 0.0, 0.0);
+        }
+        if (!has_voxel(texel, ivec3(0, i, 0))) {
+            normal += vec3(0.0, -i, 0.0);
+        }
+        if (!has_voxel(texel, ivec3(0, 0, i))) {
+            normal += vec3(0.0, 0.0, -i);
+        }
+    }
+
+    return normalize(normal);
+}
+
 void main() {
     oColor = vec3(0.0);
 
@@ -541,7 +579,11 @@ void main() {
     ivec3 texel;
     float t;
     if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t)) {
-        oColor = vec3(texel) / vec3(textureSize(texVol, 0));
+        const vec3 normal = gradient_normal(texel);
+        const float light = dot(normalize(vec3(1.0, 4.0, 2.0)), normal);
+        oColor = vec3(max(0.0, light) * 0.7 + 0.3);
+        // oColor = normal * 0.5 + 0.5;
+        // oColor = vec3(texel) / vec3(textureSize(texVol, 0));
     } else {
         discard;
     }
