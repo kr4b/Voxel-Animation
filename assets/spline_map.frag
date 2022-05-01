@@ -96,6 +96,9 @@ layout( std140, binding = 2 ) uniform USplineMap {
 // Get position on the spline for t
 vec3 position_on_spline(in Spline spline, in float t);
 
+// Get position on the spline derivative for t
+vec3 position_on_spline(in Spline spline, in float t);
+
 // Intersect axis aligned spline with offset xz-axis plane
 bool intersect_transformed_spline_plane(in Spline spline, in float offset, inout float t);
 
@@ -200,12 +203,16 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, in floa
 //////////////////////////////////////////////////////////////////////////////
 
 // Generate gradient normal for given texel
-vec3 gradient_normal(in vec3 texel);
+vec3 gradient_normal(in Spline spline, in vec3 texel);
 
 // Function Implementations
 // Spline
 vec3 position_on_spline(in Spline spline, in float t) {
     return spline.a * t * t * t + spline.b * t * t + spline.c * t + spline.d;
+}
+
+vec3 position_on_spline_prime(in Spline spline, in float t) {
+    return 3.0 * spline.a * t * t + 2.0 * spline.b * t + spline.c;
 }
 
 bool intersect_transformed_spline_plane(in Spline spline, in float offset, inout float t) {
@@ -389,7 +396,7 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout i
                 // Intersection
                 if (color > threshold) {
                     t = i;
-                    normal = gradient_normal(coords);
+                    normal = gradient_normal(spline_map.transformed_spline, coords);
                     return true;
                 }
 
@@ -553,12 +560,19 @@ bool has_voxel(in ivec3 texel, in ivec3 offset) {
     return color > threshold;
 }
 
-vec3 gradient_normal(in vec3 coord) {
-    // return texture(gradientField, coord).rgb * 2.0 - 1.0;
-    return normalize(vec3(
+vec3 gradient_normal(in Spline spline, in vec3 coord) {
+    const vec3 slope = position_on_spline_prime(spline, coord.y);
+    const float xangle = atan(slope.x);
+    const float zangle = atan(slope.z);
+    const vec3 normal = vec3(
         texture(distanceField, coord - vec3(EPSILON, 0.0, 0.0)).r - texture(distanceField, coord + vec3(EPSILON, 0.0, 0.0)).r,
         texture(distanceField, coord - vec3(0.0, EPSILON, 0.0)).r - texture(distanceField, coord + vec3(0.0, EPSILON, 0.0)).r,
         texture(distanceField, coord - vec3(0.0, 0.0, EPSILON)).r - texture(distanceField, coord + vec3(0.0, 0.0, EPSILON)).r
+    );
+    return normalize(vec3(
+        normal.x * sin(xangle),
+        normal.y + normal.x * cos(xangle) + normal.z * cos(zangle),
+        normal.z * cos(zangle)
     ));
 }
 
@@ -573,10 +587,10 @@ void main() {
     float t;
     vec3 normal;
     if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t, normal)) {
-        const float light = dot(normalize(vec3(1.0, 4.0, 2.0)), normal);
+        const float light = dot(normalize(vec3(-1.0, 1.0, -1.0)), normal);
         oColor = vec3(max(0.0, light) * 0.7 + 0.3);
         // oColor = normal * 0.5 + 0.5;
-        oColor *= vec3(texel) / vec3(textureSize(texVol, 0));
+        // oColor *= vec3(texel) / vec3(textureSize(texVol, 0));
     } else {
         discard;
     }
