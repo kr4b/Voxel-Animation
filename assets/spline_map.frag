@@ -26,6 +26,7 @@ layout( std140, binding = 1 ) uniform UCamera {
 
 layout( binding = 0 ) uniform sampler3D texVol;
 layout( binding = 1 ) uniform sampler3D distanceField;
+layout( binding = 2 ) uniform sampler3D gradientField;
 
 uniform float step_size;
 uniform float threshold;
@@ -186,7 +187,7 @@ bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts
 bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out vec3 raw_coords);
 
 // Walk/march ray over spline map
-bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, in float step_size, inout ivec3 texel, inout float t);
+bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, in float step_size, inout ivec3 texel, inout float t, inout vec3 normal);
 
 //////////////////////////////////////////////////////////////////////////////
 //  __  __  _                  _  _                                         //
@@ -199,7 +200,7 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, in floa
 //////////////////////////////////////////////////////////////////////////////
 
 // Generate gradient normal for given texel
-vec3 gradient_normal(in ivec3 texel);
+vec3 gradient_normal(in vec3 texel);
 
 // Function Implementations
 // Spline
@@ -371,7 +372,7 @@ Ray get_frag_ray(in vec2 frag_coord, out vec3 origin, out vec3 direction) {
     return ray_constructor(origin, direction);
 }
 
-bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout ivec3 texel, inout float t) {
+bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout ivec3 texel, inout float t, inout vec3 normal) {
     vec2 ts;
     const bool result = intersect_ray_spline_map(ray, spline_map, ts);
 
@@ -382,12 +383,13 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout i
             vec3 coords, raw_coords;
 
             if (texture_coords(spline_map, pos, coords, raw_coords)) {
-                texel = ivec3(clamp(coords, 0.0, 1.0 - 1e-4) * size);
+                texel = ivec3(coords * size);
                 const float color = texelFetch(texVol, texel, 0).r;
 
                 // Intersection
                 if (color > threshold) {
                     t = i;
+                    normal = gradient_normal(coords);
                     return true;
                 }
 
@@ -551,22 +553,14 @@ bool has_voxel(in ivec3 texel, in ivec3 offset) {
     return color > threshold;
 }
 
-vec3 gradient_normal(in ivec3 texel) {
-    vec3 normal = vec3(0.0);
-
-    for (int i = -1; i <= 1; i += 2) {
-        if (!has_voxel(texel, ivec3(i, 0, 0))) {
-            normal += vec3(-i, 0.0, 0.0);
-        }
-        if (!has_voxel(texel, ivec3(0, i, 0))) {
-            normal += vec3(0.0, -i, 0.0);
-        }
-        if (!has_voxel(texel, ivec3(0, 0, i))) {
-            normal += vec3(0.0, 0.0, -i);
-        }
-    }
-
-    return normalize(normal);
+vec3 gradient_normal(in vec3 coord) {
+    // return texture(gradientField, coord).rgb * 2.0 - 1.0;
+    const float eps = 1.0e-2;
+    return normalize(vec3(
+        texture(distanceField, coord + vec3(eps, 0.0, 0.0)).r - texture(distanceField, coord - vec3(eps, 0.0, 0.0)).r,
+        texture(distanceField, coord - vec3(0.0, eps, 0.0)).r - texture(distanceField, coord + vec3(0.0, eps, 0.0)).r,
+        texture(distanceField, coord + vec3(0.0, 0.0, eps)).r - texture(distanceField, coord - vec3(0.0, 0.0, eps)).r
+    ));
 }
 
 void main() {
@@ -578,12 +572,12 @@ void main() {
 
     ivec3 texel;
     float t;
-    if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t)) {
-        const vec3 normal = gradient_normal(texel);
+    vec3 normal;
+    if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t, normal)) {
         const float light = dot(normalize(vec3(1.0, 4.0, 2.0)), normal);
-        oColor = vec3(max(0.0, light) * 0.7 + 0.3);
+        oColor = vec3(max(0.0, light) * 0.9 + 0.1);
         // oColor = normal * 0.5 + 0.5;
-        // oColor = vec3(texel) / vec3(textureSize(texVol, 0));
+        oColor *= vec3(texel) / vec3(textureSize(texVol, 0));
     } else {
         discard;
     }

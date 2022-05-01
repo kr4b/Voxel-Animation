@@ -384,11 +384,22 @@ void Volume::initialize() {
     glTextureStorage3D(this->dataTexture, 1, GL_R32F, this->width(), this->height(), this->depth());
     glTextureSubImage3D(
         this->dataTexture, 0, 0, 0, 0, this->width(), this->height(), this->depth(), GL_RED, GL_FLOAT, this->data());
+    glBindTexture(GL_TEXTURE_3D, this->dataTexture);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
+
 
     glCreateTextures(GL_TEXTURE_3D, 1, &this->distanceTexture);
     glBindTextureUnit(1, this->distanceTexture);
 
     glTextureStorage3D(this->distanceTexture, 1, GL_R32F, this->width(), this->height(), this->depth());
+
+
+    glCreateTextures(GL_TEXTURE_3D, 1, &this->gradientTexture);
+    glBindTextureUnit(2, this->gradientTexture);
+
+    glTextureStorage3D(this->gradientTexture, 1, GL_RGB32F, this->width(), this->height(), this->depth());
 }
 
 /// Create distance field by starting at non-empty voxels (0 distance)
@@ -426,7 +437,7 @@ void Volume::create_distance_field(float threshold) {
 
     // Try to add the unit to the new stack if its distance is less than the current distance
     const auto tryAdd = [this](std::stack<Unit>& stack, int x, int y, int z, glm::vec3 distance) {
-        const int index = z * this->width() * this->height() + y * this->width() + x;
+        const int index = this->to_linear_index(x, y, z);
         const Unit newUnit = {
             glm::vec3(x, y, z),
             distance,
@@ -468,5 +479,65 @@ void Volume::create_distance_field(float threshold) {
     glBindTextureUnit(1, this->distanceTexture);
     glTextureSubImage3D(
         this->distanceTexture, 0, 0, 0, 0,
-        this->width(), this->height(), this->depth(), GL_RED, GL_FLOAT, this->mDistanceField.data());
+        this->width(), this->height(), this->depth(),
+        GL_RED, GL_FLOAT, this->mDistanceField.data()
+    );
+    glBindTexture(GL_TEXTURE_3D, this->distanceTexture);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+}
+
+void Volume::create_gradient_field(float threshold) {
+    int x = 0,
+        y = 0,
+        z = 0;
+    
+    for (int i = 0; i < this->total_element_count(); i++) {
+        glm::vec3 normal(0.0f);
+
+        if (x >= 1 && x <= this->width() - 2)
+            normal.x = this->mDistanceField[this->to_linear_index(x + 1, y, z)] - this->mDistanceField[this->to_linear_index(x - 1, y, z)];
+        else
+            normal.x = x == 0 ? -1.0f : 1.0f;
+
+        if (y >= 1 && y <= this->height() - 2)
+            normal.y = this->mDistanceField[this->to_linear_index(x, y + 1, z)] - this->mDistanceField[this->to_linear_index(x, y - 1, z)];
+        else
+            normal.y = y == 0 ? -1.0f : 1.0f;
+
+        if (z >= 1 && z <= this->depth() - 2)
+            normal.z = this->mDistanceField[this->to_linear_index(x, y, z + 1)] - this->mDistanceField[this->to_linear_index(x, y, z - 1)];
+        else
+            normal.z = z == 0 ? -1.0f : 1.0f;
+
+        normal.y *= -1.0f;
+
+        size_t index = this->to_linear_index(x, y, z);
+        this->mGradientField[index] = glm::normalize(normal);
+        this->mGradientField[index] = this->mGradientField[index] * 0.5f + 0.5f;
+
+        x = (x + 1) % this->width();
+        if (x == 0) {
+            y = (y + 1) % this->height();
+            if (y == 0) {
+                z = (z + 1) % this->depth();
+            }
+        }
+    }
+
+    glBindTextureUnit(2, this->gradientTexture);
+    glTextureSubImage3D(
+        this->gradientTexture, 0, 0, 0, 0,
+        this->width(), this->height(), this->depth(),
+        GL_RGB, GL_FLOAT, this->mGradientField.data()
+    );
+    glBindTexture(GL_TEXTURE_3D, this->gradientTexture);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }

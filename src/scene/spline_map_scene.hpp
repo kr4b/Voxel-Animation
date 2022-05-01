@@ -80,6 +80,7 @@ public:
         )
     {
         this->volume.create_distance_field(this->threshold);
+        this->volume.create_gradient_field(this->threshold);
         this->init();
     };
 

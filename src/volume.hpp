@@ -10,6 +10,7 @@
 
 #include <glad/glad.h>
 #include <glm/vec3.hpp>
+#include <glm/geometric.hpp>
 
 struct FLDInfo {
     size_t ndims;
@@ -65,6 +66,7 @@ class Volume {
         const float& operator() (std::size_t aI, std::size_t aJ, std::size_t aK) const;
         void initialize();
         void create_distance_field(float threshold);
+        void create_gradient_field(float threshold);
 
     public:
         GLsizei width() const;
@@ -82,8 +84,9 @@ class Volume {
     private:
         std::vector<float> mData;
         std::vector<float> mDistanceField;
+        std::vector<glm::vec3> mGradientField;
         GLsizei mWidth, mHeight, mDepth;
-        GLuint dataTexture, distanceTexture;
+        GLuint dataTexture, distanceTexture, gradientTexture;
 };
 
 // Load mhd volume from .mhd file
@@ -101,6 +104,7 @@ inline
 Volume::Volume( GLsizei aWidth, GLsizei aHeight, GLsizei aDepth )
     : mData(aWidth * aHeight * aDepth)
     , mDistanceField(aWidth * aHeight * aDepth)
+    , mGradientField(aWidth * aHeight * aDepth)
     , mWidth(aWidth)
     , mHeight(aHeight)
     , mDepth(aDepth)
@@ -110,6 +114,7 @@ inline
 Volume::Volume(GLsizei aWidth, GLsizei aHeight, GLsizei aDepth, GLsizei vecLen)
     : mData(aWidth * aHeight * aDepth * vecLen)
     , mDistanceField(aWidth * aHeight * aDepth * vecLen)
+    , mGradientField(aWidth * aHeight * aDepth * vecLen)
     , mWidth(aWidth)
     , mHeight(aHeight)
     , mDepth(aDepth)
@@ -160,4 +165,5 @@ std::size_t Volume::to_linear_index(std::size_t aI, std::size_t aJ, std::size_t 
 inline void Volume::bind() const {
     glBindTextureUnit(0, this->dataTexture);
     glBindTextureUnit(1, this->distanceTexture);
+    // glBindTextureUnit(2, this->gradientTexture);
 }
