@@ -499,21 +499,19 @@ void Volume::create_gradient_field(float threshold) {
         glm::vec3 normal(0.0f);
 
         if (x >= 1 && x <= this->width() - 2)
-            normal.x = this->mDistanceField[this->to_linear_index(x + 1, y, z)] - this->mDistanceField[this->to_linear_index(x - 1, y, z)];
+            normal.x = this->mDistanceField[this->to_linear_index(x - 1, y, z)] - this->mDistanceField[this->to_linear_index(x + 1, y, z)];
         else
-            normal.x = x == 0 ? -1.0f : 1.0f;
+            normal.x = x == 0 ? 1.0f : -1.0f;
 
         if (y >= 1 && y <= this->height() - 2)
-            normal.y = this->mDistanceField[this->to_linear_index(x, y + 1, z)] - this->mDistanceField[this->to_linear_index(x, y - 1, z)];
+            normal.y = this->mDistanceField[this->to_linear_index(x, y - 1, z)] - this->mDistanceField[this->to_linear_index(x, y + 1, z)];
         else
-            normal.y = y == 0 ? -1.0f : 1.0f;
+            normal.y = y == 0 ? 1.0f : -1.0f;
 
         if (z >= 1 && z <= this->depth() - 2)
-            normal.z = this->mDistanceField[this->to_linear_index(x, y, z + 1)] - this->mDistanceField[this->to_linear_index(x, y, z - 1)];
+            normal.z = this->mDistanceField[this->to_linear_index(x, y, z - 1)] - this->mDistanceField[this->to_linear_index(x, y, z + 1)];
         else
-            normal.z = z == 0 ? -1.0f : 1.0f;
-
-        normal.y *= -1.0f;
+            normal.z = z == 0 ? 1.0f : -1.0f;
 
         size_t index = this->to_linear_index(x, y, z);
         this->mGradientField[index] = glm::normalize(normal);

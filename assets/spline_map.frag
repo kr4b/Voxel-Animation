@@ -5,7 +5,7 @@
 #define VOLUME_STEPS 1024
 #define MAX_SAMPLERS 1
 #define M_PI 3.14159265
-#define EPSILON 1e-2f
+#define EPSILON 1.0e-2
 #define MAX_VALUE 2.0
 #define MIN_VALUE -MAX_VALUE
 
@@ -555,11 +555,10 @@ bool has_voxel(in ivec3 texel, in ivec3 offset) {
 
 vec3 gradient_normal(in vec3 coord) {
     // return texture(gradientField, coord).rgb * 2.0 - 1.0;
-    const float eps = 1.0e-2;
     return normalize(vec3(
-        texture(distanceField, coord + vec3(eps, 0.0, 0.0)).r - texture(distanceField, coord - vec3(eps, 0.0, 0.0)).r,
-        texture(distanceField, coord - vec3(0.0, eps, 0.0)).r - texture(distanceField, coord + vec3(0.0, eps, 0.0)).r,
-        texture(distanceField, coord + vec3(0.0, 0.0, eps)).r - texture(distanceField, coord - vec3(0.0, 0.0, eps)).r
+        texture(distanceField, coord - vec3(EPSILON, 0.0, 0.0)).r - texture(distanceField, coord + vec3(EPSILON, 0.0, 0.0)).r,
+        texture(distanceField, coord - vec3(0.0, EPSILON, 0.0)).r - texture(distanceField, coord + vec3(0.0, EPSILON, 0.0)).r,
+        texture(distanceField, coord - vec3(0.0, 0.0, EPSILON)).r - texture(distanceField, coord + vec3(0.0, 0.0, EPSILON)).r
     ));
 }
 
@@ -575,7 +574,7 @@ void main() {
     vec3 normal;
     if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t, normal)) {
         const float light = dot(normalize(vec3(1.0, 4.0, 2.0)), normal);
-        oColor = vec3(max(0.0, light) * 0.9 + 0.1);
+        oColor = vec3(max(0.0, light) * 0.7 + 0.3);
         // oColor = normal * 0.5 + 0.5;
         oColor *= vec3(texel) / vec3(textureSize(texVol, 0));
     } else {
