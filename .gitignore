@@ -8,6 +8,8 @@ bin/
 lib/
 assets/**/*.fld
 
+result/
+
 **/*.vcxproj*
 **/*.make*
 

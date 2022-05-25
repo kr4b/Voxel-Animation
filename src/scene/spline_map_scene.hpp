@@ -9,6 +9,8 @@
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 
+#include <imgui.h>
+
 #include <deque>
 
 #include "../setup.hpp"
@@ -78,6 +80,7 @@ public:
         )
     {
         this->volume.create_distance_field(this->threshold);
+        this->volume.create_gradient_field(this->threshold);
         this->init();
     };
 

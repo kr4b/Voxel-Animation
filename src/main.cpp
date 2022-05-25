@@ -25,9 +25,7 @@ void showBenchmark(State* state, int& frames) {
     if (state->averageFps < 0) {
         ImGui::Text("~");
     } else {
-        char fps[10];
-        std::snprintf(fps, sizeof(fps), "%.2f", state->averageFps);
-        ImGui::Text(fps);
+        ImGui::Text("%.2f", state->averageFps);
     }
 
     ImGui::End();

@@ -5,7 +5,7 @@
 #define VOLUME_STEPS 1024
 #define MAX_SAMPLERS 1
 #define M_PI 3.14159265
-#define EPSILON 1e-2f
+#define EPSILON 1.0e-2
 #define MAX_VALUE 2.0
 #define MIN_VALUE -MAX_VALUE
 
@@ -26,6 +26,7 @@ layout( std140, binding = 1 ) uniform UCamera {
 
 layout( binding = 0 ) uniform sampler3D texVol;
 layout( binding = 1 ) uniform sampler3D distanceField;
+layout( binding = 2 ) uniform sampler3D gradientField;
 
 uniform float step_size;
 uniform float threshold;
@@ -93,6 +94,9 @@ layout( std140, binding = 2 ) uniform USplineMap {
 ////////////////////////////////////////
 
 // Get position on the spline for t
+vec3 position_on_spline(in Spline spline, in float t);
+
+// Get position on the spline derivative for t
 vec3 position_on_spline(in Spline spline, in float t);
 
 // Intersect axis aligned spline with offset xz-axis plane
@@ -186,12 +190,29 @@ bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts
 bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out vec3 raw_coords);
 
 // Walk/march ray over spline map
-bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, in float step_size, inout ivec3 texel, inout float t);
+bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, in float step_size, inout ivec3 texel, inout float t, inout vec3 normal);
+
+//////////////////////////////////////////////////////////////////////////////
+//  __  __  _                  _  _                                         //
+// |  \/  |(_)                | || |                                        //
+// | \  / | _  ___   ___  ___ | || |  __ _  _ __    ___   ___   _   _  ___  //
+// | |\/| || |/ __| / __|/ _ \| || | / _` || '_ \  / _ \ / _ \ | | | |/ __| //
+// | |  | || |\__ \| (__|  __/| || || (_| || | | ||  __/| (_) || |_| |\__ \ //
+// |_|  |_||_||___/ \___|\___||_||_| \__,_||_| |_| \___| \___/  \__,_||___/ //
+//                                                                          //
+//////////////////////////////////////////////////////////////////////////////
+
+// Generate gradient normal for given texel
+vec3 gradient_normal(in Spline spline, in vec3 texel);
 
 // Function Implementations
 // Spline
 vec3 position_on_spline(in Spline spline, in float t) {
     return spline.a * t * t * t + spline.b * t * t + spline.c * t + spline.d;
+}
+
+vec3 position_on_spline_prime(in Spline spline, in float t) {
+    return 3.0 * spline.a * t * t + 2.0 * spline.b * t + spline.c;
 }
 
 bool intersect_transformed_spline_plane(in Spline spline, in float offset, inout float t) {
@@ -358,7 +379,7 @@ Ray get_frag_ray(in vec2 frag_coord, out vec3 origin, out vec3 direction) {
     return ray_constructor(origin, direction);
 }
 
-bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout ivec3 texel, inout float t) {
+bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout ivec3 texel, inout float t, inout vec3 normal) {
     vec2 ts;
     const bool result = intersect_ray_spline_map(ray, spline_map, ts);
 
@@ -369,11 +390,13 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout i
             vec3 coords, raw_coords;
 
             if (texture_coords(spline_map, pos, coords, raw_coords)) {
-                texel = ivec3(clamp(coords, 0.0, 1.0 - 1e-4) * size);
+                texel = ivec3(coords * size);
                 const float color = texelFetch(texVol, texel, 0).r;
 
+                // Intersection
                 if (color > threshold) {
                     t = i;
+                    normal = gradient_normal(spline_map.transformed_spline, coords);
                     return true;
                 }
 
@@ -531,6 +554,28 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out v
     return false;
 }
 
+// Misc
+bool has_voxel(in ivec3 texel, in ivec3 offset) {
+    const float color = texelFetch(texVol, texel + offset, 0).r;
+    return color > threshold;
+}
+
+vec3 gradient_normal(in Spline spline, in vec3 coord) {
+    const vec3 slope = position_on_spline_prime(spline, coord.y);
+    const float xangle = atan(slope.x);
+    const float zangle = atan(slope.z);
+    const vec3 normal = vec3(
+        texture(distanceField, coord - vec3(EPSILON, 0.0, 0.0)).r - texture(distanceField, coord + vec3(EPSILON, 0.0, 0.0)).r,
+        texture(distanceField, coord - vec3(0.0, EPSILON, 0.0)).r - texture(distanceField, coord + vec3(0.0, EPSILON, 0.0)).r,
+        texture(distanceField, coord - vec3(0.0, 0.0, EPSILON)).r - texture(distanceField, coord + vec3(0.0, 0.0, EPSILON)).r
+    );
+    return normalize(vec3(
+        normal.x * sin(xangle),
+        normal.y + normal.x * cos(xangle) + normal.z * cos(zangle),
+        normal.z * cos(zangle)
+    ));
+}
+
 void main() {
     oColor = vec3(0.0);
 
@@ -540,8 +585,12 @@ void main() {
 
     ivec3 texel;
     float t;
-    if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t)) {
-        oColor = vec3(texel) / vec3(textureSize(texVol, 0));
+    vec3 normal;
+    if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t, normal)) {
+        const float light = dot(normalize(vec3(-1.0, 1.0, -1.0)), normal);
+        oColor = vec3(max(0.0, light) * 0.7 + 0.3);
+        // oColor = normal * 0.5 + 0.5;
+        // oColor *= vec3(texel) / vec3(textureSize(texVol, 0));
     } else {
         discard;
     }
