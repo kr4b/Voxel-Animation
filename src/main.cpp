@@ -64,6 +64,12 @@ int main() {
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     }
+
+    for (SplineMapScene* scene : scenePointers) {
+        if (scene) {
+            delete scene;
+        }
+    }
   
     return 0;
 }
