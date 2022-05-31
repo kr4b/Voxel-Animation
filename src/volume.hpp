@@ -79,6 +79,9 @@ class Volume {
 
         void bind() const;
 
+        bool has_distance_field() const;
+        bool has_gradient_field() const;
+
         std::size_t to_linear_index( std::size_t, std::size_t, std::size_t ) const;
 
     private:
@@ -87,6 +90,7 @@ class Volume {
         std::vector<glm::vec3> mGradientField;
         GLsizei mWidth, mHeight, mDepth;
         GLuint dataTexture, distanceTexture, gradientTexture;
+        bool hasDistance, hasGradient;
 };
 
 // Load mhd volume from .mhd file
@@ -108,6 +112,8 @@ Volume::Volume( GLsizei aWidth, GLsizei aHeight, GLsizei aDepth )
     , mWidth(aWidth)
     , mHeight(aHeight)
     , mDepth(aDepth)
+    , hasDistance(false)
+    , hasGradient(false)
 {}
 
 inline
@@ -118,6 +124,8 @@ Volume::Volume(GLsizei aWidth, GLsizei aHeight, GLsizei aDepth, GLsizei vecLen)
     , mWidth(aWidth)
     , mHeight(aHeight)
     , mDepth(aDepth)
+    , hasDistance(false)
+    , hasGradient(false)
 {}
 
 inline
@@ -158,6 +166,16 @@ const float* Volume::data() const {
 }
 
 inline
+bool Volume::has_distance_field() const {
+    return hasGradient;
+}
+
+inline
+bool Volume::has_gradient_field() const {
+    return hasGradient;
+}
+
+inline
 std::size_t Volume::to_linear_index(std::size_t aI, std::size_t aJ, std::size_t aK) const {
     return aK * mWidth * mHeight + aJ * mWidth + aI;
 }
@@ -165,5 +183,5 @@ std::size_t Volume::to_linear_index(std::size_t aI, std::size_t aJ, std::size_t 
 inline void Volume::bind() const {
     glBindTextureUnit(0, this->dataTexture);
     glBindTextureUnit(1, this->distanceTexture);
-    // glBindTextureUnit(2, this->gradientTexture);
+    glBindTextureUnit(2, this->gradientTexture);
 }

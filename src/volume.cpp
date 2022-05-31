@@ -405,6 +405,7 @@ void Volume::initialize() {
 /// Create distance field by starting at non-empty voxels (0 distance)
 /// Then iteratively go outwards by 1 voxel until all values in the distance field are filled correctly
 void Volume::create_distance_field(float threshold) {
+    hasDistance = true;
     struct Unit {
         glm::vec3 voxel;
         glm::vec3 distance;
@@ -491,6 +492,7 @@ void Volume::create_distance_field(float threshold) {
 }
 
 void Volume::create_gradient_field(float threshold) {
+    hasGradient = true;
     int x = 0,
         y = 0,
         z = 0;

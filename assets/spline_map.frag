@@ -11,7 +11,7 @@
 
 layout( location = 0 ) in vec2 v2fTexCoord;
 
-layout( location = 0 ) out vec3 oColor;
+layout( location = 0 ) out vec4 oColor;
 
 layout( std140, binding = 0 ) uniform UVolume {
     vec3 volMin;
@@ -577,7 +577,7 @@ vec3 gradient_normal(in Spline spline, in vec3 coord) {
 }
 
 void main() {
-    oColor = vec3(0.0);
+    oColor = vec4(0.0);
 
     vec3 origin;
     vec3 direction;
@@ -588,10 +588,13 @@ void main() {
     vec3 normal;
     if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t, normal)) {
         const float light = dot(normalize(vec3(-1.0, 1.0, -1.0)), normal);
-        oColor = vec3(max(0.0, light) * 0.7 + 0.3);
+        oColor = vec4(vec3(max(0.0, light) * 0.7 + 0.3), 1.0);
+        // TODO: Depth hack, maybe base it on projection near/far planes
+        gl_FragDepth = t / 100.0;
         // oColor = normal * 0.5 + 0.5;
         // oColor *= vec3(texel) / vec3(textureSize(texVol, 0));
     } else {
-        discard;
+        gl_FragDepth = 1.0;
+        // discard;
     }
 }

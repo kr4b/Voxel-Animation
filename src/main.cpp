@@ -7,6 +7,7 @@
 
 #include "scene/scenes.hpp"
 #include "scene/debug_scene.hpp"
+#include "scene/scene_collection.hpp"
 
 void showBenchmark(State* state, int& frames) {
     if (frames >= 0) {
@@ -35,9 +36,14 @@ int main() {
     State* state = NULL;
     Window window(1280, 720);
     Setup setup;
+    SceneCollection collection(window, setup);
     SplineMapScene* scenePointers[scenes::len] = { NULL };
     int index = scenes::Cube;
+    int mode = 0;
     int frames = -1;
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+    glEnable(GL_DEPTH_TEST);
 
     while (window.update(state, frames)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -47,14 +53,22 @@ int main() {
             scenePointers[index] = create_scene((scenes::Scene) index, window, setup);
         }
 
-        state = &scenePointers[index]->get_state();
-
-        scenePointers[index]->update();
-        scenePointers[index]->render();
+        if (mode == 0) {
+            state = &collection.get_state();
+            collection.update_and_render();
+        } else {
+            state = &scenePointers[index]->get_state();
+            scenePointers[index]->update();
+            scenePointers[index]->render();
+        }
 
         // Scene selection
         ImGui::Begin("Scene");
-        ImGui::ListBox("Scenes", &index, scenes::names, scenes::len);
+        const char* const names[] = { "Collection", "Individual" };
+        ImGui::ListBox("Mode", &mode, names, 2);
+        if (mode == 1) {
+            ImGui::ListBox("Scenes", &index, scenes::names, scenes::len);
+        }
         ImGui::End();
 
         showBenchmark(state, frames);

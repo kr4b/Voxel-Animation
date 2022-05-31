@@ -1,5 +1,7 @@
 #pragma once
 
+#include <memory>
+
 #include "spline_map_scene.hpp"
 
 namespace scenes {
@@ -55,5 +57,9 @@ static Volume create_volume(scenes::Scene scene) {
 }
 
 static SplineMapScene* create_scene(scenes::Scene scene, Window& window, Setup& setup) {
-    return new SplineMapScene(window, setup, create_volume(scene));
+    return new SplineMapScene(window, setup, std::make_shared<Volume>(create_volume(scene)));
+}
+
+static SplineMapScene* create_scene_from_loaded(SplineMapScene* scene, Window& window, Setup& setup) {
+    return new SplineMapScene(window, setup, scene->get_volume());
 }

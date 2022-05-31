@@ -23,8 +23,8 @@ void State::startBenchmark() {
   this->averageFps = -1.0;
   this->skip = true;
 
-  this->cameraRot = scenarios[0].first;
-  this->cameraOff = scenarios[0].second;
+  this->cameraRotation = scenarios[0].first;
+  this->cameraOffset = scenarios[0].second;
 }
 
 void State::nextScenario(int frames) {
@@ -42,8 +42,12 @@ void State::nextScenario(int frames) {
     return;
   }
 
-  this->cameraRot = scenarios[this->scenarioCount].first;
-  this->cameraOff = scenarios[this->scenarioCount].second;
+  this->cameraRotation = scenarios[this->scenarioCount].first;
+  this->cameraOffset = scenarios[this->scenarioCount].second;
+}
+
+void State::translateCamera(glm::vec3 translation) {
+  this->cameraTranslation += translation;
 }
 
 void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
@@ -60,8 +64,8 @@ void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
     // Space => create new debug rays
     case GLFW_KEY_SPACE:
       state->refreshRayEmitter = true;
-      state->lastCameraRot = state->cameraRot;
-      state->lastCameraOff = state->cameraOff;
+      state->lastCameraRotation = state->cameraRotation;
+      state->lastCameraOffset = state->cameraOffset;
       state->lastX = state->prevX;
       state->lastY = state->prevY;
       break;
@@ -72,8 +76,8 @@ void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
     }
     // Backspace => return to camera transformation when debug rays were created
     case GLFW_KEY_BACKSPACE:
-      state->cameraRot = state->lastCameraRot;
-      state->cameraOff = state->lastCameraOff;
+      state->cameraRotation = state->lastCameraRotation;
+      state->cameraOffset = state->lastCameraOffset;
       break;
     }
 
@@ -97,7 +101,7 @@ void state::scroll_callback(GLFWwindow *win, double, double y) {
   if (ImGui::GetIO().WantCaptureMouse) return;
   if (auto state = reinterpret_cast<State*>(glfwGetWindowUserPointer(win))) {
     auto dist = 1.f - state->scrollMult * float(y);
-    state->cameraOff *= dist;
+    state->cameraOffset *= dist;
   }
 }
 
@@ -113,10 +117,10 @@ void state::motion_callback(GLFWwindow* win, double x, double y) {
       auto const deltaY = y - prevY;
 
       if (state->inControl) {
-        state->cameraRot =
+        state->cameraRotation =
             glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), float(glm::degrees(state->motionRotMult * deltaX)), glm::vec3(0.0f, 1.0f, 0.0f)) *
             glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), float(glm::degrees(state->motionRotMult * deltaY)), glm::vec3(1.0f, 0.0f, 0.0f)) *
-            state->cameraRot;
+            state->cameraRotation;
       }
     }
   }

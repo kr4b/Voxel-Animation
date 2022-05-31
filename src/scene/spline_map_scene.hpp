@@ -60,12 +60,13 @@ public:
     SplineMapScene(
         Window &window,
         Setup& setup,
-        Volume volume) :
+        std::shared_ptr<Volume> volume) :
         window(window),
         setup(setup),
         shader("assets/simple_vol.vert", "assets/spline_map.frag"),
         debugShader("assets/debug.vert", "assets/debug.frag"),
-        volume(std::move(volume)),
+        volume(volume),
+        translation(glm::vec3(0.0f)),
         tangents { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f) },
         offset(glm::vec3(0.0f, 2.0f, 0.0f)),
         splineMap(
@@ -79,8 +80,12 @@ public:
             )
         )
     {
-        this->volume.create_distance_field(this->threshold);
-        this->volume.create_gradient_field(this->threshold);
+        if (!this->volume->has_distance_field()) {
+            this->volume->create_distance_field(this->threshold);
+        }
+        if (!this->volume->has_gradient_field()) {
+            this->volume->create_gradient_field(this->threshold);
+        }
         this->init();
     };
 
@@ -101,6 +106,7 @@ private:
     bool showAxis = true;
     bool showOutline = true;
     bool animate = false;
+    glm::vec3 translation;
     glm::vec3 tangents[2];
     // Offset of top base
     glm::vec3 offset;
@@ -124,10 +130,10 @@ private:
         // Get minimum scale
         const float scale = glm::min(
             glm::min(
-                this->splineMap.width / this->volume.width(),
-                this->splineMap.height / this->volume.height()
+                this->splineMap.width / this->volume->width(),
+                this->splineMap.height / this->volume->height()
             ),
-            this->splineMap.depth / this->volume.depth()
+            this->splineMap.depth / this->volume->depth()
         );
 
         return SplineMapUniform {
@@ -212,7 +218,9 @@ private:
 
 public:
     void update() {
+        get_state().translateCamera(-this->translation);
         get_setup().update(get_window(), get_state());
+        get_state().translateCamera(this->translation);
 
         // Smoothly animate spline tangents
         if (this->animate) {
@@ -223,7 +231,7 @@ public:
         }
 
         if (get_state().debugMode) {
-            get_ray_emitter().update(get_setup(), get_state(), get_spline_map(), get_volume(), &this->threshold, &this->stepSize);
+            get_ray_emitter().update(get_setup(), get_state(), get_spline_map(), *(this->volume), &this->threshold, &this->stepSize);
             show_ui();
         }
     }
@@ -233,7 +241,7 @@ public:
         glBindBufferBase(GL_UNIFORM_BUFFER, 2, splineMapUniform);
         get_shader().uniformFloat("threshold", this->threshold);
         get_shader().uniformFloat("step_size", this->stepSize);
-        get_volume().bind();
+        this->volume->bind();
         get_setup().start_render(get_shader());
         if (get_state().debugMode) {
             get_debug_shader().use();
@@ -245,15 +253,21 @@ public:
         get_setup().end_render();
     }
 
+    void translate(glm::vec3 translation) {
+        this->translation += translation;
+    }
+
+    void set_state(State state) { this->state = state; }
+
     inline virtual State&           get_state()             { return state;         };
     inline virtual Window&          get_window()            { return window;        };
     inline virtual Setup&           get_setup()             { return setup;         };
     inline virtual Shader&          get_shader()            { return shader;        };
     inline virtual Shader&          get_debug_shader()      { return debugShader;   };
-    inline virtual Volume&          get_volume()            { return volume;        };
     inline virtual SplineMap&       get_spline_map()        { return splineMap;     };
     inline virtual Axis&            get_axis()              { return axis;          };
     inline virtual RayEmitter&      get_ray_emitter()       { return rayEmitter;    };
+    inline virtual std::shared_ptr<Volume> get_volume()     { return volume;        };
 
 protected:
     GLuint     splineMapUniform;
@@ -261,7 +275,7 @@ protected:
     Window&    window;
     Setup&     setup;
     Shader     shader, debugShader;
-    Volume     volume;
+    std::shared_ptr<Volume> volume;
     SplineMap  splineMap;
     Axis       axis;
     RayEmitter rayEmitter;

@@ -66,7 +66,7 @@ private:
             this->thresholdChange = false;
         }
 
-        const glm::mat4 view = glm::translate(glm::mat4(1.0f), state.lastCameraOff) * glm::toMat4(state.lastCameraRot);
+        const glm::mat4 view = setup.get_view();
         const size_t raysSqrt = this->rayCount * 2 - 1;
         const glm::vec2 eyePos =
             glm::vec2(state.lastX, 1.0f / setup.get_reciprocal_window_size().y - state.lastY) * setup.get_reciprocal_window_size();

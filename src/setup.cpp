@@ -36,7 +36,7 @@ void Setup::update(const Window& window, const State& state) {
         0.01f, 100.0f
     );
 
-    this->view = glm::translate(glm::mat4(1.0f), state.cameraOff) * glm::toMat4(state.cameraRot);
+    this->view = glm::translate(glm::mat4(1.0f), state.cameraOffset) * glm::toMat4(state.cameraRotation) * glm::translate(glm::mat4(1.0f), state.cameraTranslation);
     const glm::vec4 cameraWorldPos = glm::inverse(this->view) * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
     this->reciprocalWindowSize = glm::vec2(
         1.0f / float(size.first),
