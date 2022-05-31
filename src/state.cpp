@@ -1,6 +1,8 @@
 #include "state.hpp"
 #include <imgui.h>
 
+#include <glm/gtx/quaternion.hpp>
+
 const static std::pair<glm::quat, glm::vec3> scenarios[] = {
   std::make_pair(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -6.0f)),
   std::make_pair(glm::quat(0.8f, 0.1f, 0.9f, 0.6f), glm::vec3(0.0f, 0.0f, -2.0f)),
@@ -50,35 +52,83 @@ void State::translateCamera(glm::vec3 translation) {
   this->cameraTranslation += translation;
 }
 
-void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
-  if (auto state = reinterpret_cast<State*>(glfwGetWindowUserPointer(win))) {
-    if (act != GLFW_PRESS) {
-      return;
-    }
+void State::update(double deltaTime) {
+  this->cameraOffset += glm::inverse(glm::toMat3(this->cameraRotation)) * (float(deltaTime) * this->cameraVelocity);
+}
 
-    switch (key) {
+void key_press(GLFWwindow *win, State* state, int key) {
+  switch (key) {
     // Escape => exit
-    case GLFW_KEY_ESCAPE:
+    case GLFW_KEY_ESCAPE: {
       glfwSetWindowShouldClose(win, GLFW_TRUE);
       break;
+    }
     // Space => create new debug rays
-    case GLFW_KEY_SPACE:
+    case GLFW_KEY_SPACE: {
       state->refreshRayEmitter = true;
       state->lastCameraRotation = state->cameraRotation;
       state->lastCameraOffset = state->cameraOffset;
       state->lastX = state->prevX;
       state->lastY = state->prevY;
       break;
+    }
     // Tab => toggle debug mode
     case GLFW_KEY_TAB: {
       state->debugMode = !state->debugMode;
       break;
     }
     // Backspace => return to camera transformation when debug rays were created
-    case GLFW_KEY_BACKSPACE:
+    case GLFW_KEY_BACKSPACE: {
       state->cameraRotation = state->lastCameraRotation;
       state->cameraOffset = state->lastCameraOffset;
       break;
+    }
+    // W => move forward
+    case GLFW_KEY_W: {
+      state->cameraVelocity.z = state->cameraSpeed;
+      break;
+    }
+    // S => move backward
+    case GLFW_KEY_S: {
+      state->cameraVelocity.z = -state->cameraSpeed;
+      break;
+    }
+    // A => move left
+    case GLFW_KEY_A: {
+      state->cameraVelocity.x = state->cameraSpeed;
+      break;
+    }
+    // D => move right
+    case GLFW_KEY_D: {
+      state->cameraVelocity.x = -state->cameraSpeed;
+      break;
+    }
+  }
+}
+
+void key_release(GLFWwindow *win, State* state, int key) {
+  switch (key) {
+    // W,S => stop moving forward,backward
+    case GLFW_KEY_W:
+    case GLFW_KEY_S: {
+      state->cameraVelocity.z = 0.0f;
+      break;
+    }
+    // A,D => stop moving left,right
+    case GLFW_KEY_A:
+    case GLFW_KEY_D: {
+      state->cameraVelocity.x = 0.0f;
+      break;
+    }
+  }
+}
+
+void state::key_callback(GLFWwindow *win, int key, int, int act, int) {
+  if (auto state = reinterpret_cast<State*>(glfwGetWindowUserPointer(win))) {
+    if (act == GLFW_PRESS) {
+      key_press(win, state, key);
+    } else if (act == GLFW_RELEASE) {
+      key_release(win, state, key);
     }
 
     return;
@@ -117,10 +167,9 @@ void state::motion_callback(GLFWwindow* win, double x, double y) {
       auto const deltaY = y - prevY;
 
       if (state->inControl) {
-        state->cameraRotation =
-            glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), float(glm::degrees(state->motionRotMult * deltaX)), glm::vec3(0.0f, 1.0f, 0.0f)) *
-            glm::rotate(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), float(glm::degrees(state->motionRotMult * deltaY)), glm::vec3(1.0f, 0.0f, 0.0f)) *
-            state->cameraRotation;
+        state->yaw += float(state->motionRotMult * deltaX);
+        state->pitch += float(state->motionRotMult * deltaY);
+        state->cameraRotation = glm::angleAxis(state->pitch, glm::vec3(1.0f, 0.0f, 0.0f)) * glm::angleAxis(state->yaw, glm::vec3(0.0f, 1.0f, 0.0f));
       }
     }
   }

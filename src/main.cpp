@@ -62,6 +62,8 @@ int main() {
             scenePointers[index]->render();
         }
 
+        state->update(window.get_delta_time());
+
         // Scene selection
         ImGui::Begin("Scene");
         const char* const names[] = { "Collection", "Individual" };

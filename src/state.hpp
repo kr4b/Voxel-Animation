@@ -14,6 +14,7 @@ struct State {
   glm::quat cameraRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
   glm::vec3 cameraOffset = glm::vec3(0.0f, 0.0f, -6.0f);
   glm::vec3 cameraTranslation = glm::vec3(0.0f, 0.0f, -6.0f);
+  glm::vec3 cameraVelocity = glm::vec3(0.0f);
 
   glm::quat lastCameraRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
   glm::vec3 lastCameraOffset = glm::vec3(0.0f, 0.0f, -3.0f);
@@ -24,12 +25,16 @@ struct State {
   double prevX = 0.0;
   double prevY = 0.0;
 
+  float pitch = 0.0f;
+  float yaw = 0.0f;
+
   bool inControl = false;
   bool debugMode = false;
   bool refreshRayEmitter = true;
 
   static constexpr float scrollMult = 0.1f;
-  static constexpr float motionRotMult = 0.00006f;
+  static constexpr float cameraSpeed = 0.01f;
+  static constexpr float motionRotMult = 0.001f;
 
   bool skip = false;
   double averageFps = -1.0;
@@ -39,6 +44,8 @@ struct State {
   void nextScenario(int frames);
 
   void translateCamera(glm::vec3 translation);
+
+  void update(double deltaTime);
 };
 
 namespace state {
