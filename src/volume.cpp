@@ -14,6 +14,9 @@
 #include <iostream>
 #include <stack>
 
+#include <glm/vec3.hpp>
+#include <glm/gtx/euler_angles.hpp>
+
 #include "miniz.h"
 
 namespace {
@@ -377,6 +380,137 @@ Volume load_cube() {
     return cube;
 }
 
+Volume load_seaweed() {
+    struct Segment {
+        glm::vec3 from;
+        glm::vec3 to;
+        float phi;
+        float theta;
+        float length;
+        float width;
+    };
+
+    std::vector<Segment> segments;
+    srand(123456);
+
+    const int size = 64;
+    const int minSegments = 3;
+    const int maxSegments = 6;
+    const int minLeaves = 1;
+    const int maxLeaves = 3;
+    const float minLength = size / 10.0f;
+    const float maxLength = size / 4.0f;
+    const float minLeafLength = size / 20.0f;
+    const float maxLeafLength = size / 16.0f;
+    const float leafOffset = minLength;
+    const float minWidth = 1.0f;
+    const float maxWidth = 3.0f;
+    const float angleFactor = glm::radians(15.0f);
+    const float leafAngleFactor = glm::radians(50.0f);
+
+    const int segmentCount = rand() % (maxSegments - minSegments + 1) + minSegments;
+    float totalLength = 0.0f;
+    float prevPhi = glm::radians(90.0f);
+    float prevTheta = glm::radians(90.0f);
+    glm::vec3 from(size / 2.0f, size - 1.0f, size / 2.0f);
+
+    for (int i = 0; i < segmentCount; i++) {
+        const float width = (1.0f - float(i) / float(segmentCount)) * (maxWidth - minWidth) + minWidth;
+        const float phi = prevPhi - angleFactor + float(rand()) / float(RAND_MAX) * angleFactor * 2.0f;
+        const float theta = prevTheta - angleFactor + float(rand()) / float(RAND_MAX) * angleFactor * 2.0f;
+        const float length = float(rand()) / float(RAND_MAX) * (maxLength - minLength + 1) + minLength;
+        const glm::vec3 to = from + glm::vec3(length * cos(phi) * sin(theta), -length * sin(phi) * sin(theta), length * cos(theta));
+        const Segment segment { from, to, phi, theta, length, width };
+        segments.push_back(segment);
+        from = to;
+        prevPhi = phi;
+        prevTheta = theta;
+        totalLength += length;
+    }
+
+    const int leafCount = (rand() % (maxLeaves - minLeaves + 1) + minLeaves) * 2 * segmentCount;
+    float currentLength = 0.0f;
+    int segmentIndex = 0;
+
+    for (int i = 0; i < leafCount; i++) {
+        const float dist = float(i) / float(leafCount) * (totalLength - leafOffset) + leafOffset;
+        if (dist > currentLength + segments[segmentIndex].length) {
+            currentLength += segments[segmentIndex].length;
+            segmentIndex += 1;
+        }
+
+        const float factor = 1.0f - float(segmentIndex) / float(segmentCount) * 0.5f;
+        const Segment& segment = segments[segmentIndex];
+        const glm::vec3 dir = glm::normalize(segment.to - segment.from);
+        const float t = dist - currentLength;
+        const float sign = float(i % 2) * 2.0f - 1.0f;
+        glm::vec3 from = segment.from + dir * t + glm::vec3(0.0f, 0.0f, sign * segment.width / 2.0f);
+        prevPhi = segment.phi - glm::radians(90.0f);
+        prevTheta = segment.theta - glm::radians(90.0f);
+
+        for (int j = 0; j < 2; j++) {
+            const float phi = prevPhi - leafAngleFactor + float(rand()) / float(RAND_MAX) * leafAngleFactor * 2.0f;
+            const float theta = prevTheta - leafAngleFactor + float(rand()) / float(RAND_MAX) * leafAngleFactor * 2.0f;
+            const float length = (float(rand()) / float(RAND_MAX) * (maxLeafLength - minLeafLength + 1) + minLeafLength) * factor;
+            const float width = 2.0f - float(j) * 0.5f;
+            const glm::vec3 to = from + glm::vec3(length * cos(phi) * sin(theta), -length * sin(phi) * sin(theta), sign * length * cos(theta));
+            const Segment leaf { from, to, phi, theta, length, width };
+            segments.push_back(leaf);
+            from = to;
+            prevPhi = phi;
+            prevTheta = theta;
+        }
+    }
+
+    Volume seaweed(size, size, size);
+
+    for (Segment& segment : segments) {
+        const glm::vec3 span1 = glm::vec3(
+            cos(segment.phi + glm::radians(90.0f)) * sin(segment.theta),
+            sin(segment.phi + glm::radians(90.0f)) * sin(segment.theta),
+            cos(segment.theta)
+        );
+        const glm::vec3 span2 = glm::vec3(
+            cos(segment.phi) * sin(segment.theta + glm::radians(90.0f)),
+            sin(segment.phi) * sin(segment.theta + glm::radians(90.0f)),
+            cos(segment.theta + glm::radians(90.0f))
+        );
+
+        const glm::vec3 dir = segment.to - segment.from;
+        float t = 0.0f;
+        while (t <= 1.0f) {
+            const glm::vec3 pos = segment.from + dir * t;
+
+            const float dt = glm::min(
+                glm::min(
+                    ((glm::min(glm::sign(dir.x), 0.0f) + 1.0f) - glm::fract(pos.x)) / dir.x,
+                    ((glm::min(glm::sign(dir.y), 0.0f) + 1.0f) - glm::fract(pos.y)) / dir.y
+                ),
+                ((glm::min(glm::sign(dir.z), 0.0f) + 1.0f) - glm::fract(pos.z)) / dir.z
+            );
+
+            t += dt + glm::epsilon<float>();
+            for (int i = 0; i < ceil(segment.width); i++) {
+                for (int j = 0; j < ceil(segment.width); j++) {
+                    const float fi = float(i) / ceil(segment.width);
+                    const float fj = float(j) / ceil(segment.width);
+                    const glm::vec3 off = (fi - 0.5f) * span1 * segment.width + (fj - 0.5f) * span2 * segment.width;
+                    const glm::ivec3 ipos = glm::floor(pos + off);
+                    if (ipos.x < 0 || ipos.y < 0 || ipos.z < 0 || ipos.x >= size || ipos.y >= size || ipos.z >= size) {
+                        continue;
+                    }
+                    int index = ipos.z * size * size + ipos.y * size + ipos.x;
+                    seaweed.data()[index] = 1.0f;
+                }
+            }
+
+        }
+    }
+
+    seaweed.initialize();
+    return seaweed;
+}
+
 void Volume::initialize() {
     glCreateTextures(GL_TEXTURE_3D, 1, &this->dataTexture);
     glBindTextureUnit(0, this->dataTexture);
@@ -389,12 +523,10 @@ void Volume::initialize() {
     glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
     glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
 
-
     glCreateTextures(GL_TEXTURE_3D, 1, &this->distanceTexture);
     glBindTextureUnit(1, this->distanceTexture);
 
     glTextureStorage3D(this->distanceTexture, 1, GL_R32F, this->width(), this->height(), this->depth());
-
 
     glCreateTextures(GL_TEXTURE_3D, 1, &this->gradientTexture);
     glBindTextureUnit(2, this->gradientTexture);

@@ -16,8 +16,8 @@ private:
 
 public:
     SceneCollection(Window& window, Setup& setup) {
-        SplineMapScene* scene1 = create_scene(scenes::Pig, window, setup);
-        SplineMapScene* scene2 = create_scene_from_loaded(scene1, window, setup);
+        SplineMapScene* scene1 = create_scene(scenes::Seaweed, window, setup);
+        SplineMapScene* scene2 = create_scene(scenes::Carp, window, setup);
         SplineMapScene* scene3 = create_scene_from_loaded(scene1, window, setup);
         scene1->translate(glm::vec3(1.0f, 1.0f, -2.0f));
         scene3->translate(glm::vec3(-1.0f, 0.0f, 3.0f));

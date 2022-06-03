@@ -103,6 +103,9 @@ Volume load_fld_volume(char const* fileName);
 // Load debug cube
 Volume load_cube();
 
+// Load debug seaweed
+Volume load_seaweed();
+
 // Implementation:
 inline
 Volume::Volume( GLsizei aWidth, GLsizei aHeight, GLsizei aDepth )

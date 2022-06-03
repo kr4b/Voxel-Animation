@@ -7,6 +7,7 @@
 namespace scenes {
     enum Scene {
         Cube,
+        Seaweed,
         Pig,
         Bonsai,
         Carp,
@@ -19,6 +20,7 @@ namespace scenes {
 
     static const char* const names[] = {
         "cube",
+        "seaweed",
         "pig",
         "bonsai",
         "carp",
@@ -50,6 +52,8 @@ static Volume create_volume(scenes::Scene scene) {
             return load_fld_volume("assets/tooth.fld");
         case scenes::Bunny:
             return load_mhd_volume("assets/bunny.mhd");
+        case scenes::Seaweed:
+            return load_seaweed();
         case scenes::Cube:
         default:
             return load_cube();
