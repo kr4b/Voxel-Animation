@@ -70,6 +70,8 @@ struct SplineMap {
     Spline opposite_spline;
     Spline transformed_spline;
 
+    vec3 color;
+
     float width;
     float height;
     float depth;
@@ -159,7 +161,7 @@ Plane plane_constructor(in vec3 point, in vec3 span1, in vec3 span2);
 Ray ray_constructor(in vec3 origin, in vec3 direction);
 
 // Construct a ray from the fragment coordinates
-Ray get_frag_ray(in vec2 frag_coord, out vec3 origin, out vec3 direction);
+Ray get_frag_ray(in vec2 frag_coord);
 
 // Intersect of ray with line
 // Note that it is assumed that the ray intersects the line
@@ -369,12 +371,12 @@ Ray ray_constructor(in vec3 origin, in vec3 direction) {
     return ray;
 }
 
-Ray get_frag_ray(in vec2 frag_coord, out vec3 origin, out vec3 direction) {
+Ray get_frag_ray(in vec2 frag_coord) {
 	const vec4 hray = vec4(frag_coord * 2.0 - vec2(1.0), 1.0, 1.0);
 	const vec4 wray = uCamera.inverseProjCamera * hray;
 
-	origin = uCamera.cameraWorldPos;
-	direction = normalize( wray.xyz / wray.w - origin );
+	const vec3 origin = uCamera.cameraWorldPos;
+	const vec3 direction = normalize( wray.xyz / wray.w - origin );
 
     return ray_constructor(origin, direction);
 }
@@ -579,16 +581,16 @@ vec3 gradient_normal(in Spline spline, in vec3 coord) {
 void main() {
     oColor = vec4(0.0);
 
-    vec3 origin;
-    vec3 direction;
-    Ray ray = get_frag_ray(gl_FragCoord.xy * uCamera.reciprocalWindowSize, origin, direction);
+    Ray ray = get_frag_ray(gl_FragCoord.xy * uCamera.reciprocalWindowSize);
 
+    bool intersect = false;
     ivec3 texel;
     float t;
     vec3 normal;
+    
     if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t, normal)) {
         const float light = dot(normalize(vec3(-1.0, 1.0, -1.0)), normal);
-        oColor = vec4(vec3(max(0.0, light) * 0.7 + 0.3), 1.0);
+        oColor = vec4(uSplineMap.spline_map.color * (max(0.0, light) * 0.7 + 0.3), 1.0);
         // TODO: Depth hack, maybe base it on projection near/far planes
         gl_FragDepth = t / 100.0;
         // oColor = normal * 0.5 + 0.5;

@@ -6,4 +6,5 @@ layout( location = 0 ) out vec3 oColor;
 
 void main() {
   oColor = iColor;
+  gl_FragDepth = 0.98;
 }

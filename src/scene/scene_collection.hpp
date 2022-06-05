@@ -20,7 +20,8 @@ public:
         SplineMapScene* scene2 = create_scene(scenes::Carp, window, setup);
         SplineMapScene* scene3 = create_scene_from_loaded(scene1, window, setup);
         scene1->translate(glm::vec3(1.0f, 1.0f, -2.0f));
-        scene3->translate(glm::vec3(-1.0f, 0.0f, 3.0f));
+        scene2->translate(glm::vec3(0.0f, -1.0f, 0.0f));
+        scene3->translate(glm::vec3(-1.0f, 1.0f, 3.0f));
         scenes.push_back(scene1);
         scenes.push_back(scene2);
         scenes.push_back(scene3);
@@ -37,11 +38,14 @@ public:
         ImGui::SliderInt("Offset", &this->offset, 0, scenes.size() - 1);
         ImGui::End();
 
+        bool showUi = true;
         for (int i = 0; i < scenes.size(); i++) {
             SplineMapScene* scene = scenes[(i + offset) % scenes.size()];
             scene->set_state(get_state());
+            scene->get_state().showUi = showUi;
             scene->update();
             scene->render();
+            showUi = false;
         }
     }
 

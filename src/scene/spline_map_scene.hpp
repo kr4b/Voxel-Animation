@@ -48,6 +48,7 @@ struct SplineMapUniform
     alignas(16) SplineUniform spline;
     alignas(16) SplineUniform opposite_spline;
     alignas(16) SplineUniform transformed_spline;
+    alignas(16) glm::vec3 color;
 
     float width;
     float height;
@@ -60,15 +61,17 @@ public:
     SplineMapScene(
         Window &window,
         Setup& setup,
-        std::shared_ptr<Volume> volume) :
+        std::shared_ptr<Volume> volume,
+        glm::ivec3 color) :
         window(window),
         setup(setup),
         shader("assets/simple_vol.vert", "assets/spline_map.frag"),
         debugShader("assets/debug.vert", "assets/debug.frag"),
         volume(volume),
-        translation(glm::vec3(0.0f)),
+        translation(0.0f),
         tangents { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f) },
-        offset(glm::vec3(0.0f, 2.0f, 0.0f)),
+        offset(0.0f, 2.0f, 0.0f),
+        color(color),
         splineMap(
             Plane(
                 glm::vec3(-1.0f, -1.0f, -1.0f),
@@ -96,10 +99,10 @@ public:
 
 protected:
     void init() {
-        const SplineMapUniform uniform = create_uniform();
+        this->uniformData = create_uniform();
 
         glCreateBuffers(1, &splineMapUniform);
-        glNamedBufferStorage(splineMapUniform, sizeof(SplineMapUniform), &uniform, GL_DYNAMIC_STORAGE_BIT);
+        glNamedBufferStorage(splineMapUniform, sizeof(SplineMapUniform), &this->uniformData, GL_DYNAMIC_STORAGE_BIT);
     };
 
 private:
@@ -110,6 +113,7 @@ private:
     glm::vec3 tangents[2];
     // Offset of top base
     glm::vec3 offset;
+    glm::ivec3 color;
     float threshold = 0.25f;
     float stepSize = 0.025f;
     double time = 0.0;
@@ -169,6 +173,7 @@ private:
                 this->splineMap.spline.transformedSpline->c,
                 this->splineMap.spline.transformedSpline->d
             },
+            glm::vec3(this->color) / 255.0f,
             this->splineMap.width,
             this->splineMap.height,
             this->splineMap.depth,
@@ -199,6 +204,10 @@ private:
         splineMapChange |= ImGui::DragFloat("y", &this->tangents[1].y);
         splineMapChange |= ImGui::DragFloat("z", &this->tangents[1].z);
         ImGui::PopID();
+        ImGui::Text("Color:");
+        splineMapChange |= ImGui::SliderInt("R", &this->color.x, 0, 255);
+        splineMapChange |= ImGui::SliderInt("G", &this->color.y, 0, 255);
+        splineMapChange |= ImGui::SliderInt("B", &this->color.z, 0, 255);
         ImGui::Checkbox("Animate", &this->animate);
         ImGui::End();
 
@@ -212,8 +221,7 @@ private:
         this->splineMap.clean();
         SplineMap splineMap = SplineMap(this->splineMap.base, spline);
         std::memmove(&this->splineMap, &splineMap, sizeof(SplineMap));
-        const SplineMapUniform uniform = create_uniform();
-        glNamedBufferSubData(this->splineMapUniform, 0, sizeof(SplineMapUniform), &uniform);
+        this->uniformData = create_uniform();
     }
 
 public:
@@ -232,12 +240,15 @@ public:
 
         if (get_state().debugMode) {
             get_ray_emitter().update(get_setup(), get_state(), get_spline_map(), *(this->volume), &this->threshold, &this->stepSize);
-            show_ui();
+            if (get_state().showUi) {
+                show_ui();
+            }
         }
     }
 
     void render() {
         get_shader().use();
+        glNamedBufferSubData(this->splineMapUniform, 0, sizeof(SplineMapUniform), &this->uniformData);
         glBindBufferBase(GL_UNIFORM_BUFFER, 2, splineMapUniform);
         get_shader().uniformFloat("threshold", this->threshold);
         get_shader().uniformFloat("step_size", this->stepSize);
@@ -259,17 +270,19 @@ public:
 
     void set_state(State state) { this->state = state; }
 
-    inline virtual State&           get_state()             { return state;         };
-    inline virtual Window&          get_window()            { return window;        };
-    inline virtual Setup&           get_setup()             { return setup;         };
-    inline virtual Shader&          get_shader()            { return shader;        };
-    inline virtual Shader&          get_debug_shader()      { return debugShader;   };
-    inline virtual SplineMap&       get_spline_map()        { return splineMap;     };
-    inline virtual Axis&            get_axis()              { return axis;          };
-    inline virtual RayEmitter&      get_ray_emitter()       { return rayEmitter;    };
-    inline virtual std::shared_ptr<Volume> get_volume()     { return volume;        };
+    inline virtual State&           get_state()             { return state;        };
+    inline virtual Window&          get_window()            { return window;       };
+    inline virtual Setup&           get_setup()             { return setup;        };
+    inline virtual Shader&          get_shader()            { return shader;       };
+    inline virtual Shader&          get_debug_shader()      { return debugShader;  };
+    inline virtual SplineMap&       get_spline_map()        { return splineMap;    };
+    inline virtual Axis&            get_axis()              { return axis;         };
+    inline virtual RayEmitter&      get_ray_emitter()       { return rayEmitter;   };
+    inline virtual std::shared_ptr<Volume> get_volume()     { return volume;       };
+    inline virtual glm::ivec3       get_color()             { return color;        }
 
 protected:
+    SplineMapUniform uniformData;
     GLuint     splineMapUniform;
     State      state;
     Window&    window;

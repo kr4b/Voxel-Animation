@@ -30,6 +30,7 @@ struct State {
 
   bool inControl = false;
   bool debugMode = false;
+  bool showUi = true;
   bool refreshRayEmitter = true;
 
   static constexpr float scrollMult = 0.1f;

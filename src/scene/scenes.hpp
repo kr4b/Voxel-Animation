@@ -1,6 +1,9 @@
 #pragma once
 
 #include <memory>
+#include <utility>
+
+#include <glm/vec3.hpp>
 
 #include "spline_map_scene.hpp"
 
@@ -34,36 +37,37 @@ namespace scenes {
     static const int len = sizeof(names) / sizeof(names[0]);
 }
 
-static Volume create_volume(scenes::Scene scene) {
+static std::pair<std::shared_ptr<Volume>, glm::ivec3> create_volume(scenes::Scene scene) {
     switch (scene) {
-        case scenes::Pig:
-            return load_fld_volume("assets/pig8.fld");
-        case scenes::Bonsai:
-            return load_fld_volume("assets/bonsai.fld");
-        case scenes::Carp:
-            return load_fld_volume("assets/carp8.fld");
-        case scenes::Orange:
-            return load_fld_volume("assets/orange.fld");
-        case scenes::Stent:
-            return load_fld_volume("assets/stent8.fld");
-        case scenes::Tomato:
-            return load_fld_volume("assets/tomato.fld");
-        case scenes::Tooth:
-            return load_fld_volume("assets/tooth.fld");
-        case scenes::Bunny:
-            return load_mhd_volume("assets/bunny.mhd");
-        case scenes::Seaweed:
-            return load_seaweed();
+        case scenes::Pig: // Piggy Pink
+            return std::make_pair(std::make_shared<Volume>(load_fld_volume("assets/pig8.fld")), glm::ivec3(253, 221, 230));
+        case scenes::Bonsai: // Bark Brown
+            return std::make_pair(std::make_shared<Volume>(load_fld_volume("assets/bonsai.fld")), glm::ivec3(102, 73, 58));
+        case scenes::Carp: // Apricot Orange
+            return std::make_pair(std::make_shared<Volume>(load_fld_volume("assets/carp8.fld")), glm::ivec3(253, 180, 130));
+        case scenes::Orange: // Sweet Orange
+            return std::make_pair(std::make_shared<Volume>(load_fld_volume("assets/orange.fld")), glm::ivec3(250, 141, 73));
+        case scenes::Stent: // Dark Flesh
+            return std::make_pair(std::make_shared<Volume>(load_fld_volume("assets/stent8.fld")), glm::ivec3(186, 141, 135));
+        case scenes::Tomato: // Tomato
+            return std::make_pair(std::make_shared<Volume>(load_fld_volume("assets/tomato.fld")), glm::ivec3(206, 41, 57));
+        case scenes::Tooth: // Neutral Pearl White
+            return std::make_pair(std::make_shared<Volume>(load_fld_volume("assets/tooth.fld")), glm::ivec3(242, 238, 231));
+        case scenes::Bunny: // White Fur
+            return std::make_pair(std::make_shared<Volume>(load_mhd_volume("assets/bunny.mhd")), glm::ivec3(244, 241, 240));
+        case scenes::Seaweed: // Nori Seaweed Green
+            return std::make_pair(std::make_shared<Volume>(load_seaweed()), glm::ivec3(70, 72, 38));
         case scenes::Cube:
         default:
-            return load_cube();
+            return std::make_pair(std::make_shared<Volume>(load_cube()), glm::ivec3(255));
     }
 }
 
 static SplineMapScene* create_scene(scenes::Scene scene, Window& window, Setup& setup) {
-    return new SplineMapScene(window, setup, std::make_shared<Volume>(create_volume(scene)));
+    const auto pair = create_volume(scene);
+    return new SplineMapScene(window, setup, pair.first, pair.second);
 }
 
 static SplineMapScene* create_scene_from_loaded(SplineMapScene* scene, Window& window, Setup& setup) {
-    return new SplineMapScene(window, setup, scene->get_volume());
+    return new SplineMapScene(window, setup, scene->get_volume(), scene->get_color());
 }
