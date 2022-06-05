@@ -595,8 +595,23 @@ void main() {
         gl_FragDepth = t / 100.0;
         // oColor = normal * 0.5 + 0.5;
         // oColor *= vec3(texel) / vec3(textureSize(texVol, 0));
-    } else {
+        intersect = true;
+    }
+
+    if (true) {
+        const vec3 floorNormal = vec3(0.0, -1.0, 0.0);
+        const vec3 floorPoint = vec3(0.0, -1.0, 0.0);
+        const float d = dot(floorNormal, ray.direction);
+        if (d >= 10e-6) {
+            const float t2 = dot(floorNormal, (floorPoint - ray.origin)) / d;
+            if (t2 >= 10e-6 && (!intersect || t2 < t)) {
+                oColor = vec4(0.76, 0.6, 0.42, 1.0);
+                gl_FragDepth = 0.99;
+            }
+        } 
+    }
+
+    if (!intersect) {
         gl_FragDepth = 1.0;
-        // discard;
     }
 }
