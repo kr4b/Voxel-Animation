@@ -88,9 +88,9 @@ void Spline::update_buffers() {
         vertices[i * 3 + 1] = point.y;
         vertices[i * 3 + 2] = point.z;
 
-        colors[i * 3 + 0] = 1.0f;
-        colors[i * 3 + 1] = 1.0f;
-        colors[i * 3 + 2] = 1.0f;
+        colors[i * 3 + 0] = 0.75f;
+        colors[i * 3 + 1] = 0.75f;
+        colors[i * 3 + 2] = 0.75f;
     }
 
     glBindVertexArray(this->lineVao);

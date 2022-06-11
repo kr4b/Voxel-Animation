@@ -387,7 +387,7 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout i
 
     if (result) {
         float i = max(0.0, ts.x);
-        while (i <= ts.y) {
+        for (int steps = 0; steps < 1000 && i <= ts.y; steps++) {
             const vec3 pos = ray.origin + ray.direction * i;
             vec3 coords, raw_coords;
 
@@ -572,8 +572,8 @@ vec3 gradient_normal(in Spline spline, in vec3 coord) {
         texture(distanceField, coord - vec3(0.0, 0.0, EPSILON)).r - texture(distanceField, coord + vec3(0.0, 0.0, EPSILON)).r
     );
     return normalize(vec3(
-        normal.x * sin(xangle),
-        normal.y + normal.x * cos(xangle) + normal.z * cos(zangle),
+        normal.x * cos(xangle),
+        normal.y + normal.x * sin(xangle) + normal.z * sin(zangle),
         normal.z * cos(zangle)
     ));
 }
@@ -589,7 +589,7 @@ void main() {
     vec3 normal;
     
     if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t, normal)) {
-        const float light = dot(normalize(vec3(-1.0, 1.0, -1.0)), normal);
+        const float light = dot(normalize(vec3(5.0, 10.0, 20.0) - (ray.origin + t * ray.direction)), normal);
         oColor = vec4(uSplineMap.spline_map.color * (max(0.0, light) * 0.7 + 0.3), 1.0);
         // TODO: Depth hack, maybe base it on projection near/far planes
         gl_FragDepth = t / 100.0;
@@ -607,6 +607,7 @@ void main() {
             if (t2 >= 10e-6 && (!intersect || t2 < t)) {
                 oColor = vec4(0.76, 0.6, 0.42, 1.0);
                 gl_FragDepth = 0.99;
+                intersect = true;
             }
         } 
     }

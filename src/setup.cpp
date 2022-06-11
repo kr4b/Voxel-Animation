@@ -13,6 +13,7 @@ struct CameraUniform {
 };
 
 Setup::Setup() {
+    // glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClearColor(0.01f, 0.22f, 0.39f, 1.0f);
 
     glCreateVertexArrays(1, &this->vao);
