@@ -49,10 +49,8 @@ struct SplineMapUniform
     alignas(16) SplineUniform opposite_spline;
     alignas(16) SplineUniform transformed_spline;
     alignas(16) glm::vec3 color;
+    alignas(16) glm::vec3 size;
 
-    float width;
-    float height;
-    float depth;
     float scale;
 };
 
@@ -62,7 +60,8 @@ public:
         Window &window,
         Setup& setup,
         std::shared_ptr<Volume> volume,
-        glm::ivec3 color) :
+        glm::ivec3 color,
+        float rotation) :
         window(window),
         setup(setup),
         shader("assets/simple_vol.vert", "assets/spline_map.frag"),
@@ -72,11 +71,16 @@ public:
         tangents { glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f) },
         offset(0.0f, 2.0f, 0.0f),
         color(color),
+        rotation(rotation),
         splineMap(
             Plane(
                 glm::vec3(-1.0f, -1.0f, -1.0f),
-                glm::vec3(0.0f, 0.0f, 2.0f),
-                glm::vec3(2.0f, 0.0f, 0.0f)
+                glm::vec3(float(volume->width()) / float(volume->height()) * 2.0f, 0.0f, 0.0f),
+                glm::vec3(
+                    0.0f,
+                    float(volume->depth()) / float(volume->height()) * 2.0f * sin(rotation),
+                    float(volume->depth()) / float(volume->height()) * 2.0f * cos(rotation)
+                )
             ),
             Spline::with_tangents(
                 glm::vec3(0.0f), offset, tangents[0], tangents[1]
@@ -114,6 +118,7 @@ private:
     // Offset of top base
     glm::vec3 offset;
     glm::ivec3 color;
+    float rotation;
     float threshold = 0.25f;
     float stepSize = 0.025f;
     double time = 0.0;
@@ -174,9 +179,7 @@ private:
                 this->splineMap.spline.transformedSpline->d
             },
             glm::vec3(this->color) / 255.0f,
-            this->splineMap.width,
-            this->splineMap.height,
-            this->splineMap.depth,
+            glm::vec3(this->splineMap.width, this->splineMap.height, this->splineMap.depth),
             scale,
         };
     }
@@ -280,6 +283,7 @@ public:
     inline virtual RayEmitter&      get_ray_emitter()       { return rayEmitter;   };
     inline virtual std::shared_ptr<Volume> get_volume()     { return volume;       };
     inline virtual glm::ivec3       get_color()             { return color;        }
+    inline virtual float            get_rotation()          { return rotation;     };
 
 protected:
     SplineMapUniform uniformData;

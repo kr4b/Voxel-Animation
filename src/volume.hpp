@@ -98,7 +98,7 @@ class Volume {
 Volume load_mhd_volume(char const* aFileName);
 
 // Load fld volume from .fld file
-Volume load_fld_volume(char const* fileName);
+Volume load_fld_volume(char const* fileName, glm::ivec3 order = glm::ivec3(0, 1, 2));
 
 // Load debug cube
 Volume load_cube();

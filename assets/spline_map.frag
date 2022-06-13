@@ -71,10 +71,8 @@ struct SplineMap {
     Spline transformed_spline;
 
     vec3 color;
+    vec3 size;
 
-    float width;
-    float height;
-    float depth;
     float scale;
 };
 
@@ -544,9 +542,9 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out v
         const vec3 edge = position_on_spline(spline_map.transformed_spline, t);
         const vec3 diff = p.xyz - edge;
 
-        const float xComp = diff.x / spline_map.width;
-        const float yComp = 1.0 - p.y / spline_map.height;
-        const float zComp = diff.z / spline_map.depth;
+        const float xComp = diff.x / spline_map.size.x;
+        const float yComp = 1.0 - p.y / spline_map.size.y;
+        const float zComp = diff.z / spline_map.size.z;
 
         raw_coords = edge;
         coords = vec3(xComp, yComp, zComp);
@@ -589,7 +587,7 @@ void main() {
     vec3 normal;
     
     if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t, normal)) {
-        const float light = dot(normalize(vec3(5.0, 10.0, 20.0) - (ray.origin + t * ray.direction)), normal);
+        const float light = dot(normalize(vec3(5.0, 150.0, 20.0) - (ray.origin + t * ray.direction)), normal);
         oColor = vec4(uSplineMap.spline_map.color * (max(0.0, light) * 0.7 + 0.3), 1.0);
         // TODO: Depth hack, maybe base it on projection near/far planes
         gl_FragDepth = t / 100.0;

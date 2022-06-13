@@ -278,7 +278,7 @@ catch(std::exception const& eError) {
     return Volume(0, 0, 0);
 }
 
-Volume load_fld_volume(char const* fileName) {
+Volume load_fld_volume(char const* fileName, glm::ivec3 order) {
     FLDInfo info;
     std::ifstream file(fileName, std::ios::in | std::ios::binary);
 
@@ -316,11 +316,9 @@ Volume load_fld_volume(char const* fileName) {
     }
 
     assert(info.ndims == 3 && "Must have 3 dimensions");
-    Volume volume(info.dims[0], info.dims[1], info.dims[2], info.vecLen);
+    Volume volume(info.dims[order.x], info.dims[order.y], info.dims[order.z], info.vecLen);
 
-    size_t x = 0;
-    size_t y = 0;
-    size_t z = 0;
+    size_t axes[3] = {0};
     size_t vecIndex = 0;
     size_t dataSize = 0;
     unsigned int data = 0;
@@ -333,7 +331,7 @@ Volume load_fld_volume(char const* fileName) {
         data = (data << 8) + (unsigned int) byte;
         if (++dataSize == info.bytes) {
             const float value = float(data);
-            const size_t index = (z * info.dims[0] * info.dims[1] + y * info.dims[0] + x) * info.vecLen + vecIndex;
+            const size_t index = (axes[order.z] * info.dims[order.x] * info.dims[order.y] + axes[order.y] * info.dims[order.x] + axes[order.x]) * info.vecLen + vecIndex;
             volume.data()[index] = value;
             if (value > maxv) maxv = value;
             if (value < minv) minv = value;
@@ -341,11 +339,11 @@ Volume load_fld_volume(char const* fileName) {
             dataSize = 0;
             vecIndex = (vecIndex + 1) % info.vecLen;
 
-            if (++x == info.dims[0]) {
-                x = 0;
-                if (++y == info.dims[1]) {
-                    y = 0;
-                    if (++z == info.dims[2]) {
+            if (++axes[0] == info.dims[0]) {
+                axes[0] = 0;
+                if (++axes[1] == info.dims[1]) {
+                    axes[1] = 0;
+                    if (++axes[2] == info.dims[2]) {
                         break;
                     }
                 }
@@ -407,59 +405,70 @@ Volume load_seaweed() {
     const float maxWidth = 3.0f;
     const float angleFactor = glm::radians(15.0f);
     const float leafAngleFactor = glm::radians(50.0f);
+    const float baseOffset = 0.3f;
 
-    const int segmentCount = rand() % (maxSegments - minSegments + 1) + minSegments;
-    float totalLength = 0.0f;
-    float prevPhi = glm::radians(90.0f);
-    float prevTheta = glm::radians(90.0f);
-    glm::vec3 from(size / 2.0f, size - 1.0f, size / 2.0f);
+    int segmentOffset = 0;
 
-    for (int i = 0; i < segmentCount; i++) {
-        const float width = (1.0f - float(i) / float(segmentCount)) * (maxWidth - minWidth) + minWidth;
-        const float phi = prevPhi - angleFactor + float(rand()) / float(RAND_MAX) * angleFactor * 2.0f;
-        const float theta = prevTheta - angleFactor + float(rand()) / float(RAND_MAX) * angleFactor * 2.0f;
-        const float length = float(rand()) / float(RAND_MAX) * (maxLength - minLength + 1) + minLength;
-        const glm::vec3 to = from + glm::vec3(length * cos(phi) * sin(theta), -length * sin(phi) * sin(theta), length * cos(theta));
-        const Segment segment { from, to, phi, theta, length, width };
-        segments.push_back(segment);
-        from = to;
-        prevPhi = phi;
-        prevTheta = theta;
-        totalLength += length;
-    }
+    for (int i = 0; i < 3; i++) {
+        const int segmentCount = rand() % (maxSegments - minSegments + 1) + minSegments;
+        float totalLength = 0.0f;
+        float prevPhi = glm::radians(90.0f);
+        float prevTheta = glm::radians(90.0f);
+        glm::vec3 from(
+            (0.5f - baseOffset + float(rand()) / float(RAND_MAX) * baseOffset * 2.0f) * size,
+            size - 1.0f,
+            (0.5f - baseOffset + float(rand()) / float(RAND_MAX) * baseOffset * 2.0f) * size
+        );
 
-    const int leafCount = (rand() % (maxLeaves - minLeaves + 1) + minLeaves) * 2 * segmentCount;
-    float currentLength = 0.0f;
-    int segmentIndex = 0;
-
-    for (int i = 0; i < leafCount; i++) {
-        const float dist = float(i) / float(leafCount) * (totalLength - leafOffset) + leafOffset;
-        if (dist > currentLength + segments[segmentIndex].length) {
-            currentLength += segments[segmentIndex].length;
-            segmentIndex += 1;
-        }
-
-        const float factor = 1.0f - float(segmentIndex) / float(segmentCount) * 0.5f;
-        const Segment& segment = segments[segmentIndex];
-        const glm::vec3 dir = glm::normalize(segment.to - segment.from);
-        const float t = dist - currentLength;
-        const float sign = float(i % 2) * 2.0f - 1.0f;
-        glm::vec3 from = segment.from + dir * t + glm::vec3(0.0f, 0.0f, sign * segment.width / 2.0f);
-        prevPhi = segment.phi - glm::radians(90.0f);
-        prevTheta = segment.theta - glm::radians(90.0f);
-
-        for (int j = 0; j < 2; j++) {
-            const float phi = prevPhi - leafAngleFactor + float(rand()) / float(RAND_MAX) * leafAngleFactor * 2.0f;
-            const float theta = prevTheta - leafAngleFactor + float(rand()) / float(RAND_MAX) * leafAngleFactor * 2.0f;
-            const float length = (float(rand()) / float(RAND_MAX) * (maxLeafLength - minLeafLength + 1) + minLeafLength) * factor;
-            const float width = 2.0f - float(j) * 0.5f;
-            const glm::vec3 to = from + glm::vec3(length * cos(phi) * sin(theta), -length * sin(phi) * sin(theta), sign * length * cos(theta));
-            const Segment leaf { from, to, phi, theta, length, width };
-            segments.push_back(leaf);
+        for (int i = 0; i < segmentCount; i++) {
+            const float width = (1.0f - float(i) / float(segmentCount)) * (maxWidth - minWidth) + minWidth;
+            const float phi = prevPhi - angleFactor + float(rand()) / float(RAND_MAX) * angleFactor * 2.0f;
+            const float theta = prevTheta - angleFactor + float(rand()) / float(RAND_MAX) * angleFactor * 2.0f;
+            const float length = float(rand()) / float(RAND_MAX) * (maxLength - minLength + 1) + minLength;
+            const glm::vec3 to = from + glm::vec3(length * cos(phi) * sin(theta), -length * sin(phi) * sin(theta), length * cos(theta));
+            const Segment segment { from, to, phi, theta, length, width };
+            segments.push_back(segment);
             from = to;
             prevPhi = phi;
             prevTheta = theta;
+            totalLength += length;
         }
+
+        const int leafCount = (rand() % (maxLeaves - minLeaves + 1) + minLeaves) * 2 * segmentCount;
+        float currentLength = 0.0f;
+        int segmentIndex = 0;
+
+        for (int i = 0; i < leafCount; i++) {
+            const float dist = float(i) / float(leafCount) * (totalLength - leafOffset) + leafOffset;
+            if (dist > currentLength + segments[segmentIndex + segmentOffset].length) {
+                currentLength += segments[segmentIndex + segmentOffset].length;
+                segmentIndex += 1;
+            }
+
+            const float factor = 1.0f - float(segmentIndex) / float(segmentCount) * 0.5f;
+            const Segment& segment = segments[segmentIndex + segmentOffset];
+            const glm::vec3 dir = glm::normalize(segment.to - segment.from);
+            const float t = dist - currentLength;
+            const float sign = float(i % 2) * 2.0f - 1.0f;
+            glm::vec3 from = segment.from + dir * t + glm::vec3(0.0f, 0.0f, sign * segment.width / 2.0f);
+            prevPhi = segment.phi - glm::radians(90.0f);
+            prevTheta = segment.theta - glm::radians(90.0f);
+
+            for (int j = 0; j < 2; j++) {
+                const float phi = prevPhi - leafAngleFactor + float(rand()) / float(RAND_MAX) * leafAngleFactor * 2.0f;
+                const float theta = prevTheta - leafAngleFactor + float(rand()) / float(RAND_MAX) * leafAngleFactor * 2.0f;
+                const float length = (float(rand()) / float(RAND_MAX) * (maxLeafLength - minLeafLength + 1) + minLeafLength) * factor;
+                const float width = 2.0f - float(j) * 0.5f;
+                const glm::vec3 to = from + glm::vec3(length * cos(phi) * sin(theta), -length * sin(phi) * sin(theta), sign * length * cos(theta));
+                const Segment leaf { from, to, phi, theta, length, width };
+                segments.push_back(leaf);
+                from = to;
+                prevPhi = phi;
+                prevTheta = theta;
+            }
+        }
+
+        segmentOffset += segmentCount + leafCount * 2;
     }
 
     Volume seaweed(size, size, size);

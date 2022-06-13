@@ -79,6 +79,7 @@ void key_press(GLFWwindow *win, State* state, int key) {
     }
     // Backspace => return to camera transformation when debug rays were created
     case GLFW_KEY_BACKSPACE: {
+      break;
       state->cameraRotation = state->lastCameraRotation;
       state->cameraOffset = state->lastCameraOffset;
       break;

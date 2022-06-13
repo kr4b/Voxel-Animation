@@ -30,7 +30,7 @@ SplineMap::SplineMap(const Plane& base, const Spline& spline) :
     // Calculate width, height and depth
     // Where the width and depth are of each base and the height is the distance between the bases
     this->width = abs(length(this->base.span1));
-    this->height = abs(end.y - start.y);
+    this->height = glm::distance(start, end);
     this->depth = abs(length(this->base.span2));
 
     // Init some other stuff

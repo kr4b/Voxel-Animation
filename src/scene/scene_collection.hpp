@@ -20,7 +20,7 @@ public:
         SplineMapScene* scene2 = create_scene(scenes::Carp, window, setup);
         SplineMapScene* scene3 = create_scene_from_loaded(scene1, window, setup);
         scene1->translate(glm::vec3(1.0f, 1.0f, -2.0f));
-        scene2->translate(glm::vec3(0.0f, -1.0f, 0.0f));
+        scene2->translate(glm::vec3(-0.5f, -1.0f, -1.25f));
         scene3->translate(glm::vec3(-1.0f, 1.0f, 3.0f));
         scenes.push_back(scene1);
         scenes.push_back(scene2);
