@@ -35,7 +35,7 @@ Window::Window(const int width, const int height) : frames(0) {
   glfwSetScrollCallback(this->window, state::scroll_callback);
   glfwSetCursorPosCallback(this->window, state::motion_callback);
 
-  glfwSwapInterval(1);
+  // glfwSwapInterval(1);
 
   this->prevUpdate = std::chrono::high_resolution_clock::now();
   this->prevFrame = this->prevUpdate;

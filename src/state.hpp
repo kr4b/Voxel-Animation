@@ -13,12 +13,12 @@
 struct State {
   glm::quat cameraRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
   glm::vec3 cameraOffset = glm::vec3(0.0f, 0.0f, -6.0f);
-  glm::vec3 cameraTranslation = glm::vec3(0.0f, 0.0f, -6.0f);
+  glm::vec3 cameraTranslation = glm::vec3(0.0f, 0.0f, 0.0f);
   glm::vec3 cameraVelocity = glm::vec3(0.0f);
 
   glm::quat lastCameraRotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
-  glm::vec3 lastCameraOffset = glm::vec3(0.0f, 0.0f, -3.0f);
-  glm::vec3 lastCameraTranslation = glm::vec3(0.0f, 0.0f, -6.0f);
+  glm::vec3 lastCameraOffset = glm::vec3(0.0f, 0.0f, -6.0f);
+  glm::vec3 lastCameraTranslation = glm::vec3(0.0f, 0.0f, 0.0f);
 
   double lastX = 0.0;
   double lastY = 0.0;
@@ -47,6 +47,8 @@ struct State {
   void translateCamera(glm::vec3 translation);
 
   void update(double deltaTime);
+private:
+  void updateCamera();
 };
 
 namespace state {

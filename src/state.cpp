@@ -3,30 +3,34 @@
 
 #include <glm/gtx/quaternion.hpp>
 
-const static std::pair<glm::quat, glm::vec3> scenarios[] = {
-  std::make_pair(glm::quat(1.0f, 0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -6.0f)),
-  std::make_pair(glm::quat(0.8f, 0.1f, 0.9f, 0.6f), glm::vec3(0.0f, 0.0f, -2.0f)),
-  std::make_pair(glm::quat(0.0f, 0.7f, 0.2f, 0.7f), glm::vec3(0.0f, 0.0f, -7.0f)),
-  std::make_pair(glm::quat(0.5f, 0.8f, 0.4f, 0.2f), glm::vec3(0.0f, 0.0f, -4.0f)),
-  std::make_pair(glm::quat(0.0f, 0.2f, 0.1f, 0.0f), glm::vec3(0.0f, 0.0f, -9.0f)),
-  std::make_pair(glm::quat(0.9f, 0.3f, 0.5f, 0.8f), glm::vec3(0.0f, 0.0f, -7.0f)),
-  std::make_pair(glm::quat(0.3f, 0.5f, 0.2f, 0.1f), glm::vec3(0.0f, 0.0f, -5.0f)),
-  std::make_pair(glm::quat(0.4f, 0.7f, 1.0f, 0.5f), glm::vec3(0.0f, 0.0f, -4.0f)),
-  std::make_pair(glm::quat(0.4f, 0.2f, 0.9f, 0.0f), glm::vec3(0.0f, 0.0f, -0.0f)),
-  std::make_pair(glm::quat(1.0f, 1.0f, 0.2f, 0.2f), glm::vec3(0.0f, 0.0f, -1.0f)),
-  std::make_pair(glm::quat(0.0f, 0.5f, 0.3f, 0.8f), glm::vec3(0.0f, 0.0f, -1.0f)),
-  std::make_pair(glm::quat(0.6f, 0.9f, 0.2f, 0.5f), glm::vec3(0.0f, 0.0f, -2.0f)),
-  std::make_pair(glm::quat(0.1f, 0.4f, 0.1f, 0.9f), glm::vec3(0.0f, 0.0f, -6.0f)),
-  std::make_pair(glm::quat(0.7f, 0.1f, 0.3f, 0.8f), glm::vec3(0.0f, 0.0f, -6.0f)),
+const static glm::vec3 scenarios[] = {
+  glm::vec3(4.1f, 2.1f, 4.5f),
+  glm::vec3(3.5f, -3.9f, -3.3f),
+  glm::vec3(-4.9f, -2.9f, 4.5f),
+  glm::vec3(1.9f, 4.8f, 2.2f),
+  glm::vec3(2.8f, -3.1f, 0.65f),
+  glm::vec3(2.5f, 1.9f, 4.9f),
+  glm::vec3(-4.2f, -3.3f, -0.91f),
+  glm::vec3(5.7f, -2.2f, 0.085f),
+  glm::vec3(-0.81f, -5.1f, -0.99f),
+  glm::vec3(-4.8f, -1.4f, 4.6f),
+  glm::vec3(2.8f, 4.2f, -1.1f),
+  glm::vec3(-5.4f, 4.2f, 4.0f),
+  glm::vec3(4.1f, 2.5f, -1.4f),
+  glm::vec3(4.7f, 0.78f, 0.14f)
 };
+
+void State::updateCamera() {
+  this->cameraRotation = glm::conjugate(glm::quatLookAt(glm::normalize(-scenarios[this->scenarioCount]), glm::vec3(0.0f, 1.0f, 0.0f)));
+  this->cameraOffset = -scenarios[this->scenarioCount];
+}
 
 void State::startBenchmark() {
   this->scenarioCount = 0;
   this->averageFps = -1.0;
   this->skip = true;
 
-  this->cameraRotation = scenarios[0].first;
-  this->cameraOffset = scenarios[0].second;
+  this->updateCamera();
 }
 
 void State::nextScenario(int frames) {
@@ -44,8 +48,7 @@ void State::nextScenario(int frames) {
     return;
   }
 
-  this->cameraRotation = scenarios[this->scenarioCount].first;
-  this->cameraOffset = scenarios[this->scenarioCount].second;
+  this->updateCamera();
 }
 
 void State::translateCamera(glm::vec3 translation) {
