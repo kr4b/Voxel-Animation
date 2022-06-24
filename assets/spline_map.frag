@@ -334,7 +334,7 @@ Plane plane_constructor(in vec3 point, in vec3 span1, in vec3 span2) {
     const float cangle = cos(rangle);
     const float sangle = sin(rangle);
 
-    plane.inv_matrix = inverse(mat4(
+    mat4 matrix = mat4(
         cangle + raxis.x * raxis.x * (1.0 - cangle),
         raxis.y * raxis.x * (1.0 - cangle) + raxis.z * sangle,
         raxis.z * raxis.x * (1.0 - cangle) - raxis.y * sangle,
@@ -354,7 +354,19 @@ Plane plane_constructor(in vec3 point, in vec3 span1, in vec3 span2) {
         point.y,
         point.z,
         1.0
-    ));
+    );
+
+    float abs_det = abs(determinant(matrix));
+    if (isnan(abs_det) || abs_det <= 1e-9) {
+        matrix = mat4(
+            1.0, 0.0, 0.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 1.0, 0.0,
+            0.0, 0.0, 0.0, 1.0
+        );
+    }
+
+    plane.inv_matrix = inverse(matrix);
 
     return plane;
 }
@@ -370,11 +382,11 @@ Ray ray_constructor(in vec3 origin, in vec3 direction) {
 }
 
 Ray get_frag_ray(in vec2 frag_coord) {
-	const vec4 hray = vec4(frag_coord * 2.0 - vec2(1.0), 1.0, 1.0);
-	const vec4 wray = uCamera.inverseProjCamera * hray;
+    const vec4 hray = vec4(frag_coord * 2.0 - vec2(1.0), 1.0, 1.0);
+    const vec4 wray = uCamera.inverseProjCamera * hray;
 
-	const vec3 origin = uCamera.cameraWorldPos;
-	const vec3 direction = normalize( wray.xyz / wray.w - origin );
+    const vec3 origin = uCamera.cameraWorldPos;
+    const vec3 direction = normalize( wray.xyz / wray.w - origin );
 
     return ray_constructor(origin, direction);
 }
@@ -445,12 +457,24 @@ bool intersect_ray_line_segment(in Ray ray, in vec3 point1, in vec3 point2, inou
     if (result < 0.0 || result > 1.0) return false;
 
     const vec3 intersection = point1 * (1.0 - result) + point2 * result;
-    t = (intersection.x - ray.origin.x) / ray.direction.x;
+
+    if (abs(ray.direction.x) >= 1e-9) {
+        t = (intersection.x - ray.origin.x) / ray.direction.x;
+    }
+    else if (abs(ray.direction.y) >= 1e-9) {
+        t = (intersection.y - ray.origin.y) / ray.direction.y;
+    }
+    else if (abs(ray.direction.z) >= 1e-9) {
+        t = (intersection.z - ray.origin.z) / ray.direction.z;
+    } else {
+        return false;
+    }
+
     return true;
 }
 
 void find_ray_spline_intersection(in Ray ray, in Spline spline, in float t, in vec3 offset, inout vec2 ret) {
-    if (t >= 0.0 - EPSILON && t <= 1.0 + EPSILON) {
+    if (t >= 0.0 && t <= 1.0) {
         const vec3 pos1 = position_on_spline(spline, t);
         const vec3 pos2 = pos1 + offset;
 
@@ -480,8 +504,8 @@ bool intersect_ray_plane(in Ray ray, in Plane plane, inout float t) {
 
     // Check if point is inside bounds of the plane/rectangle
     return (
-        scalar1 > 0 && scalar1 < length1 &&
-        scalar2 > 0 && scalar2 < length2
+        scalar1 >= 0 && scalar1 <= length1 &&
+        scalar2 >= 0 && scalar2 <= length2
     );
 }
 
@@ -492,8 +516,8 @@ bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts
     const vec3 span2 = spline_map.base.span2;
 
     // Project ray on planes orthogonal to spanning vectors of the base
-    const Plane plane1 = plane_constructor(ray.origin, normalize(ray.direction - dot(ray.direction, span1) * span1), span1);
-    const Plane plane2 = plane_constructor(ray.origin, normalize(ray.direction - dot(ray.direction, span2) * span2), span2);
+    const Plane plane1 = plane_constructor(ray.origin, ray.direction, span1);
+    const Plane plane2 = plane_constructor(ray.origin, ray.direction, span2);
 
     vec3 intermediate_ts;
 
@@ -529,7 +553,7 @@ bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts
         ts.y = max(ts.y, t);
     }
 
-    return ts.x < ts.y;
+    return ts.x <= ts.y && ts.x >= 0.0;
 }
 
 // SplineMap
