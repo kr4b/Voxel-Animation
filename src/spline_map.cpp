@@ -47,6 +47,7 @@ SplineMap::SplineMap(const Plane& base, const Spline& spline) :
         1.0f));
     edgeSplines[0].init_vao();
     edgeSplines[0].update_buffers();
+
     edgeSplines[1] = this->spline.transform(glm::mat4x4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
@@ -57,6 +58,7 @@ SplineMap::SplineMap(const Plane& base, const Spline& spline) :
         1.0f));
     edgeSplines[1].init_vao();
     edgeSplines[1].update_buffers();
+
     edgeSplines[2] = this->spline.transform(glm::mat4x4(
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,

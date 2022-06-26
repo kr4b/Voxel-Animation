@@ -528,9 +528,9 @@ void Volume::initialize() {
     glTextureSubImage3D(
         this->dataTexture, 0, 0, 0, 0, this->width(), this->height(), this->depth(), GL_RED, GL_FLOAT, this->data());
     glBindTexture(GL_TEXTURE_3D, this->dataTexture);
-    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_R, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_3D,  GL_TEXTURE_WRAP_R, GL_CLAMP);
 
     glCreateTextures(GL_TEXTURE_3D, 1, &this->distanceTexture);
     glBindTextureUnit(1, this->distanceTexture);

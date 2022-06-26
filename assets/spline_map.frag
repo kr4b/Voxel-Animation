@@ -39,15 +39,6 @@ struct Spline {
     vec3 d; // t^0
 };
 
-struct Cubic {
-    float p;
-    float q;
-    float root;
-    float discriminant;
-    float fac;
-    float arccos;
-};
-
 struct Plane {
     vec3 point;
     vec3 span1;
@@ -118,17 +109,8 @@ Spline transform_spline(in Spline spline, in mat4 matrix);
 //                                //
 ////////////////////////////////////
 
-// Construct cubic equation
-Cubic cubic_constructor(in float a, in float b, in float c, in float d);
-
-// Calculate roots
-// https://en.wikipedia.org/wiki/Cubic_equation#Cardano's_formula
-// https://en.wikipedia.org/wiki/Cubic_equation#Trigonometric_solution_for_three_real_roots
-float calculate_default_root(inout Cubic cubic);
-float single_real_root(inout Cubic cubic);
-float first_root(inout Cubic cubic);
-float second_root(inout Cubic cubic);
-float third_root(inout Cubic cubic);
+// Solve up to a cubic equation
+bool solve_polynomial(in float a, in float b, in float c, in float d, out vec3 roots);
 
 //////////////////////////////////////
 //   _____   _                      //
@@ -216,44 +198,32 @@ vec3 position_on_spline_prime(in Spline spline, in float t) {
 }
 
 bool intersect_transformed_spline_plane(in Spline spline, in float offset, inout float t) {
-    const vec3 conversion = -spline.b / (3.0 * spline.a);
-    Cubic cubic = cubic_constructor(
-        spline.a.y,
-        spline.b.y,
-        spline.c.y,
-        spline.d.y - offset
-    );
+    vec3 roots;
+    if (!solve_polynomial(spline.a.y, spline.b.y, spline.c.y, spline.d.y - offset, roots)) {
+        return false;
+    }
 
-    // Try all roots
-    t = conversion.y + first_root(cubic);
+    t = roots.x;
     if (t < 0.0 || t > 1.0) {
-        t = conversion.y + second_root(cubic);
+        t = roots.y;
         if (t < 0.0 || t > 1.0) {
-            t = conversion.y + third_root(cubic);
-            if (t < 0.0 || t > 1.0) {
-                return false;
-            }
+            t = roots.z;
         }
     }
 
-    return true;
+    return t >= 0.0 && t <= 1.0;
 }
 
 void intersect_spline_plane(in Spline spline, in Plane plane, inout vec3 ts) {
     const Spline transformed_spline = transform_spline(spline, plane.inv_matrix);
 
-    const float conversion = -transformed_spline.b.y / (3.0 * transformed_spline.a.y);
-    Cubic cubic = cubic_constructor(
+    solve_polynomial(
         transformed_spline.a.y,
         transformed_spline.b.y,
         transformed_spline.c.y,
-        transformed_spline.d.y
+        transformed_spline.d.y,
+        ts
     );
-
-    // Return all roots
-    ts.x = conversion + first_root(cubic);
-    ts.y = conversion + second_root(cubic);
-    ts.z = conversion + third_root(cubic);
 }
 
 Spline transform_spline(in Spline spline, in mat4 matrix) {
@@ -269,57 +239,80 @@ Spline transform_spline(in Spline spline, in mat4 matrix) {
 }
 
 // Cubic
-Cubic cubic_constructor(in float a, in float b, in float c, in float d) {
-    Cubic cubic;
+bool solve_polynomial(in float a, in float b, in float c, in float d, out vec3 roots) {
+    if (a != 0.0) {
+        // Cubic
+        // https://en.wikipedia.org/wiki/Cubic_equation
+        const float conversion = -b / (3.0 * a);
+        const float p = (3.0 * a * c - b * b) / (3.0 * a * a);
+        const float q = (2.0 * b * b * b - 9.0 * a * b * c + 27.0 * a * a * d) / (27.0 * a * a * a);
 
-    cubic.p = (3.0 * a * c - b * b) / (3.0 * a * a);
-    cubic.q = (2.0 * b * b * b - 9.0 * a * b * c + 27.0 * a * a * d) / (27.0 * a * a * a);
+        const float discriminant = 27.0 * q * q + 4.0 * p * p * p;
+        
+        if (discriminant > 0.0) {
+            const float D = sqrt(q * q / 4.0 + p * p * p / 27.0);
+            const float C0 = -0.5 * q + D;
+            const float C1 = -0.5 * q - D;
 
-    cubic.discriminant = 27.0 * cubic.q * cubic.q + 4.0 * cubic.p * cubic.p * cubic.p;
+            roots = vec3(sign(C0) * pow(abs(C0), 0.333333) + sign(C1) * pow(abs(C1), 0.333333));
+        }
+        else if (discriminant < 0.0) {
+            const float fac = 2.0 * sqrt(-p / 3.0);
+            const float arccos = acos(3.0 * q / (2.0 * p) * sqrt(-3.0 / p)) / 3.0;
 
-    cubic.root = calculate_default_root(cubic);
+            roots = vec3(
+                fac * cos(arccos),
+                fac * cos(arccos - 2.0 / 3.0 * M_PI),
+                fac * cos(arccos - 4.0 / 3.0 * M_PI)
+            );
+        }
+        else if (p == 0.0) {
+            roots = vec3(0.0);
+        }
+        else {
+            roots = vec3(
+                3.0 * q / p,
+                -0.5 * 3.0 * q / p,
+                -1.0
+            );
+        }
 
-    return cubic;
-}
+        roots += conversion;
 
-float calculate_default_root(inout Cubic cubic) {
-    if (cubic.discriminant > 0.0) {
-        cubic.root = single_real_root(cubic);
-    } else {
-        cubic.fac = 2.0 * sqrt(-cubic.p / 3.0);
-        cubic.arccos = acos(3.0 * cubic.q / (2.0 * cubic.p) * sqrt(-3.0 / cubic.p)) / 3.0;
-
-        cubic.root = second_root(cubic);
+        return true;
     }
 
-    return cubic.root;
-}
+    if (b != 0.0) {
+        // Quadratic
+        const float discriminant = c * c - 4 * b * d;
 
-float single_real_root(inout Cubic cubic) {
-    if (cubic.discriminant > 0.0) {
-        const float D = sqrt(cubic.q * cubic.q / 4.0 + cubic.p * cubic.p * cubic.p / 27.0);
-        const float C0 = -0.5 * cubic.q + D;
-        const float C1 = -0.5 * cubic.q - D;
+        if (discriminant < 0.0) {
+            roots = vec3(-1.0);
+            return false;
+        }
 
-        cubic.root = sign(C0) * pow(abs(C0), 1.0 / 3.0) + sign(C1) * pow(abs(C1), 1.0 / 3.0);
+        roots = vec3(
+            0.5 * (-c + sqrt(discriminant)) / b,
+            0.5 * (-c - sqrt(discriminant)) / b,
+            -1.0
+        );
+
+        return true;
     }
-    return cubic.root;
+
+    if (c != 0.0) {
+        roots = vec3(
+            -d / c,
+            -1.0,
+            -1.0
+        );
+
+        return true;
+    }
+
+    return false;
 }
 
-float first_root(inout Cubic cubic){
-    if (cubic.discriminant <= 0.0) cubic.root = cubic.fac * cos(cubic.arccos);
-    return cubic.root;
-}
-
-float second_root(inout Cubic cubic){
-    if (cubic.discriminant <= 0.0) cubic.root = cubic.fac * cos(cubic.arccos - 2.0 / 3.0 * M_PI);
-    return cubic.root;
-}
-
-float third_root(inout Cubic cubic){
-    if (cubic.discriminant <= 0.0) cubic.root = cubic.fac * cos(cubic.arccos - 4.0 / 3.0 * M_PI);
-    return cubic.root;
-}
 
 // Plane
 Plane plane_constructor(in vec3 point, in vec3 span1, in vec3 span2) {
@@ -402,6 +395,7 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout i
             vec3 coords, raw_coords;
 
             if (texture_coords(spline_map, pos, coords, raw_coords)) {
+                // Clamp texture coords here, texelfetch does not support wrap mode
                 texel = ivec3(coords * size);
                 const float color = texelFetch(texVol, texel, 0).r;
 
@@ -441,34 +435,22 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout i
 }
 
 bool intersect_ray_line_segment(in Ray ray, in vec3 point1, in vec3 point2, inout float t) {
-    const vec3 dpoint = point1 - point2;
+    const vec3 line_origin = point1;
+    const vec3 line_direction = point2 - line_origin;
 
-    const float dxy = ray.direction.y * dpoint.x - ray.direction.x * dpoint.y;
-    const float dxz = ray.direction.z * dpoint.x - ray.direction.x * dpoint.z;
-    const float dyz = ray.direction.z * dpoint.y - ray.direction.y * dpoint.z;
-
-    if (dxy == 0.0 && dxz == 0.0 && dyz == 0.0) return false;
-
-    float result;
-    if (abs(dxy) > abs(dxz) && abs(dxy) > abs(dyz)) result = (ray.direction.y * (point1.x - ray.origin.x) - ray.direction.x * (point1.y - ray.origin.y)) / dxy;
-    if (abs(dxz) > abs(dyz) && abs(dxz) > abs(dxy)) result = (ray.direction.z * (point1.x - ray.origin.x) - ray.direction.x * (point1.z - ray.origin.z)) / dxz;
-    if (abs(dyz) > abs(dxy) && abs(dyz) > abs(dxz)) result = (ray.direction.z * (point1.y - ray.origin.y) - ray.direction.y * (point1.z - ray.origin.z)) / dyz;
-
-    if (result < 0.0 || result > 1.0) return false;
-
-    const vec3 intersection = point1 * (1.0 - result) + point2 * result;
-
-    if (abs(ray.direction.x) >= 1e-9) {
-        t = (intersection.x - ray.origin.x) / ray.direction.x;
-    }
-    else if (abs(ray.direction.y) >= 1e-9) {
-        t = (intersection.y - ray.origin.y) / ray.direction.y;
-    }
-    else if (abs(ray.direction.z) >= 1e-9) {
-        t = (intersection.z - ray.origin.z) / ray.direction.z;
-    } else {
+    if (dot(ray.origin - line_origin, cross(line_direction, ray.direction)) == 0) {
         return false;
     }
+
+    const vec3 plane = cross(line_direction, ray.direction);
+    float s = dot(cross(ray.origin - line_origin, ray.direction), plane) / dot(plane, plane);
+    float r = dot(cross(ray.origin - line_origin, line_direction), plane) / dot(plane, plane);
+
+    if (s < 0.0 || s > 1.0 || r < 0.0) {
+        return false;
+    }
+
+    t = r;
 
     return true;
 }
@@ -558,20 +540,35 @@ bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts
 
 // SplineMap
 bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out vec3 raw_coords) {
-    const vec4 p = spline_map.base.inv_matrix * vec4(pos, 1.0);
+    // const vec4 p = spline_map.base.inv_matrix * vec4(pos, 1.0);
     float t;
 
     // Interpolate coordinates on base translated to spline intersection point
-    if (intersect_transformed_spline_plane(spline_map.transformed_spline, p.y, t)) {
-        const vec3 edge = position_on_spline(spline_map.transformed_spline, t);
-        const vec3 diff = p.xyz - edge;
+    if (intersect_transformed_spline_plane(spline_map.transformed_spline, pos.y - spline_map.base.point.y, t)) {
+        const vec3 edge = position_on_spline(spline_map.spline, t);
 
-        const float xComp = diff.x / spline_map.size.x;
-        const float yComp = 1.0 - p.y / spline_map.size.y;
-        const float zComp = diff.z / spline_map.size.z;
+        // Project `pos` and `edge` onto `span1`
+        const float px = dot(normalize(spline_map.base.span1), pos);
+        const float ex = dot(normalize(spline_map.base.span1), edge);
+        const float xComp = abs((px - ex) / spline_map.size.x);
+
+        // Project `pos` and `edge` onto `span2`
+        const float pz = dot(normalize(spline_map.base.span2), pos);
+        const float ez = dot(normalize(spline_map.base.span2), edge);
+        const float zComp = abs((pz - ez) / spline_map.size.z);
+
+        const vec3 diff = pos - edge;
+
+        // const float xComp = diff.x / spline_map.size.x;
+        // const float zComp = diff.z / spline_map.size.z;
+        const float yComp = 1.0 - (pos.y - spline_map.base.point.y) / spline_map.size.y;
 
         raw_coords = edge;
-        coords = vec3(xComp, yComp, zComp);
+        coords = clamp(
+            vec3(xComp, yComp, zComp),
+            vec3(0.0),
+            vec3(1.0 - 1e-6)
+        );
         return true;
     }
 
