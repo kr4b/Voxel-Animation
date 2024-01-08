@@ -1,0 +1,7 @@
+ObjectType = Image
+NDims = 3
+DimSize = 256 365 256
+BinaryData = True
+ElementType = MET_UCHAR
+ElementByteOrderMSB = False
+ElementDataFile = stent8.raw

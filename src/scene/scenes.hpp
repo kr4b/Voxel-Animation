@@ -48,7 +48,7 @@ static std::tuple<std::shared_ptr<Volume>, glm::ivec3, float> create_volume(scen
         case scenes::Orange: // Sweet Orange
             return std::make_tuple(std::make_shared<Volume>(load_fld_volume("assets/orange.fld")), glm::ivec3(250, 141, 73), 0.0f);
         case scenes::Stent: // Dark Flesh
-            return std::make_tuple(std::make_shared<Volume>(load_fld_volume("assets/stent8.fld")), glm::ivec3(186, 141, 135), 0.0f);
+            return std::make_tuple(std::make_shared<Volume>(load_mhd_volume("assets/stent8.mhd")), glm::ivec3(186, 141, 135), 0.0f);
         case scenes::Tomato: // Tomato
             return std::make_tuple(std::make_shared<Volume>(load_fld_volume("assets/tomato.fld")), glm::ivec3(206, 41, 57), 0.0f);
         case scenes::Tooth: // Neutral Pearl White

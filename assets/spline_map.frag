@@ -8,6 +8,7 @@
 #define EPSILON 1.0e-2
 #define MAX_VALUE 2.0
 #define MIN_VALUE -MAX_VALUE
+#define USE_TRANSFER_FUNCTION 1
 
 layout( location = 0 ) in vec2 v2fTexCoord;
 
@@ -30,6 +31,9 @@ layout( binding = 2 ) uniform sampler3D gradientField;
 
 uniform float step_size;
 uniform float threshold;
+// Transfer function variables, not always set
+uniform float stop0x;
+uniform float stop1x;
 
 /// Structs
 struct Spline {
@@ -172,7 +176,11 @@ bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts
 bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out vec3 raw_coords);
 
 // Walk/march ray over spline map
+#if USE_TRANSFER_FUNCTION
+bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, in float step_size, inout ivec3 texel, inout float t, inout vec3 normal, inout vec4 color);
+#else
 bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, in float step_size, inout ivec3 texel, inout float t, inout vec3 normal);
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 //  __  __  _                  _  _                                         //
@@ -186,6 +194,8 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, in floa
 
 // Generate gradient normal for given texel
 vec3 gradient_normal(in Spline spline, in vec3 texel);
+
+vec4 transfer_function(in float value);
 
 // Function Implementations
 // Spline
@@ -384,7 +394,13 @@ Ray get_frag_ray(in vec2 frag_coord) {
     return ray_constructor(origin, direction);
 }
 
+#if USE_TRANSFER_FUNCTION
+bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout ivec3 texel, inout float t, inout vec3 normal, inout vec4 color) {
+    bool found_intersection = false;
+    color.a = 1.0;
+#else
 bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout ivec3 texel, inout float t, inout vec3 normal) {
+#endif
     vec2 ts;
     const bool result = intersect_ray_spline_map(ray, spline_map, ts);
 
@@ -397,13 +413,27 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout i
             if (texture_coords(spline_map, pos, coords, raw_coords)) {
                 // Clamp texture coords here, texelfetch does not support wrap mode
                 texel = ivec3(coords * size);
-                const float color = texelFetch(texVol, texel, 0).r;
+                const float value = texelFetch(texVol, texel, 0).r;
 
                 // Intersection
-                if (color > threshold) {
-                    t = i;
-                    normal = gradient_normal(spline_map.transformed_spline, coords);
+                if (value > threshold) {
+#if USE_TRANSFER_FUNCTION
+                    vec4 voxel_color = transfer_function(value);
+                    if (voxel_color.a > 0.0) {
+                        color.xyz += voxel_color.xyz * voxel_color.a * color.a;
+                        color.a *= 1.0 - voxel_color.a;
+                    }
+
+                    if (!found_intersection) {
+                        found_intersection = true;
+#endif
+                        t = i;
+                        normal = gradient_normal(spline_map.transformed_spline, coords);
+#if USE_TRANSFER_FUNCTION
+                    }
+#else
                     return true;
+#endif
                 }
 
                 // Determine the distance in the distance field and apply deformation correction
@@ -431,10 +461,15 @@ bool walk_spline_map(in SplineMap spline_map, in Ray ray, in ivec3 size, inout i
         }
     }
 
+#if USE_TRANSFER_FUNCTION
+    return found_intersection;
+#else
     return false;
+#endif
 }
 
 bool intersect_ray_line_segment(in Ray ray, in vec3 point1, in vec3 point2, inout float t) {
+    // https://mathworld.wolfram.com/Line-LineIntersection.html
     const vec3 line_origin = point1;
     const vec3 line_direction = point2 - line_origin;
 
@@ -564,11 +599,7 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out v
         const float yComp = 1.0 - (pos.y - spline_map.base.point.y) / spline_map.size.y;
 
         raw_coords = edge;
-        coords = clamp(
-            vec3(xComp, yComp, zComp),
-            vec3(0.0),
-            vec3(1.0 - 1e-6)
-        );
+        coords = vec3(xComp, yComp, zComp);
         return true;
     }
 
@@ -597,6 +628,27 @@ vec3 gradient_normal(in Spline spline, in vec3 coord) {
     ));
 }
 
+vec4 transfer_function(in float value) {
+    if (value >= 0.314) {
+        return vec4(1.0, 1.0, 1.0, 0.8);
+    }
+    if (value >= 0.2635) {
+        vec3 red = vec3(0.95, 0.1, 0.35); // [0.29, ->]
+        vec3 blue = vec3(0.2, 0.1, 0.7); // [0.27, 0.29]
+
+        float alpha = clamp((value - 0.2635) / (0.314 - 0.2635), 0.0, 1.0);
+        return vec4(mix(blue, red, alpha), alpha * 0.4 + 0.1);
+    }
+    if (value >= stop0x) {
+        vec3 blue = vec3(0.2, 0.1, 0.7); // [0.26, ->]
+        vec3 yellow = vec3(0.6, 0.65, 0.05); // [0.2, 0.26]
+
+        float alpha = clamp((value - stop0x) / (0.2635 - stop0x), 0.0, 1.0);
+        return vec4(mix(yellow, blue, alpha), alpha * 0.085 + 0.1);
+    }
+    return vec4(1.0, 1.0, 1.0, 0.001);
+}
+
 void main() {
     oColor = vec4(0.0);
 
@@ -606,10 +658,17 @@ void main() {
     ivec3 texel;
     float t;
     vec3 normal;
-    
+#if USE_TRANSFER_FUNCTION
+    vec4 color;
+
+    if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t, normal, color)) {
+        const float light = dot(normalize(vec3(5.0, 150.0, 20.0) - (ray.origin + t * ray.direction)), normal);
+        oColor = vec4(color.rgb * (max(0.0, light) * 0.7 + 0.3), 1.0);
+#else
     if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t, normal)) {
         const float light = dot(normalize(vec3(5.0, 150.0, 20.0) - (ray.origin + t * ray.direction)), normal);
         oColor = vec4(uSplineMap.spline_map.color * (max(0.0, light) * 0.7 + 0.3), 1.0);
+#endif
         // TODO: Depth hack, maybe base it on projection near/far planes
         gl_FragDepth = t / 100.0;
         // oColor = normal * 0.5 + 0.5;

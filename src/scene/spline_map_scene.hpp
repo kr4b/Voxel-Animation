@@ -119,8 +119,10 @@ private:
     glm::vec3 offset;
     glm::ivec3 color;
     float rotation;
-    float threshold = 0.25f;
+    float threshold = 0.25f; // stent: 0.0975f
     float stepSize = 0.025f;
+    float stop0x = 0.2f;
+    float stop1x = 0.617f;
     double time = 0.0;
 
     SplineMapUniform create_uniform() {
@@ -255,6 +257,8 @@ public:
         glBindBufferBase(GL_UNIFORM_BUFFER, 2, splineMapUniform);
         get_shader().uniformFloat("threshold", this->threshold);
         get_shader().uniformFloat("step_size", this->stepSize);
+        get_shader().uniformFloat("stop0x", this->stop0x);
+        get_shader().uniformFloat("stop1x", this->stop1x);
         this->volume->bind();
         get_setup().start_render(get_shader());
         if (get_state().debugMode) {
