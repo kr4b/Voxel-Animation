@@ -75,11 +75,19 @@ public:
         splineMap(
             Plane(
                 glm::vec3(-1.0f, -1.0f, -1.0f),
-                glm::vec3(float(volume->width()) / float(volume->height()) * 2.0f, 0.0f, 0.0f),
                 glm::vec3(
-                    0.0f,
+                    float(volume->width()) / float(volume->height()) * 2.0f * cos(rotation) -
                     float(volume->depth()) / float(volume->height()) * 2.0f * sin(rotation),
+                    0.0f,
+                    float(volume->width()) / float(volume->height()) * 2.0f * sin(rotation) +
                     float(volume->depth()) / float(volume->height()) * 2.0f * cos(rotation)
+                ),
+                glm::vec3(
+                    float(volume->width()) / float(volume->height()) * 2.0f * cos(rotation + M_PI * 0.5f) -
+                    float(volume->depth()) / float(volume->height()) * 2.0f * sin(rotation + M_PI * 0.5f),
+                    0.0f,
+                    float(volume->width()) / float(volume->height()) * 2.0f * sin(rotation + M_PI * 0.5f) +
+                    float(volume->depth()) / float(volume->height()) * 2.0f * cos(rotation + M_PI * 0.5f)
                 )
             ),
             Spline::with_tangents(
