@@ -651,7 +651,7 @@ void main() {
     float t;
     vec3 normal;
 #if USE_TRANSFER_FUNCTION
-    vec4 color;
+    vec4 color = vec4(0.0);
 
     if (walk_spline_map(uSplineMap.spline_map, ray, textureSize(texVol, 0), texel, t, normal, color)) {
         const float light = dot(normalize(vec3(5.0, 150.0, 20.0) - (ray.origin + t * ray.direction)), normal);
