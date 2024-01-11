@@ -583,8 +583,8 @@ bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out v
         const vec3 edge = position_on_spline(spline_map.transformed_spline, t);
         const vec3 diff = p.xyz - edge;
 
-        const vec3 tspan1 = (spline_map.base.inv_matrix * vec4(spline_map.base.span1, 1.0)).xyz;
-        const vec3 tspan2 = (spline_map.base.inv_matrix * vec4(spline_map.base.span2, 1.0)).xyz;
+        const vec3 tspan1 = (spline_map.base.inv_matrix * vec4(spline_map.base.span1, 0.0)).xyz;
+        const vec3 tspan2 = (spline_map.base.inv_matrix * vec4(spline_map.base.span2, 0.0)).xyz;
 
         const float xComp = diff.x / length(tspan1);
         const float zComp = diff.z / length(tspan2);
