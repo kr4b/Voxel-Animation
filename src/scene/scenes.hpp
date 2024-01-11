@@ -59,7 +59,7 @@ static std::tuple<std::shared_ptr<Volume>, glm::ivec3, float> create_volume(scen
             return std::make_tuple(std::make_shared<Volume>(load_seaweed()), glm::ivec3(70, 72, 38), 0.0f);
         case scenes::Cube:
         default:
-            return std::make_tuple(std::make_shared<Volume>(load_cube()), glm::ivec3(255), 0.0f);
+            return std::make_tuple(std::make_shared<Volume>(load_cube()), glm::ivec3(255), glm::radians(45.0f));
     }
 }
 

@@ -6,7 +6,10 @@
 #include <glm/vec3.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <iostream>
 
+#include "glm/trigonometric.hpp"
 #include "math_util.hpp"
 
 class Ray;
@@ -39,8 +42,8 @@ public:
             );
         // Non-axis aligned plane
         } else {
-            const glm::vec3 rotationAxis = glm::normalize(glm::vec3(this->normal.z, 0.0f, -this->normal.x));
-            const float rotationAngle = acos(this->normal.y);
+            const glm::vec3 rotationAxis = glm::normalize(glm::cross(this->normal, glm::vec3(0.0f, 1.0f, 0.0f)));
+            const float rotationAngle = M_PI - glm::acos(this->normal.y);
 
             const float cosAngle = cos(rotationAngle);
             const float sinAngle = sin(rotationAngle);
@@ -141,7 +144,7 @@ public:
         glBindVertexArray(0);
     }
 
-        void clean() {
+    void clean() {
         glDeleteVertexArrays(1, &this->vao);
         glDeleteBuffers(2, this->buffers);
     }
@@ -153,6 +156,6 @@ private:
     // Construct normal that always points up, maybe the up vector could be given as a parameter
     const glm::vec3 construct_normal(glm::vec3 span1, glm::vec3 span2) {
         const glm::vec3 normal = glm::normalize(glm::cross(span1, span2));
-        return normal * float(sign(normal.y));
+        return normal;
     }
 };

@@ -15,7 +15,7 @@ public:
     ~Setup();
 
     void update(const Window& window, const State& state);
-    void start_render(const Shader& shader) const;
+    void start_render() const;
     void end_render() const;
     void debug(const Shader& shader) const;
 

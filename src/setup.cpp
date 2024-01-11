@@ -56,7 +56,7 @@ void Setup::update(const Window& window, const State& state) {
     glNamedBufferSubData(this->cameraUniform, 0, sizeof(CameraUniform), &camera);
 }
 
-void Setup::start_render(const Shader& shader) const {
+void Setup::start_render() const {
     glBindVertexArray(this->vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }

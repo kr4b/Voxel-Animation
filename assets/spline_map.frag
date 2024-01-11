@@ -8,7 +8,7 @@
 #define EPSILON 1.0e-2
 #define MAX_VALUE 2.0
 #define MIN_VALUE -MAX_VALUE
-#define USE_TRANSFER_FUNCTION 1
+#define USE_TRANSFER_FUNCTION 0
 
 layout( location = 0 ) in vec2 v2fTexCoord;
 
@@ -575,28 +575,20 @@ bool intersect_ray_spline_map(in Ray ray, in SplineMap spline_map, inout vec2 ts
 
 // SplineMap
 bool texture_coords(in SplineMap spline_map, in vec3 pos, out vec3 coords, out vec3 raw_coords) {
-    // const vec4 p = spline_map.base.inv_matrix * vec4(pos, 1.0);
+    const vec4 p = spline_map.base.inv_matrix * vec4(pos, 1.0);
     float t;
 
     // Interpolate coordinates on base translated to spline intersection point
-    if (intersect_transformed_spline_plane(spline_map.transformed_spline, pos.y - spline_map.base.point.y, t)) {
-        const vec3 edge = position_on_spline(spline_map.spline, t);
+    if (intersect_transformed_spline_plane(spline_map.transformed_spline, p.y, t)) {
+        const vec3 edge = position_on_spline(spline_map.transformed_spline, t);
+        const vec3 diff = p.xyz - edge;
 
-        // Project `pos` and `edge` onto `span1`
-        const float px = dot(normalize(spline_map.base.span1), pos);
-        const float ex = dot(normalize(spline_map.base.span1), edge);
-        const float xComp = abs((px - ex) / spline_map.size.x);
+        const vec3 tspan1 = (spline_map.base.inv_matrix * vec4(spline_map.base.span1, 1.0)).xyz;
+        const vec3 tspan2 = (spline_map.base.inv_matrix * vec4(spline_map.base.span2, 1.0)).xyz;
 
-        // Project `pos` and `edge` onto `span2`
-        const float pz = dot(normalize(spline_map.base.span2), pos);
-        const float ez = dot(normalize(spline_map.base.span2), edge);
-        const float zComp = abs((pz - ez) / spline_map.size.z);
-
-        const vec3 diff = pos - edge;
-
-        // const float xComp = diff.x / spline_map.size.x;
-        // const float zComp = diff.z / spline_map.size.z;
-        const float yComp = 1.0 - (pos.y - spline_map.base.point.y) / spline_map.size.y;
+        const float xComp = diff.x / length(tspan1);
+        const float zComp = diff.z / length(tspan2);
+        const float yComp = 1.0 - p.y / spline_map.size.y;
 
         raw_coords = edge;
         coords = vec3(xComp, yComp, zComp);

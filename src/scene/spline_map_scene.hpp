@@ -76,18 +76,14 @@ public:
             Plane(
                 glm::vec3(-1.0f, -1.0f, -1.0f),
                 glm::vec3(
-                    float(volume->width()) / float(volume->height()) * 2.0f * cos(rotation) -
-                    float(volume->depth()) / float(volume->height()) * 2.0f * sin(rotation),
+                    float(volume->width()) / float(volume->height()) * 2.0f,
                     0.0f,
-                    float(volume->width()) / float(volume->height()) * 2.0f * sin(rotation) +
-                    float(volume->depth()) / float(volume->height()) * 2.0f * cos(rotation)
+                    0.0f
                 ),
                 glm::vec3(
-                    float(volume->width()) / float(volume->height()) * 2.0f * cos(rotation + M_PI * 0.5f) -
-                    float(volume->depth()) / float(volume->height()) * 2.0f * sin(rotation + M_PI * 0.5f),
                     0.0f,
-                    float(volume->width()) / float(volume->height()) * 2.0f * sin(rotation + M_PI * 0.5f) +
-                    float(volume->depth()) / float(volume->height()) * 2.0f * cos(rotation + M_PI * 0.5f)
+                    float(volume->depth()) / float(volume->height()) * 2.0f * sin(rotation),
+                    float(volume->depth()) / float(volume->height()) * 2.0f * cos(rotation)
                 )
             ),
             Spline::with_tangents(
@@ -268,7 +264,7 @@ public:
         get_shader().uniformFloat("stop0x", this->stop0x);
         get_shader().uniformFloat("stop1x", this->stop1x);
         this->volume->bind();
-        get_setup().start_render(get_shader());
+        get_setup().start_render();
         if (get_state().debugMode) {
             get_debug_shader().use();
             get_setup().debug(get_debug_shader());
